@@ -1,0 +1,57 @@
+User-agent: *
+Allow: /
+
+# High-priority pages for crawling
+Allow: /tools/
+Allow: /tools/rugcheck
+Allow: /tools/gas-tracker
+Allow: /tools/honeypot-check
+Allow: /tools/wallet-profiler
+Allow: /tools/airdrop-hunter
+Allow: /tools/mev-protection
+Allow: /tools/rug-alert
+Allow: /tools/dex-aggregator
+
+# Block admin and sensitive areas
+Disallow: /admin/
+Disallow: /api/private/
+Disallow: /dashboard/
+Disallow: /user/
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
+
+# Allow important static resources
+Allow: /static/css/
+Allow: /static/js/
+Allow: /static/img/
+
+# Block certain file types
+Disallow: *.json$
+Disallow: *.log$
+Disallow: /static/*.map$
+
+# Sitemap location
+Sitemap: https://paycrypt.online/sitemap.xml
+
+# Crawl delay to be respectful to server resources
+Crawl-delay: 1
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2
+
+# Block bad bots and scrapers
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /

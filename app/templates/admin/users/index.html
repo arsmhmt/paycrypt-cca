@@ -1,0 +1,118 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ _('Users') }} - {{ _('Admin Dashboard') }}{% endblock %}
+
+{% block content %}
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ _('Users') }}</h1>
+        <a href="{{ url_for('user.create_user') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="bi bi-plus-circle-fill"></i> {{ _('Add New User') }}
+        </a>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">{{ _('All Users') }}</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                           data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                             aria-labelledby="dropdownMenuLink">
+                            <a class="dropdown-item" href="#">{{ _('Export to CSV') }}</a>
+                            <a class="dropdown-item" href="#">{{ _('Print') }}</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#">{{ _('Refresh') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if users %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Username') }}</th>
+                                    <th>{{ _('Name') }}</th>
+                                    <th>{{ _('Email') }}</th>
+                                    <th>{{ _('Role') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                    <th>{{ _('Last Login') }}</th>
+                                    <th>{{ _('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.role.name if user.role else _('No Role') }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if user.is_active else 'secondary' }}">
+                                            {{ _('Active') if user.is_active else _('Inactive') }}
+                                        </span>
+                                    </td>
+                                    <td>{{ user.last_login_at.strftime('%Y-%m-%d %H:%M') if user.last_login_at else 'Never' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('user.edit_user', user_id=user.id) }}" 
+                                           class="btn btn-sm btn-primary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% if current_user.id != user.id %}
+                                        <form action="{{ url_for('user.delete_user', user_id=user.id) }}" 
+                                              method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-danger" 
+                                                    onclick="return confirm('Are you sure you want to delete this user?')"
+                                                    title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-people display-4 text-muted mb-3"></i>
+                        <h5>No users found</h5>
+                        <p class="text-muted">Create your first user to get started</p>
+                        <a href="{{ url_for('user.create_user') }}" class="btn btn-primary mt-2">
+                            <i class="bi bi-plus-circle"></i> Add User
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /.container-fluid -->
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- Page level plugins -->
+<script src="{{ url_for('static', filename='vendor/datatables/jquery.dataTables.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
+
+<!-- Page level custom scripts -->
+<script>
+    // Call the dataTables jQuery plugin
+    $(document).ready(function() {
+        $('#dataTable').DataTable({
+            "order": [[0, "asc"]] // Sort by username
+        });
+    });
+</script>
+{% endblock %}

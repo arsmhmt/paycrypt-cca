@@ -1,0 +1,27 @@
+{% extends "admin/users/role_form.html" %}
+
+{% set title = 'Edit Role: ' + role.name %}
+
+{% block title %}{{ title }} - Admin Dashboard{% endblock %}
+
+{% block content %}
+    {{ super() }}
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        // Disable form controls for default role
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if role and role.is_default %}
+            const form = document.querySelector('form');
+            const inputs = form.querySelectorAll('input, select, textarea, button');
+            inputs.forEach(input => {
+                if (input.id !== 'csrf_token') {
+                    input.disabled = true;
+                }
+            });
+            {% endif %}
+        });
+    </script>
+{% endblock %}

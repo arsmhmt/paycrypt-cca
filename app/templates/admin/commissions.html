@@ -1,0 +1,296 @@
+{% extends "admin/admin_base.html" %}
+
+{% block page_title_content %}Commission Reports{% endblock %}
+
+{% block admin_content %}
+<style>
+    /* Make table font smaller */
+    #commissionsTable {
+        font-size: 0.85rem;
+    }
+    
+    #commissionsTable th,
+    #commissionsTable td {
+        padding: 0.4rem 0.75rem;
+    }
+    
+    #commissionsTable .table-light th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    /* Adjust card header */
+    .card-header h5 {
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+    
+    /* Make form controls smaller */
+    .form-select-sm, 
+    .form-control-sm {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.8rem;
+    }
+    
+    /* Adjust labels */
+    .form-label {
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+    }
+</style>
+
+<div class="container-fluid px-0">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Commission Reports</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm" id="exportCSV">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+                </button>
+                <button class="btn btn-outline-primary btn-sm" id="exportJSON">
+                    <i class="bi bi-file-code me-1"></i> Export JSON
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Date Range</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control form-control-sm" id="dateFrom">
+                        <span class="input-group-text">to</span>
+                        <input type="date" class="form-control form-control-sm" id="dateTo">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Client</label>
+                    <select class="form-select form-select-sm" id="clientFilter">
+                        <option value="">All Clients</option>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}">{{ client.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary btn-sm" id="applyFilters">
+                        <i class="bi bi-funnel me-1"></i> Apply
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover" id="commissionsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Client</th>
+                            <th class="text-end">Total Deposits</th>
+                            <th class="text-end">Deposit %</th>
+                            <th class="text-end">Deposit Fee</th>
+                            <th class="text-end">Total Withdrawals</th>
+                            <th class="text-end">Withdrawal %</th>
+                            <th class="text-end">Withdrawal Fee</th>
+                            <th class="text-end fw-bold">Total Commission</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client, data in commissions_data %}
+                        <tr>
+                            <td>{{ client.name }}</td>
+                            <td class="text-end">{{ "%0.2f"|format(data.deposit_total|float) }} {{ currency_symbol }}</td>
+                            <td class="text-end">{{ "%0.2f"|format(data.deposit_rate * 100) }}%</td>
+                            <td class="text-end">{{ "%0.2f"|format(data.deposit_fee|float) }} {{ currency_symbol }}</td>
+                            <td class="text-end">{{ "%0.2f"|format(data.withdrawal_total|float) }} {{ currency_symbol }}</td>
+                            <td class="text-end">{{ "%0.2f"|format(data.withdrawal_rate * 100) }}%</td>
+                            <td class="text-end">{{ "%0.2f"|format(data.withdrawal_fee|float) }} {{ currency_symbol }}</td>
+                            <td class="text-end fw-bold">{{ "%0.2f"|format(data.total_commission|float) }} {{ currency_symbol }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">No commission data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th>Total</th>
+                            <th class="text-end">{{ "%0.2f"|format(totals.deposit_total|float) }} {{ currency_symbol }}</th>
+                            <th></th>
+                            <th class="text-end">{{ "%0.2f"|format(totals.deposit_fee|float) }} {{ currency_symbol }}</th>
+                            <th class="text-end">{{ "%0.2f"|format(totals.withdrawal_total|float) }} {{ currency_symbol }}</th>
+                            <th></th>
+                            <th class="text-end">{{ "%0.2f"|format(totals.withdrawal_fee|float) }} {{ currency_symbol }}</th>
+                            <th class="text-end fw-bold">{{ "%0.2f"|format(totals.total_commission|float) }} {{ currency_symbol }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">Commission Breakdown</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="commissionChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0">Commission by Client</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="clientChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date pickers with default range (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
+    document.getElementById('dateTo').valueAsDate = today;
+
+    // Commission Breakdown Chart
+    const ctx1 = document.getElementById('commissionChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+            labels: ['Deposit Fees', 'Withdrawal Fees'],
+            datasets: [{
+                data: [
+                    {{ totals.deposit_fee|default(0) }}, 
+                    {{ totals.withdrawal_fee|default(0) }}
+                ],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 99, 132, 0.7)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.raw !== null) {
+                                label += '{{ currency_symbol }}' + context.raw.toFixed(2);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Commission by Client Chart
+    const clientData = [
+        {% for client, data in commissions_data %}
+        {
+            client: '{{ client.name }}',
+            total: {{ data.total_commission|default(0) }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const ctx2 = document.getElementById('clientChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: clientData.map(item => item.client),
+            datasets: [{
+                label: 'Commission ({{ currency_symbol }})',
+                data: clientData.map(item => item.total),
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '{{ currency_symbol }}' + value.toFixed(2);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '{{ currency_symbol }}' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Export functionality
+    document.getElementById('exportCSV').addEventListener('click', function() {
+        // Implement CSV export
+        alert('Export to CSV functionality will be implemented here');
+    });
+
+    document.getElementById('exportJSON').addEventListener('click', function() {
+        // Implement JSON export
+        alert('Export to JSON functionality will be implemented here');
+    });
+
+    // Apply filters
+    document.getElementById('applyFilters').addEventListener('click', function() {
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+        const clientId = document.getElementById('clientFilter').value;
+        
+        // Build query params
+        const params = new URLSearchParams();
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        if (clientId) params.append('client_id', clientId);
+        
+        // Reload page with filters
+        window.location.href = '{{ url_for("main.admin_commissions") }}?' + params.toString();
+    });
+});
+</script>
+{% endblock %}

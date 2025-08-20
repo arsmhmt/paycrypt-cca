@@ -1,0 +1,113 @@
+{% extends 'admin/admin_base.html' %}
+{% from 'admin/_form_helpers.html' import render_field %}
+
+{% block title %}Notification Preferences - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-bell me-2"></i>Notification Preferences
+        </h1>
+    </div>
+
+    <!-- Notification Preferences Form -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="bi bi-sliders me-2"></i>configure Notification Preferences
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.save_notification_preferences') }}">
+                {{ form.hidden_tag() }}
+                
+                <!-- User Selection -->
+                <div class="mb-4">
+                    {{ render_field(form.user_id, class="form-select") }}
+                </div>
+
+                <!-- Notification Preferences -->
+                <div class="row">
+                    {% for nt in NotificationType %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-{{ 'envelope' if nt == 'email' else 'phone' if nt == 'sms' else 'bell' if nt == 'push' else 'link-45deg' }} me-2"></i>
+                                    {{ nt.name.title() }} Notifications
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                {% for et in NotificationEvent %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="pref_{{ nt.value }}_{{ et.value }}"
+                                           name="pref_{{ nt.value }}_{{ et.value }}"
+                                           {% if form[f'pref_{nt.value}_{et.value}'].data %}checked{% endif %}>
+                                    <label class="form-check-label" 
+                                           for="pref_{{ nt.value }}_{{ et.value }}">
+                                        {{ et.name.replace('_', ' ').title() }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Form Actions -->
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Save Preferences
+                    </button>
+                    <a href="{{ url_for('admin.index') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Update form when user changes
+    const userSelect = document.getElementById('user_id');
+    if (userSelect) {
+        userSelect.addEventListener('change', function() {
+            // Clear all checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Load user preferences
+            if (this.value) {
+                fetch(`/admin/user/${this.value}/preferences`)
+                    .then(response => response.json())
+                    .then(preferences => {
+                        preferences.forEach(pref => {
+                            const checkbox = document.getElementById(`pref_${pref.type}_${pref.event}`);
+                            if (checkbox) {
+                                checkbox.checked = pref.enabled;
+                            }
+                        });
+                    });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

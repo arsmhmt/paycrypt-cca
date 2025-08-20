@@ -1,0 +1,97 @@
+{% extends "admin/base.html" %}
+{% block title %}Payment Details - {{ payment.id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Payment Details</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('admin.payments_list') }}">Payments</a></li>
+        <li class="breadcrumb-item active">Payment #{{ payment.id }}</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-coins me-1"></i>
+            Payment Details
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Payment ID</label>
+                        <p class="form-control-plaintext">{{ payment.id }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Client</label>
+                        <p class="form-control-plaintext">{{ payment.client.name if payment.client else 'N/A' }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <p class="form-control-plaintext">{{ "%.2f"|format(payment.amount) }} {{ payment.currency }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <p class="form-control-plaintext">
+                            <span class="badge {% if payment.status == 'completed' %}bg-success{% elif payment.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ payment.status|capitalize }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <p class="form-control-plaintext">{{ payment.payment_method|capitalize }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Transaction ID</label>
+                        <p class="form-control-plaintext">{{ payment.transaction_id if payment.transaction_id else 'N/A' }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Created At</label>
+                        <p class="form-control-plaintext">{{ payment.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Updated At</label>
+                        <p class="form-control-plaintext">{{ payment.updated_at.strftime('%Y-%m-%d %H:%M:%S') if payment.updated_at else 'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <h5>Description</h5>
+                <p>{{ payment.description if payment.description else 'No description provided' }}</p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="mt-4">
+                <h5>Quick Actions</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <form action="{{ url_for('admin.mark_payment_status', payment_id=payment.id, status='completed') }}" method="POST">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-check me-2"></i>Mark as Completed
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <form action="{{ url_for('admin.mark_payment_status', payment_id=payment.id, status='failed') }}" method="POST">
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="fas fa-times me-2"></i>Mark as Failed
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <form action="{{ url_for('admin.generate_invoice', payment_id=payment.id) }}" method="POST">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-file-invoice me-2"></i>Generate Invoice
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% macro render_field(field) %}
+    <div class="mb-3">
+        <label for="{{ field.id }}" class="form-label">
+            {{ field.label.text }}
+            {% if field.description %}
+            <i class="bi bi-info-circle ms-2" 
+               data-bs-toggle="tooltip" 
+               data-bs-placement="top" 
+               title="{{ field.description }}"></i>
+            {% endif %}
+        </label>
+        {{ field(class="form-control") }}
+        {% if field.errors %}
+            <div class="invalid-feedback d-block">
+                {% for error in field.errors %}
+                    {{ error }}<br>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="bi bi-{{
+                'globe' if _setting_type == 'system' else
+                'credit-card' if _setting_type == 'payment' else
+                'bell' if _setting_type == 'notification' else
+                'shield-lock' if _setting_type == 'security' else
+                'envelope' if _setting_type == 'email' else
+                'link-45deg' }} me-2"></i>
+            {{ _setting_type.title() }} Settings
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.settings') }}">
+            {{ _form.hidden_tag() }}
+            
+            <!-- Add setting type field -->
+            <input type="hidden" name="setting_type" value="{{ _setting_type }}">
+            
+            <!-- Render fields -->
+            {% for setting in _settings %}
+                {% if setting.key in _form.fields %}
+                    {{ render_field(_form.fields[setting.key]) }}
+                {% endif %}
+            {% endfor %}
+            
+            <!-- Form Actions -->
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Save Changes
+                </button>
+                <button type="button" class="btn btn-secondary" 
+                        onclick="location.reload()">
+                    <i class="bi bi-x-lg me-1"></i> Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

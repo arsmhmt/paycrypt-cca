@@ -1,0 +1,211 @@
+{% extends "public_base.html" %}
+
+{% block title %}Select Payment Method - Paycrypt{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-coins me-2"></i>
+                        Subscription Payment - {{ billing_cycle|title }} Billing
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4>{{ package.name }}</h4>
+                        <div class="billing-summary p-3 bg-light rounded">
+                            {% if billing_cycle == 'monthly' %}
+                            <h5 class="text-success mb-2">
+                                <i class="fas fa-calendar me-2"></i>
+                                Monthly Subscription
+                            </h5>
+                            <p class="mb-1"><strong>Amount:</strong> ${{ "%.2f"|format(billing_amount) }} USD</p>
+                            <p class="mb-1"><strong>Billing Cycle:</strong> Every 30 days</p>
+                            <p class="mb-0"><strong>Service Period:</strong> {{ period_start.strftime('%Y-%m-%d') }} to {{ period_end.strftime('%Y-%m-%d') }}</p>
+                            {% else %}
+                            <h5 class="text-warning mb-2">
+                                <i class="fas fa-star me-2"></i>
+                                Annual Subscription ({{ package.annual_discount_percent|int }}% Discount)
+                            </h5>
+                            <p class="mb-1"><strong>Amount:</strong> ${{ "%.2f"|format(billing_amount) }} USD</p>
+                            {% if package.annual_savings > 0 %}
+                            <p class="mb-1 text-success"><strong>You Save:</strong> ${{ "%.2f"|format(package.annual_savings) }} per year!</p>
+                            {% endif %}
+                            <p class="mb-1"><strong>Billing Cycle:</strong> Every 365 days</p>
+                            <p class="mb-0"><strong>Service Period:</strong> {{ period_start.strftime('%Y-%m-%d') }} to {{ period_end.strftime('%Y-%m-%d') }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Choose Your Payment Method
+                    </h5>
+                    
+                    <p class="text-muted mb-4">
+                        Select your preferred cryptocurrency to pay for your subscription. 
+                        Amounts are calculated using current market rates.
+                    </p>
+
+                    <div class="row" id="crypto-options">
+                        <!-- Crypto options will be loaded here -->
+                    </div>
+
+                    <!-- Auto-renewal Info -->
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="fas fa-sync-alt me-2"></i>Auto-Renewal</h6>
+                        <p class="mb-2">
+                            Your subscription will automatically renew at the end of each billing period 
+                            to ensure uninterrupted service.
+                        </p>
+                        <ul class="mb-0">
+                            <li>You'll receive a payment notification 7 days before renewal</li>
+                            <li>Payment window: 72 hours before service suspension</li>
+                            <li>You can cancel auto-renewal anytime from your dashboard</li>
+                        </ul>
+                    </div>
+
+                    <!-- Service Suspension Warning -->
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Service Suspension</h6>
+                        <p class="mb-0">
+                            <strong>Important:</strong> If payment is not received within 72 hours of billing date, 
+                            your service will be automatically suspended until payment is made.
+                        </p>
+                    </div>
+
+                    <!-- Back Button -->
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('package_payment.initiate_activation', package_id=package.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to Billing Options
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.crypto-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    border-color: #28a745 !important;
+}
+
+.crypto-icon {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.crypto-amount {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.price-display {
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin: 10px 0;
+}
+
+.card.crypto-option {
+    border: 2px solid #e9ecef;
+}
+
+.card.crypto-option:hover .btn {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.billing-summary {
+    border-left: 4px solid #28a745;
+}
+</style>
+
+<script>
+// Load cryptocurrency options
+document.addEventListener('DOMContentLoaded', function() {
+    loadCryptoOptions();
+});
+
+function loadCryptoOptions() {
+    // Get popular cryptocurrencies (this would typically be loaded via AJAX)
+    const popularCryptos = [
+        {symbol: 'BTC', name: 'Bitcoin', icon: 'bitcoin', rate: 45000.00},
+        {symbol: 'ETH', name: 'Ethereum', icon: 'ethereum', rate: 2800.00},
+        {symbol: 'LTC', name: 'Litecoin', icon: 'litecoin', rate: 95.00},
+        {symbol: 'USDT', name: 'Tether USD', icon: 'tether', rate: 1.00},
+        {symbol: 'BNB', name: 'Binance Coin', icon: 'binance-coin', rate: 320.00},
+        {symbol: 'DOGE', name: 'Dogecoin', icon: 'dogecoin', rate: 0.09}
+    ];
+    
+    const billingAmount = {{ billing_amount }};
+    const container = document.getElementById('crypto-options');
+    
+    popularCryptos.forEach(crypto => {
+        const cryptoAmount = billingAmount / crypto.rate;
+        const formattedAmount = formatCryptoAmount(cryptoAmount, crypto.symbol);
+        
+        const optionHtml = `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card crypto-option h-100" onclick="selectCrypto('${crypto.symbol}')" style="cursor: pointer;">
+                    <div class="card-body text-center">
+                        <div class="crypto-icon mb-3">
+                            <i class="fab fa-${crypto.icon}" style="font-size: 2.5rem; color: #f7931a;"></i>
+                        </div>
+                        <h6 class="card-title">${crypto.name}</h6>
+                        <p class="card-text"><strong>${crypto.symbol}</strong></p>
+                        <div class="price-display">
+                            <span class="crypto-amount">${formattedAmount}</span>
+                            <small class="text-muted d-block">≈ $${crypto.rate.toFixed(2)} per ${crypto.symbol}</small>
+                        </div>
+                        <button class="btn btn-outline-success btn-sm mt-2">
+                            <i class="fas fa-arrow-right me-1"></i>Select ${crypto.symbol}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.innerHTML += optionHtml;
+    });
+}
+
+function formatCryptoAmount(amount, currency) {
+    if (currency === 'BTC' || currency === 'ETH' || currency === 'LTC') {
+        return amount.toFixed(8) + ' ' + currency;
+    } else if (currency === 'USDT' || currency === 'USDC') {
+        return amount.toFixed(6) + ' ' + currency;
+    } else {
+        return amount.toFixed(4) + ' ' + currency;
+    }
+}
+
+function selectCrypto(cryptoSymbol) {
+    // Add loading state
+    const cards = document.querySelectorAll('.crypto-option');
+    cards.forEach(card => {
+        card.style.pointerEvents = 'none';
+        card.style.opacity = '0.7';
+    });
+    
+    // Show loading message
+    const selectedCard = event.currentTarget;
+    const btn = selectedCard.querySelector('.btn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Creating Payment...';
+    
+    // Redirect to create payment
+    const url = `{{ url_for('package_payment.create_flat_rate_crypto_payment', package_id=package.id, billing_cycle=billing_cycle, crypto_currency='CRYPTO') }}`.replace('CRYPTO', cryptoSymbol);
+    window.location.href = url;
+}
+</script>
+{% endblock %}

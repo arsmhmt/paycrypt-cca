@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+
+{% block title %}📊 DEX Analyzer - Best DEX Prices & Liquidity Pool Scanner | PayCrypt{% endblock %}
+
+{% block head %}
+<!-- SEO Meta Tags for DEX Analyzer -->
+<meta name="description" content="📊 Find best DEX prices and analyze liquidity pools across all exchanges. Compare DEX rates, liquidity depth, and discover optimal trading opportunities with our free DEX aggregator.">
+<meta name="keywords" content="DEX analyzer, DEX aggregator, liquidity pool scanner, best DEX prices, DeFi exchange comparison, DEX trading, liquidity analysis, DEX price comparison, DeFi analytics, decentralized exchange tools">
+<meta name="author" content="PayCrypt - DeFi Trading Analytics">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://paycrypt.online/tools/dex-analyzer">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paycrypt.online/tools/dex-analyzer">
+<meta property="og:title" content="📊 DEX Analyzer - Best DEX Prices & Liquidity Scanner | PayCrypt">
+<meta property="og:description" content="📊 Find best DEX prices and analyze liquidity pools across all exchanges. Free professional DEX aggregator and analytics tool.">
+<meta property="og:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta property="og:site_name" content="PayCrypt DeFi Tools">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://paycrypt.online/tools/dex-analyzer">
+<meta name="twitter:title" content="📊 DEX Analyzer - Find Best DEX Prices">
+<meta name="twitter:description" content="📊 Compare DEX prices and analyze liquidity pools to find optimal trading opportunities across all exchanges.">
+<meta name="twitter:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta name="twitter:creator" content="@paycryptonline">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "DEX Analyzer",
+  "alternateName": "DEX Aggregator Tool",
+  "url": "https://paycrypt.online/tools/dex-analyzer",
+  "description": "Professional DEX analysis tool to compare prices across decentralized exchanges and analyze liquidity pools for optimal trading.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "provider": {
+    "@type": "Organization",
+    "name": "PayCrypt",
+    "url": "https://paycrypt.online"
+  },
+  "featureList": [
+    "DEX price comparison",
+    "Liquidity pool analysis",
+    "Trading optimization",
+    "Multi-DEX support",
+    "Real-time data",
+    "Best rate finder",
+    "Arbitrage opportunities"
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card bg-gradient-warning text-dark mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                DEX Aggregator
+                            </h2>
+                            <p class="mb-0 opacity-90">
+                                Find the best prices across decentralized exchanges for optimal trading
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="badge bg-dark text-warning fs-6 px-3 py-2">
+                                <i class="fas fa-chart-network me-1"></i>
+                                Multi-DEX
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-coins me-2 text-primary"></i>
+                        Find Best Trading Route
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="chain" class="form-label">
+                                <i class="fas fa-link me-1"></i>
+                                Blockchain
+                            </label>
+                            <select name="chain" id="chain" class="form-select" required>
+                                <option value="">Select chain...</option>
+                                {% for chain_id, chain_name in chains.items() %}
+                                    <option value="{{ chain_id }}" 
+                                            {% if request.form.get('chain') == chain_id %}selected{% endif %}>
+                                        {{ chain_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="token_in" class="form-label">
+                                <i class="fas fa-arrow-right me-1"></i>
+                                From Token
+                            </label>
+                            <input type="text" 
+                                   name="token_in" 
+                                   id="token_in" 
+                                   class="form-control" 
+                                   placeholder="ETH, USDC, WBTC..." 
+                                   required
+                                   value="{{ request.form.get('token_in', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="token_out" class="form-label">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                To Token
+                            </label>
+                            <input type="text" 
+                                   name="token_out" 
+                                   id="token_out" 
+                                   class="form-control" 
+                                   placeholder="USDT, DAI, LINK..." 
+                                   required
+                                   value="{{ request.form.get('token_out', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="amount" class="form-label">
+                                <i class="fas fa-coins me-1"></i>
+                                Amount
+                            </label>
+                            <input type="number" 
+                                   name="amount" 
+                                   id="amount" 
+                                   class="form-control" 
+                                   placeholder="1.0" 
+                                   step="0.000001"
+                                   min="0"
+                                   required
+                                   value="{{ request.form.get('amount', '') }}">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="fas fa-search me-1"></i>
+                                Find
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if routes %}
+            <!-- Best Route -->
+            <div class="card border-success mb-4">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-trophy me-2"></i>
+                            Best Route Found
+                        </h5>
+                        <div class="badge bg-light text-success fs-6">
+                            {{ routes.total_routes_found }} routes analyzed
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="badge bg-primary fs-6 me-3">{{ routes.best_route.dex }}</div>
+                                <div class="h5 mb-0">
+                                    {{ amount }} {{ token_in }} → {{ routes.estimated_output }} {{ token_out }}
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-sm-3">
+                                    <div class="border-start border-success border-3 ps-3">
+                                        <small class="text-muted">Price Impact</small>
+                                        <div class="fw-bold text-success">{{ routes.best_route.price_impact }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="border-start border-info border-3 ps-3">
+                                        <small class="text-muted">Min. Received</small>
+                                        <div class="fw-bold">{{ routes.best_route.minimum_received }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="border-start border-warning border-3 ps-3">
+                                        <small class="text-muted">Gas Estimate</small>
+                                        <div class="fw-bold">{{ routes.best_route.gas_estimate }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="border-start border-secondary border-3 ps-3">
+                                        <small class="text-muted">Route</small>
+                                        <div class="fw-bold">{{ " → ".join(routes.best_route.route_path) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 text-center">
+                            <button class="btn btn-success btn-lg mb-2" disabled>
+                                <i class="fas fa-wallet me-2"></i>
+                                Execute Trade
+                            </button>
+                            <br>
+                            <small class="text-muted">Connect wallet to trade</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alternative Routes -->
+            <div class="card border-info mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-route me-2"></i>
+                        Alternative Routes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for route in routes.alternative_routes %}
+                        <div class="col-lg-4">
+                            <div class="card border-light h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="card-title mb-0">{{ route.dex }}</h6>
+                                        <span class="badge bg-secondary">Alt #{{ loop.index }}</span>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <small class="text-muted">Price Impact:</small>
+                                        <span class="fw-bold {% if route.price_impact|replace('%', '')|float > 0.5 %}text-warning{% else %}text-success{% endif %}">
+                                            {{ route.price_impact }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <small class="text-muted">Min. Received:</small>
+                                        <span class="fw-bold">{{ route.minimum_received }}</span>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <small class="text-muted">Gas:</small>
+                                        <span class="fw-bold">{{ route.gas_estimate }}</span>
+                                    </div>
+                                    
+                                    <div>
+                                        <small class="text-muted">Route:</small>
+                                        <div class="small">{{ " → ".join(route.route_path) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Supported DEXes -->
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-network-wired me-2"></i>
+                                Supported DEXes
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded">
+                                        <i class="fab fa-ethereum text-primary mb-2" style="font-size: 2rem;"></i>
+                                        <h6>Uniswap V2/V3</h6>
+                                        <small class="text-muted">Ethereum's largest DEX</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded">
+                                        <i class="fas fa-fish text-info mb-2" style="font-size: 2rem;"></i>
+                                        <h6>SushiSwap</h6>
+                                        <small class="text-muted">Multi-chain DEX</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded">
+                                        <i class="fas fa-circle text-warning mb-2" style="font-size: 2rem;"></i>
+                                        <h6>Curve</h6>
+                                        <small class="text-muted">Stablecoin specialist</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded">
+                                        <i class="fas fa-coins text-success mb-2" style="font-size: 2rem;"></i>
+                                        <h6>PancakeSwap</h6>
+                                        <small class="text-muted">BSC's leading DEX</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                Trading Tips
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <small>Compare gas fees across routes</small>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <small>Watch for price impact > 3%</small>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <small>Set appropriate slippage tolerance</small>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <small>Consider MEV protection</small>
+                                </li>
+                                <li class="mb-0">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <small>Double-check token addresses</small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Token input styling */
+#token_in, #token_out {
+    text-transform: uppercase;
+}
+
+/* Route path visualization */
+.route-path {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn {
+        font-size: 0.875rem;
+    }
+}
+</style>
+
+<script>
+// Auto-uppercase token inputs
+document.getElementById('token_in').addEventListener('input', function(e) {
+    e.target.value = e.target.value.toUpperCase();
+});
+
+document.getElementById('token_out').addEventListener('input', function(e) {
+    e.target.value = e.target.value.toUpperCase();
+});
+
+// Swap tokens function
+function swapTokens() {
+    const tokenIn = document.getElementById('token_in');
+    const tokenOut = document.getElementById('token_out');
+    
+    const temp = tokenIn.value;
+    tokenIn.value = tokenOut.value;
+    tokenOut.value = temp;
+}
+
+// Add swap button functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Add swap button between token inputs
+    const tokenOutGroup = document.getElementById('token_out').closest('.col-md-3');
+    const swapBtn = document.createElement('button');
+    swapBtn.type = 'button';
+    swapBtn.className = 'btn btn-outline-secondary btn-sm position-absolute';
+    swapBtn.style.cssText = 'top: 50%; left: -15px; transform: translateY(-50%); z-index: 10; border-radius: 50%; width: 30px; height: 30px; padding: 0;';
+    swapBtn.innerHTML = '<i class="fas fa-exchange-alt"></i>';
+    swapBtn.onclick = swapTokens;
+    
+    tokenOutGroup.style.position = 'relative';
+    tokenOutGroup.appendChild(swapBtn);
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const amount = document.getElementById('amount').value;
+    if (parseFloat(amount) <= 0) {
+        e.preventDefault();
+        alert('Please enter a valid amount greater than 0');
+    }
+});
+</script>
+{% endblock %}

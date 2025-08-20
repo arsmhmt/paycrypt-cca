@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Checkout | PayCrypt{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-3">PayCrypt Checkout</h1>
+          <p class="text-muted mb-4">Order {{ session.order_id }} • {{ session.amount }} {{ session.currency }}</p>
+
+          <div class="alert alert-info d-flex align-items-center" role="alert">
+            <i class="bi bi-shield-lock me-2"></i>
+            This hosted checkout is secured and CSRF-safe.
+          </div>
+
+          <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+              <label class="form-label">Select coin</label>
+              <select class="form-select" name="coin">
+                <option value="USDT" {% if selected_coin == 'USDT' %}selected{% endif %}>USDT</option>
+                <option value="BTC" {% if selected_coin == 'BTC' %}selected{% endif %}>BTC</option>
+                <option value="ETH" {% if selected_coin == 'ETH' %}selected{% endif %}>ETH</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Select network</label>
+              <select class="form-select" name="network">
+                <option value="TRC20" {% if selected_network == 'TRC20' %}selected{% endif %}>TRC20</option>
+                <option value="BEP20" {% if selected_network == 'BEP20' %}selected{% endif %}>BEP20</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Amount to pay</label>
+              <div class="input-group">
+                <span class="input-group-text">{{ fiat_amount }} {{ session.currency }}</span>
+                <span class="input-group-text">≈ {{ crypto_amount }} {{ selected_coin }}</span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Deposit Address</label>
+              <div class="input-group">
+                <input type="text" class="form-control" value="{{ deposit_address }}" readonly>
+                <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText('{{ deposit_address }}')">Copy</button>
+              </div>
+            </div>
+            <div class="mb-3 text-center">
+              <label class="form-label">Scan QR to pay</label>
+              <div>
+                <img src="{{ qr_code }}" alt="QR Code" style="max-width:180px;">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Time left to pay</label>
+              <div id="countdown" class="fw-bold text-danger" style="font-size:1.2em;"></div>
+            </div>
+            <button class="btn btn-primary" type="submit">Pay now</button>
+            <a class="btn btn-outline-secondary ms-2" href="{{ session.cancel_url }}">Cancel</a>
+          </form>
+          <script>
+            // Countdown timer
+            let secondsLeft = {{ seconds_left }};
+            function updateCountdown() {
+              if (secondsLeft <= 0) {
+                document.getElementById('countdown').innerText = 'Expired';
+                return;
+              }
+              let m = Math.floor(secondsLeft / 60);
+              let s = secondsLeft % 60;
+              document.getElementById('countdown').innerText = `${m}m ${s}s`;
+              secondsLeft--;
+              setTimeout(updateCountdown, 1000);
+            }
+            updateCountdown();
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Package Activation Payment - Paycrypt{% endblock %}
+
+{% block styles %}
+<style>
+    .payment-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    
+    .payment-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .payment-header {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .payment-body {
+        padding: 2rem;
+    }
+    
+    .crypto-payment-box {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        text-align: center;
+        background: #f8fafc;
+    }
+    
+    .payment-address {
+        background: #1f2937;
+        color: #10b981;
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        word-break: break-all;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+    }
+    
+    .amount-display {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #6366f1;
+        margin: 1rem 0;
+    }
+    
+    .countdown-timer {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: center;
+    }
+    
+    .status-indicator {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        text-align: center;
+        margin: 1rem 0;
+    }
+    
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #f59e0b;
+    }
+    
+    .status-completed {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+    
+    .qr-code-placeholder {
+        width: 200px;
+        height: 200px;
+        background: #f3f4f6;
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem auto;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    
+    .instructions {
+        background: #eff6ff;
+        border: 1px solid #3b82f6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .demo-notice {
+        background: #fef2f2;
+        border: 1px solid #ef4444;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        color: #dc2626;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="payment-container">
+    <div class="payment-card">
+        <div class="payment-header">
+            <h1><i class="bi bi-credit-card me-2"></i>Package Activation Payment</h1>
+            <p class="mb-0">Complete your payment to activate {{ payment.package.name }}</p>
+        </div>
+        
+        <div class="payment-body">
+            <!-- Package Info -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Package Details</h5>
+                    <p><strong>Package:</strong> {{ payment.package.name }}</p>
+                    <p><strong>Type:</strong> {{ payment.package.client_type.value|title }}</p>
+                    <p><strong>Setup Fee:</strong> ${{ payment.setup_fee_amount }} {{ payment.setup_fee_currency }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Payment Status</h5>
+                    <div class="status-indicator {% if payment.status.name == 'COMPLETED' %}status-completed{% else %}status-pending{% endif %}">
+                        {% if payment.status.name == 'COMPLETED' %}
+                            <i class="bi bi-check-circle me-2"></i>Payment Completed
+                        {% else %}
+                            <i class="bi bi-clock me-2"></i>Awaiting Payment
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            {% if payment.status.name != 'COMPLETED' %}
+            <!-- Payment Timer -->
+            <div class="countdown-timer">
+                <h6><i class="bi bi-stopwatch me-2"></i>Payment Window</h6>
+                <div id="countdown" class="h5 mb-0">{{ payment.time_remaining }}</div>
+                <small>Time remaining to complete payment</small>
+            </div>
+            
+            <!-- Crypto Payment Details -->
+            <div class="crypto-payment-box">
+                <h5><i class="fas fa-coins me-2"></i>{{ payment.crypto_currency }} Payment</h5>
+                
+                <div class="amount-display">
+                    {{ "%.8f"|format(payment.crypto_amount) }} {{ payment.crypto_currency }}
+                </div>
+                
+                <p class="text-muted">
+                    Equivalent to ${{ payment.setup_fee_amount }} USD at rate: 
+                    ${{ "{:,.2f}".format(payment.exchange_rate) }}/{{ payment.crypto_currency }}
+                </p>
+                
+                <!-- QR Code Placeholder -->
+                <div class="qr-code-placeholder">
+                    <div class="text-center">
+                        <i class="bi bi-qr-code" style="font-size: 2rem;"></i><br>
+                        QR Code will be here<br>
+                        <small>(In production)</small>
+                    </div>
+                </div>
+                
+                <!-- Payment Address -->
+                <h6>Payment Address:</h6>
+                <div class="payment-address" id="paymentAddress">
+                    {{ payment.crypto_address }}
+                </div>
+                
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-outline-primary btn-sm" onclick="copyAddress()">
+                        <i class="bi bi-clipboard me-1"></i>Copy Address
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="checkPayment()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Check Status
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="instructions">
+                <h6><i class="bi bi-info-circle me-2"></i>Payment Instructions</h6>
+                <ol class="mb-0">
+                    <li>Send exactly <strong>{{ "%.8f"|format(payment.crypto_amount) }} {{ payment.crypto_currency }}</strong> to the address above</li>
+                    <li>Payment must be received within the time limit</li>
+                    <li>Your package will be activated automatically after {{ payment.required_confirmations }} confirmation(s)</li>
+                    <li>You will receive an email confirmation once payment is processed</li>
+                </ol>
+            </div>
+            
+            <!-- Demo Notice -->
+            <div class="demo-notice">
+                <h6><i class="bi bi-exclamation-triangle me-2"></i>Demo Mode</h6>
+                <p class="mb-2">This is a demonstration. In production, you would send real {{ payment.crypto_currency }} to activate your package.</p>
+                <button class="btn btn-danger btn-sm" onclick="simulatePayment()">
+                    <i class="bi bi-lightning me-1"></i>Simulate Payment (Demo Only)
+                </button>
+            </div>
+            {% else %}
+            <!-- Payment Completed -->
+            <div class="text-center">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h3 class="text-success">Payment Completed!</h3>
+                <p class="text-muted">Your package has been activated successfully.</p>
+                <p><strong>Transaction:</strong> {{ payment.transaction_hash }}</p>
+                <a href="{{ url_for('client.dashboard') }}" class="btn btn-primary">
+                    <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let paymentCheckInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    {% if payment.status.name != 'COMPLETED' %}
+    // Start checking payment status every 30 seconds
+    paymentCheckInterval = setInterval(checkPayment, 30000);
+    
+    // Update countdown timer
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+    {% endif %}
+});
+
+function copyAddress() {
+    const address = document.getElementById('paymentAddress').textContent.trim();
+    navigator.clipboard.writeText(address).then(function() {
+        showToast('Payment address copied to clipboard!', 'success');
+    }).catch(function() {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = address;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('Payment address copied!', 'success');
+    });
+}
+
+function checkPayment() {
+    fetch(`/package-payment/check-payment/{{ payment.id }}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.is_completed) {
+                clearInterval(paymentCheckInterval);
+                showToast('Payment confirmed! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking payment:', error);
+        });
+}
+
+function simulatePayment() {
+    if (confirm('This will simulate a successful payment. Continue?')) {
+        fetch(`/package-payment/simulate-payment/{{ payment.id }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Payment simulated successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = data.redirect;
+                }, 2000);
+            } else {
+                showToast('Error: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error simulating payment:', error);
+            showToast('An error occurred', 'error');
+        });
+    }
+}
+
+function updateCountdown() {
+    // This would be implemented with the actual expiry time
+    // For now, just show static text
+}
+
+function showToast(message, type) {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.parentElement.removeChild(toast);
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

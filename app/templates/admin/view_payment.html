@@ -1,0 +1,475 @@
+{% extends 'admin/admin_base.html' %}
+{% from 'admin/_form_helpers.html' import render_field %}
+
+{% block title %}Payment #{{ payment.id }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <a href="{{ url_for('admin.payments_list') }}" class="text-decoration-none text-gray-600">
+                <i class="bi bi-arrow-left me-2"></i>
+            </a>
+            Payment #{{ payment.id }}
+        </h1>
+        <div class="d-flex">
+            {% if payment.status == 'completed' and not payment.refunded %}
+            <button type="button" class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#refundModal">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Process Refund
+            </button>
+            {% endif %}
+            <a href="{{ url_for('admin.edit_payment', payment_id=payment.id) }}" class="btn btn-primary me-2">
+                <i class="bi bi-pencil me-1"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.payments_list') }}" class="btn btn-secondary">
+                <i class="bi bi-x-lg me-1"></i> Close
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Payment Details Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-credit-card me-2"></i>Payment Details
+                    </h6>
+                    <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'warning' if payment.status == 'pending' 
+                        else 'danger' if payment.status in ['failed', 'cancelled'] else 'info' }} px-3 py-2">
+                        {{ payment.status|title }}
+                        {% if payment.refunded %}(Refunded){% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="border-bottom pb-3 mb-3">
+                                <h6 class="text-muted small mb-2">PAYMENT TO</h6>
+                                <h5 class="mb-1">{{ config.APP_NAME }}</h5>
+                                <p class="mb-0 small text-muted">
+                                    {{ config.COMPANY_ADDRESS|replace('\n', '<br>')|safe }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border-bottom pb-3 mb-3">
+                                <h6 class="text-muted small mb-2">CLIENT</h6>
+                                <h5 class="mb-1">
+                                    {% if payment.client %}
+                                        {{ payment.client.name }}
+                                    {% else %}
+                                        <span class="text-muted">No client associated</span>
+                                    {% endif %}
+                                </h5>
+                                {% if payment.client %}
+                                <p class="mb-0 small">
+                                    <a href="mailto:{{ payment.client.email }}">{{ payment.client.email }}</a>
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <h6 class="mb-0">{{ payment.description or 'Payment' }}</h6>
+                                        <small class="text-muted">
+                                            {{ payment.created_at.strftime('%B %d, %Y %H:%M') }}
+                                            {% if payment.reference %}
+                                            <br>Reference: {{ payment.reference }}
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                    <td class="text-end align-middle">
+                                        <h5 class="mb-0">{{ "%s %0.2f"|format(payment.currency, payment.amount) }}</h5>
+                                    </td>
+                                </tr>
+                                {% if payment.fee_amount and payment.fee_amount > 0 %}
+                                <tr>
+                                    <td class="text-end">
+                                        <span class="text-muted">Fee ({{ payment.fee_percentage }}%)</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="text-muted">{{ "%s %0.2f"|format(payment.currency, payment.fee_amount) }}</span>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                <tr class="table-light">
+                                    <td class="text-end">
+                                        <h5 class="mb-0">Total</h5>
+                                    </td>
+                                    <td class="text-end">
+                                        <h5 class="mb-0">
+                                            {{ "%s %0.2f"|format(payment.currency, payment.amount + (payment.fee_amount or 0)) }}
+                                        </h5>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if payment.notes %}
+                    <div class="mt-4">
+                        <h6 class="text-muted small mb-2">NOTES</h6>
+                        <p class="mb-0">{{ payment.notes|nl2br|safe }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Events Timeline -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-clock-history me-2"></i>Payment History
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for event in payment.events|sort(attribute='created_at', reverse=true) %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker">
+                                <i class="bi bi-{{ 'check-circle-fill text-success' if event.event_type == 'completed' 
+                                    else 'exclamation-circle-fill text-warning' if event.event_type == 'pending'
+                                    else 'x-circle-fill text-danger' if event.event_type in ['failed', 'cancelled']
+                                    else 'info-circle-fill text-info' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">
+                                        {{ event.event_type|replace('_', ' ')|title }}
+                                        {% if event.initiated_by %}
+                                            <small class="text-muted">by {{ event.initiated_by }}</small>
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">{{ event.created_at.strftime('%b %d, %Y %H:%M') }}</small>
+                                </div>
+                                {% if event.data %}
+                                <div class="alert alert-light p-2 mt-2 mb-0 small">
+                                    <pre class="mb-0">{{ event.data|tojson(indent=2) }}</pre>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-clock-history display-4 text-muted mb-3"></i>
+                            <p class="text-muted">No payment history available</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- Payment Summary -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-info-circle me-2"></i>Payment Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Payment ID</span>
+                            <span class="font-monospace">{{ payment.id }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Status</span>
+                            <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'warning' if payment.status == 'pending' 
+                                else 'danger' if payment.status in ['failed', 'cancelled'] else 'info' }}">
+                                {{ payment.status|title }}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Amount</span>
+                            <span>{{ "%s %0.2f"|format(payment.currency, payment.amount) }}</span>
+                        </li>
+                        {% if payment.fee_amount and payment.fee_amount > 0 %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Fee ({{ payment.fee_percentage }}%)</span>
+                            <span>{{ "%s %0.2f"|format(payment.currency, payment.fee_amount) }}</span>
+                        </li>
+                        {% endif %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Net Amount</span>
+                            <span class="fw-bold">
+                                {{ "%s %0.2f"|format(payment.currency, payment.net_amount or (payment.amount - (payment.fee_amount or 0))) }}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Currency</span>
+                            <span>{{ payment.currency }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Created</span>
+                            <span>{{ payment.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+                        </li>
+                        {% if payment.updated_at != payment.created_at %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Last Updated</span>
+                            <span>{{ payment.updated_at.strftime('%b %d, %Y %H:%M') }}</span>
+                        </li>
+                        {% endif %}
+                        {% if payment.paid_at %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Paid At</span>
+                            <span>{{ payment.paid_at.strftime('%b %d, %Y %H:%M') }}</span>
+                        </li>
+                        {% endif %}
+                        {% if payment.refunded %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Refunded At</span>
+                            <span>{{ payment.refunded_at.strftime('%b %d, %Y %H:%M') }}</span>
+                        </li>
+                        {% endif %}
+                        {% if payment.payment_method %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>Payment Method</span>
+                            <span>{{ payment.payment_method|title }}</span>
+                        </li>
+                        {% endif %}
+                        {% if payment.ip_address %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span>IP Address</span>
+                            <span>{{ payment.ip_address }}</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Client Information -->
+            {% if payment.client %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-person me-2"></i>Client Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">
+                        <a href="{{ url_for('admin.edit_client', client_id=payment.client.id) }}">
+                            {{ payment.client.name }}
+                        </a>
+                    </h6>
+                    <ul class="list-unstyled mb-0">
+                        {% if payment.client.email %}
+                        <li class="mb-2">
+                            <i class="bi bi-envelope me-2 text-muted"></i>
+                            <a href="mailto:{{ payment.client.email }}">{{ payment.client.email }}</a>
+                        </li>
+                        {% endif %}
+                        {% if payment.client.phone %}
+                        <li class="mb-2">
+                            <i class="bi bi-telephone me-2 text-muted"></i>
+                            <a href="tel:{{ payment.client.phone }}">{{ payment.client.phone }}</a>
+                        </li>
+                        {% endif %}
+                        {% if payment.client.company %}
+                        <li class="mb-2">
+                            <i class="bi bi-building me-2 text-muted"></i>
+                            {{ payment.client.company }}
+                        </li>
+                        {% endif %}
+                        {% if payment.client.website %}
+                        <li>
+                            <i class="bi bi-globe me-2 text-muted"></i>
+                            <a href="{{ payment.client.website }}" target="_blank" rel="noopener noreferrer">
+                                {{ payment.client.website }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-lightning-charge me-2"></i>Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if payment.status == 'pending' %}
+                        <form method="POST" action="{{ url_for('admin.complete_payment', payment_id=payment.id) }}" class="d-grid">
+                            <button type="submit" class="btn btn-success mb-2">
+                                <i class="bi bi-check-circle me-1"></i> Mark as Completed
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.cancel_payment', payment_id=payment.id) }}" class="d-grid">
+                            <button type="submit" class="btn btn-danger mb-2" 
+                                    onclick="return confirm('Are you sure you want to cancel this payment? This action cannot be undone.')">
+                                <i class="bi bi-x-circle me-1"></i> Cancel Payment
+                            </button>
+                        </form>
+                        {% elif payment.status == 'completed' and not payment.refunded %}
+                        <button type="button" class="btn btn-warning mb-2" data-bs-toggle="modal" data-bs-target="#refundModal">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Process Refund
+                        </button>
+                        {% endif %}
+                        <a href="{{ url_for('admin.edit_payment', payment_id=payment.id) }}" class="btn btn-primary mb-2">
+                            <i class="bi bi-pencil me-1"></i> Edit Payment
+                        </a>
+                        <a href="{{ url_for('admin.resend_notification', payment_id=payment.id) }}" class="btn btn-info text-white mb-2">
+                            <i class="bi bi-envelope-arrow-up me-1"></i> Resend Notification
+                        </a>
+                        <a href="{{ url_for('admin.download_invoice', payment_id=payment.id) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-download me-1"></i> Download Invoice
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refund Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1" aria-labelledby="refundModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="refundModalLabel">Process Refund</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.refund_payment', payment_id=payment.id) }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        You are about to process a refund for this payment. Please confirm the details below.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="refundAmount" class="form-label">Refund Amount ({{ payment.currency }})</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ payment.currency }}</span>
+                            <input type="number" class="form-control" id="refundAmount" name="amount" 
+                                   step="0.01" min="0.01" max="{{ payment.amount }}" 
+                                   value="{{ payment.amount }}" required>
+                        </div>
+                        <div class="form-text">
+                            Maximum refundable amount: {{ "%s %0.2f"|format(payment.currency, payment.amount) }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="refundReason" class="form-label">Reason for Refund</label>
+                        <textarea class="form-control" id="refundReason" name="reason" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="notifyCustomer" name="notify_customer" checked>
+                        <label class="form-check-label" for="notifyCustomer">
+                            Send notification to customer
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Process Refund
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 1.5rem;
+    width: 2px;
+    background: #e9ecef;
+    margin-left: -1px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    width: 2rem;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.timeline-content {
+    padding: 0.5rem 0 0 1rem;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Handle refund amount validation
+    const refundAmount = document.getElementById('refundAmount');
+    if (refundAmount) {
+        refundAmount.addEventListener('input', function() {
+            const maxAmount = parseFloat(this.max);
+            const currentValue = parseFloat(this.value) || 0;
+            
+            if (currentValue > maxAmount) {
+                this.value = maxAmount.toFixed(2);
+            } else if (currentValue < 0.01) {
+                this.value = '0.01';
+            }
+        });
+    }
+    
+    // Handle form submission
+    const refundForm = document.querySelector('#refundModal form');
+    if (refundForm) {
+        refundForm.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
+        });
+    }
+});
+</script>
+{% endblock %}

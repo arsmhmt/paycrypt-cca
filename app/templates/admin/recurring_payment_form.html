@@ -1,0 +1,56 @@
+{% extends 'admin/admin_base.html' %}
+{% from 'admin/_recurring_payment.html' import recurring_payment_form %}
+{% from 'admin/_form_helpers.html' import render_field %}
+
+{% block title %}{% if recurring_payment %}Edit{% else %}New{% endif %} Recurring Payment - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <a href="{{ url_for('admin.recurring_payments') }}" class="text-decoration-none text-gray-600">
+                <i class="bi bi-arrow-left me-2"></i>
+            </a>
+            {% if recurring_payment %}
+                Edit Recurring Payment #{{ recurring_payment.id }}
+            {% else %}
+                New Recurring Payment
+            {% endif %}
+        </h1>
+        <div>
+            <a href="{{ url_for('admin.recurring_payments') }}" class="btn btn-secondary">
+                <i class="bi bi-x-lg me-1"></i> Cancel
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    {{ recurring_payment_form(form, recurring_payment) }}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date pickers
+    const start_date = document.getElementById('start_date');
+    const end_date = document.getElementById('end_date');
+    
+    if (start_date) {
+        start_date.addEventListener('change', function() {
+            if (end_date) {
+                end_date.min = this.value;
+            }
+        });
+    }
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

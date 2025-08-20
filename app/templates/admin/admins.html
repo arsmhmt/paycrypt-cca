@@ -1,0 +1,276 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}{{ _('Admin Users') }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ _('Admin Users') }}</h1>
+        <a href="{{ url_for('admin.create_admin') }}" class="d-none d-sm-inline-block btn btn-primary shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i> {{ _('Add Admin') }}
+        </a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row">
+        <!-- Total Admins Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                {{ _('Total Admin Users') }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ admins.total }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Admins Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                {{ _('Active Admins') }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ admins.items|selectattr('is_active')|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Last Login Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                {{ _('Last Login') }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ current_admin.last_login_at.strftime('%b %d, %Y %H:%M') if
+                                current_admin.last_login_at else _('Never') }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock-history fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admins Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">{{ _('Admin Users') }}</h6>
+            <form class="d-flex" method="GET" action="{{ url_for('admin.list_admins') }}">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control bg-light border-0 small"
+                        placeholder="{{ _('Search admins...') }}" value="{{ search if search }}"
+                        aria-label="{{ _('Search') }}" aria-describedby="basic-addon2">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Username') }}</th>
+                            <th>{{ _('Email') }}</th>
+                            <th>{{ _('Status') }}</th>
+                            <th>{{ _('Last Login') }}</th>
+                            <th>{{ _('Created') }}</th>
+                            <th>{{ _('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if admins.items %}
+                        {% for admin in admins.items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                                        style="width: 32px; height: 32px;">
+                                        {{ admin.username[0]|upper }}
+                                    </div>
+                                    <a href="{{ url_for('admin.edit_admin', admin_id=admin.id) }}"
+                                        class="font-weight-bold">
+                                        {{ admin.username }}
+                                    </a>
+                                    {% if admin.id == current_admin.id %}
+                                    <span class="badge bg-primary ms-2">{{ _('You') }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>{{ admin.email }}</td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if admin.is_active else 'bg-secondary' }}">
+                                    {{ 'Active' if admin.is_active else 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if admin.last_login_at %}
+                                {{ admin.last_login_at.strftime('%b %d, %Y %H:%M') }}
+                                {% else %}
+                                {{ _('Never') }}
+                                {% endif %}
+                            </td>
+                            <td>{{ admin.created_at.strftime('%b %d, %Y') }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('admin.edit_admin', admin_id=admin.id) }}"
+                                        class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{ _('Edit') }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% if admin.id != current_admin.id %}
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                        data-bs-target="#deleteAdminModal{{ admin.id }}" {% if
+                                        admin.id==current_admin.id %}disabled{% endif %} data-bs-toggle="tooltip"
+                                        title="{{ _('Delete') }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Delete Confirmation Modal -->
+                        {% if admin.id != current_admin.id %}
+                        <div class="modal fade" id="deleteAdminModal{{ admin.id }}" tabindex="-1"
+                            aria-labelledby="deleteAdminModalLabel{{ admin.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteAdminModalLabel{{ admin.id }}">{{ _('Delete
+                                            Admin User') }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>{{ _('Are you sure you want to delete the admin user') }} <strong>{{
+                                                admin.username }}</strong>? {{ _('This action cannot be undone.') }}</p>
+                                        <p class="text-danger">{{ _('This will permanently remove their access to the
+                                            admin panel.') }}</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{
+                                            _('Cancel') }}</button>
+                                        <form action="{{ url_for('admin.delete_admin', admin_id=admin.id) }}"
+                                            method="POST" class="d-inline">
+                                            <input type="hidden" name="_method" value="DELETE">
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-trash me-1"></i> {{ _('Delete') }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">{{ _('No admin users found') }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                {% if admins.pages > 1 %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if admins.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('admin.list_admins', page=admins.prev_num, search=search) }}"
+                                aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;</span>
+                        </li>
+                        {% endif %}
+
+                        {% for page_num in admins.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=3)
+                        %}
+                        {% if page_num %}
+                        {% if admins.page == page_num %}
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ page_num }}
+                                <span class="sr-only">(current)</span>
+                            </span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('admin.list_admins', page=page_num, search=search) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if admins.has_next %}
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('admin.list_admins', page=admins.next_num, search=search) }}"
+                                aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

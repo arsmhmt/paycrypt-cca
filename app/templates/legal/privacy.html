@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Privacy Policy') }} - {{ _('Crypto Payment Gateway') }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">{{ _('Privacy Policy') }}</h1>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h2>{{ _('1. Information We Collect') }}</h2>
+                        <p>{{ _('We collect information you provide when you register, use our services, or communicate with us. This includes:') }}</p>
+                        <ul>
+                            <li>{{ _('Contact information (name, email, phone)') }}</li>
+                            <li>{{ _('Business information (company name, address, tax ID)') }}</li>
+                            <li>{{ _('Payment and transaction information') }}</li>
+                            <li>{{ _('Usage data and analytics') }}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('2. How We Use Your Information') }}</h2>
+                        <p>{{ _('We use your information to:') }}</p>
+                        <ul>
+                            <li>{{ _('Provide and improve our services') }}</li>
+                            <li>{{ _('Process transactions and send related information') }}</li>
+                            <li>{{ _('Respond to your inquiries and provide support') }}</li>
+                            <li>{{ _('Send administrative messages and updates') }}</li>
+                            <li>{{ _('Prevent fraud and enhance security') }}</li>
+                            <li>{{ _('Comply with legal obligations') }}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('3. Information Sharing') }}</h2>
+                        <p>{{ _('We do not sell your personal information. We may share information with:') }}</p>
+                        <ul>
+                            <li>{{ _('Service providers who assist with our operations') }}</li>
+                            <li>{{ _('Law enforcement or government agencies when required by law') }}</li>
+                            <li>{{ _('Business partners with your consent') }}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('4. Data Security') }}</h2>
+                        <p>{{ _('We implement appropriate security measures to protect your information. However, no method of transmission over the internet is 100% secure.') }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('5. Your Rights') }}</h2>
+                        <p>{{ _('You have the right to:') }}</p>
+                        <ul>
+                            <li>{{ _('Access and receive a copy of your personal data') }}</li>
+                            <li>{{ _('Rectify or update your information') }}</li>
+                            <li>{{ _('Request deletion of your data') }}</li>
+                            <li>{{ _('Object to or restrict processing of your data') }}</li>
+                            <li>Withdraw consent at any time</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>6. Changes to This Policy</h2>
+                        <p>We may update this policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <p class="mb-0">Last updated: July 7, 2025</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

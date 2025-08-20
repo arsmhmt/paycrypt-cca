@@ -1,0 +1,549 @@
+{% extends "base.html" %}
+
+{% block title %}🚨 Rug Pull Alert System - Real-time Crypto Scam Monitoring | PayCrypt{% endblock %}
+
+{% block head %}
+<!-- SEO Meta Tags for Rug Pull Alert System -->
+<meta name="description" content="🚨 Real-time rug pull monitoring and alerts for DeFi projects. Protect your investments with advanced scam detection, suspicious activity tracking, and instant notifications.">
+<meta name="keywords" content="rug pull alerts, crypto scam monitoring, DeFi security alerts, real-time scam detection, rug pull protection, crypto project monitoring, DeFi safety alerts, blockchain security monitoring">
+<meta name="author" content="PayCrypt - DeFi Security Monitoring">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://paycrypt.online/tools/rug-alert">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paycrypt.online/tools/rug-alert">
+<meta property="og:title" content="🚨 Rug Pull Alert System - Real-time Crypto Scam Monitoring | PayCrypt">
+<meta property="og:description" content="🚨 Protect your DeFi investments with real-time rug pull monitoring and instant scam alerts. Free professional security tool.">
+<meta property="og:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta property="og:site_name" content="PayCrypt DeFi Tools">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://paycrypt.online/tools/rug-alert">
+<meta name="twitter:title" content="🚨 Rug Pull Alert System - Real-time Scam Monitoring">
+<meta name="twitter:description" content="🚨 Stay protected with real-time rug pull alerts and comprehensive DeFi project monitoring.">
+<meta name="twitter:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta name="twitter:creator" content="@paycryptonline">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Rug Pull Alert System",
+  "alternateName": "Crypto Scam Monitoring Tool",
+  "url": "https://paycrypt.online/tools/rug-alert",
+  "description": "Real-time rug pull monitoring system with instant alerts for suspicious DeFi project activities and potential scams.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "provider": {
+    "@type": "Organization",
+    "name": "PayCrypt",
+    "url": "https://paycrypt.online"
+  },
+  "featureList": [
+    "Real-time monitoring",
+    "Rug pull detection",
+    "Instant alerts",
+    "Suspicious activity tracking",
+    "Project risk analysis",
+    "Multi-chain support",
+    "Investment protection"
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="tool-icon me-3">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title mb-1">Rug Pull Alert System</h2>
+                            <p class="mb-0">Real-time monitoring and alerts for suspicious token activities</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Analysis Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="chain" class="form-label">Blockchain</label>
+                            <select name="chain" id="chain" class="form-select" required>
+                                <option value="">Select Blockchain</option>
+                                {% for chain_id, chain_name in chains.items() %}
+                                    <option value="{{ chain_id }}" {% if chain == chain_id %}selected{% endif %}>
+                                        {{ chain_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">Token Contract Address</label>
+                            <input type="text" name="address" id="address" class="form-control" 
+                                   placeholder="0x..." value="{{ address or '' }}" required>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="fas fa-search me-2"></i>Analyze Risk
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Results -->
+    {% if result and result.success %}
+    <div class="row mb-4">
+        <!-- Risk Score -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tachometer-alt me-2"></i>Rug Pull Risk
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="position-relative d-inline-block">
+                        <div class="progress-circle" data-percentage="{{ result.rug_risk_score }}">
+                            <span class="progress-value">{{ result.rug_risk_score }}</span>
+                        </div>
+                    </div>
+                    <h6 class="mt-3 mb-0 text-{{ 'success' if result.risk_level == 'LOW' else 'warning' if result.risk_level == 'MEDIUM' else 'danger' }}">
+                        {{ result.risk_level }} RISK
+                    </h6>
+                    <small class="text-muted">Risk Score (0-100)</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Token Info -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-coins me-2"></i>Token Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <h6 class="mb-1">{{ result.token_info.name }}</h6>
+                                <small class="text-muted">Token Name</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <h6 class="mb-1">{{ result.token_info.symbol }}</h6>
+                                <small class="text-muted">Symbol</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <h6 class="mb-1">{{ result.token_info.chain }}</h6>
+                                <small class="text-muted">Blockchain</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <h6 class="mb-1">{{ result.token_info.address[:10] }}...{{ result.token_info.address[-6:] }}</h6>
+                                <small class="text-muted">Contract Address</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Alerts -->
+    {% if result.active_alerts %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 text-danger">
+                        <i class="fas fa-bell me-2"></i>Active Alerts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for alert in result.active_alerts %}
+                    <div class="alert alert-{{ 'danger' if alert.severity == 'HIGH' else 'warning' if alert.severity == 'MEDIUM' else 'info' }} d-flex align-items-center" role="alert">
+                        <i class="fas fa-exclamation-triangle me-3"></i>
+                        <div class="flex-grow-1">
+                            <strong>{{ alert.type }}:</strong> {{ alert.message }}
+                        </div>
+                        <small class="text-muted">{{ alert.timestamp }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Risk Factors Analysis -->
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tint me-2"></i>Liquidity Risk
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Risk Level</span>
+                        <span class="badge bg-{{ 'success' if result.risk_factors.liquidity_risk.level == 'LOW' else 'warning' if result.risk_factors.liquidity_risk.level == 'MEDIUM' else 'danger' }}">
+                            {{ result.risk_factors.liquidity_risk.level }}
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Locked Percentage</small>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: {{ result.risk_factors.liquidity_risk.locked_percentage }}%"></div>
+                        </div>
+                        <small>{{ result.risk_factors.liquidity_risk.locked_percentage }}%</small>
+                    </div>
+                    <div class="row g-2 text-center">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Largest Holder</small>
+                            <strong>{{ result.risk_factors.liquidity_risk.largest_holder_percentage }}%</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Top 10 Holdings</small>
+                            <strong>{{ result.risk_factors.liquidity_risk.top_10_holders_percentage }}%</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-code me-2"></i>Developer Risk
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Risk Level</span>
+                        <span class="badge bg-{{ 'success' if result.risk_factors.developer_risk.level == 'LOW' else 'warning' if result.risk_factors.developer_risk.level == 'MEDIUM' else 'danger' }}">
+                            {{ result.risk_factors.developer_risk.level }}
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Wallet Activity</small>
+                        <span class="badge bg-{{ 'success' if result.risk_factors.developer_risk.wallet_activity == 'Normal' else 'warning' }}">
+                            {{ result.risk_factors.developer_risk.wallet_activity }}
+                        </span>
+                    </div>
+                    <div class="row g-2 text-center">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Recent Sells</small>
+                            <strong class="text-{{ 'success' if result.risk_factors.developer_risk.recent_sells == 0 else 'danger' }}">
+                                {{ result.risk_factors.developer_risk.recent_sells }}
+                            </strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Team Tokens</small>
+                            <i class="fas fa-{{ 'lock text-success' if result.risk_factors.developer_risk.team_tokens_locked else 'unlock text-danger' }}"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Market Risk
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Risk Level</span>
+                        <span class="badge bg-{{ 'success' if result.risk_factors.market_risk.level == 'LOW' else 'warning' if result.risk_factors.market_risk.level == 'MEDIUM' else 'danger' }}">
+                            {{ result.risk_factors.market_risk.level }}
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Volume Change (24h)</small>
+                        <strong class="text-{{ 'success' if result.risk_factors.market_risk.volume_drop_24h > 0 else 'danger' }}">
+                            {{ result.risk_factors.market_risk.volume_drop_24h }}%
+                        </strong>
+                    </div>
+                    <div class="row g-2 text-center">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Volatility</small>
+                            <span class="badge bg-{{ 'danger' if result.risk_factors.market_risk.price_volatility == 'Very High' else 'warning' }}">
+                                {{ result.risk_factors.market_risk.price_volatility }}
+                            </span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Sentiment</small>
+                            <span class="badge bg-{{ 'success' if result.risk_factors.market_risk.social_sentiment == 'Positive' else 'danger' }}">
+                                {{ result.risk_factors.market_risk.social_sentiment }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitoring & Recommendations -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>Monitoring Setup
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" {% if result.monitoring_setup.whale_alerts %}checked{% endif %}>
+                                <label class="form-check-label">Whale Alerts</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" {% if result.monitoring_setup.liquidity_alerts %}checked{% endif %}>
+                                <label class="form-check-label">Liquidity Alerts</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" {% if result.monitoring_setup.dev_wallet_alerts %}checked{% endif %}>
+                                <label class="form-check-label">Dev Wallet Alerts</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" {% if result.monitoring_setup.price_drop_alerts %}checked{% endif %}>
+                                <label class="form-check-label">Price Drop Alerts</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Recommendations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for recommendation in result.recommendations %}
+                    <div class="d-flex align-items-start mb-2">
+                        <i class="fas fa-{{ 'check-circle text-success' if recommendation.startswith('✅') else 'exclamation-triangle text-warning' }} me-2 mt-1"></i>
+                        <span>{{ recommendation }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif result and not result.success %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Error:</strong> {{ result.error }}
+    </div>
+    {% endif %}
+
+    <!-- Recent Rug Pull Alerts -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-fire me-2"></i>Recent Rug Pull Alerts
+                    </h5>
+                    <span class="badge bg-danger">{{ recent_alerts|length if recent_alerts else 0 }} Active</span>
+                </div>
+                <div class="card-body">
+                    {% if recent_alerts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Token</th>
+                                    <th>Chain</th>
+                                    <th>Alert Type</th>
+                                    <th>Description</th>
+                                    <th>Loss Amount</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alert in recent_alerts %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ alert.token_name }}</strong><br>
+                                        <small class="text-muted">{{ alert.symbol }}</small>
+                                    </td>
+                                    <td>{{ alert.chain }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if alert.severity == 'CRITICAL' else 'warning' }}">
+                                            {{ alert.alert_type }}
+                                        </span>
+                                    </td>
+                                    <td>{{ alert.description }}</td>
+                                    <td class="text-danger"><strong>{{ alert.loss_amount }}</strong></td>
+                                    <td class="text-muted">{{ alert.time_ago }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                        <h6 class="text-muted">No recent rug pull alerts</h6>
+                        <p class="text-muted">The market appears stable at the moment</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not result %}
+    <!-- How It Works -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>How Rug Pull Detection Works
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <i class="fas fa-search fa-3x text-primary mb-3"></i>
+                            <h6>Real-time Scanning</h6>
+                            <p class="text-muted small">Continuous monitoring of token contracts and whale movements</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <i class="fas fa-brain fa-3x text-warning mb-3"></i>
+                            <h6>AI Risk Analysis</h6>
+                            <p class="text-muted small">Advanced algorithms detect suspicious patterns and behaviors</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <i class="fas fa-bell fa-3x text-danger mb-3"></i>
+                            <h6>Instant Alerts</h6>
+                            <p class="text-muted small">Get notified immediately when risks are detected</p>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                            <h6>Protection Tips</h6>
+                            <p class="text-muted small">Receive actionable advice to protect your investments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.tool-icon {
+    background: rgba(255,255,255,0.2);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.progress-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#ffc107 0deg, #ffc107 calc(var(--percentage) * 3.6deg), #e9ecef calc(var(--percentage) * 3.6deg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-circle::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+}
+
+.progress-value {
+    position: relative;
+    z-index: 1;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ffc107;
+}
+
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table {
+    font-size: 0.9rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if result and result.success %}
+    const circle = document.querySelector('.progress-circle');
+    if (circle) {
+        circle.style.setProperty('--percentage', '{{ result.rug_risk_score }}');
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

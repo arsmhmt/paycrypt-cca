@@ -1,0 +1,267 @@
+{% extends "client/base.html" %}
+
+{% block title %}API Keys - {{ client.company_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">API Keys</h1>
+            <p class="text-muted">Manage your API keys for secure programmatic access</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createApiKeyModal">
+            <i class="fas fa-plus"></i> Create New API Key
+        </button>
+    </div>
+
+    <!-- Create API Key Modal -->
+    <div class="modal fade" id="createApiKeyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New API Key</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('client.create_api_key') }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="apiKeyName" class="form-label">API Key Name</label>
+                            <input type="text" class="form-control" id="apiKeyName" name="name" 
+                                   placeholder="e.g., Production API Key" required>
+                            <small class="form-text text-muted">Give your API key a descriptive name</small>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% if client_type == 'flat_rate' %}
+                                <strong>Enterprise Client:</strong> Your API key will have full access to all features including payments, withdrawals, and webhook management.
+                            {% else %}
+                                <strong>Commission Client:</strong> Your API key will have access to payment creation, reading, and balance checking.
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create API Key</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key List -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Your API Keys</h5>
+        </div>
+        <div class="card-body">
+            {% if api_keys %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Key Preview</th>
+                            <th>Permissions</th>
+                            <th>Rate Limit</th>
+                            <th>Status</th>
+                            <th>Last Used</th>
+                            <th>Usage Count</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key in api_keys %}
+                        <tr>
+                            <td>
+                                <strong>{{ key.name }}</strong>
+                                {% if key.expires_at %}
+                                <br><small class="text-muted">
+                                    Expires: {{ key.expires_at.strftime('%Y-%m-%d') }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <code class="text-muted">{{ key.key_prefix }}</code>
+                                <button class="btn btn-sm btn-outline-secondary ms-2"
+                                    onclick="copyToClipboard('{{ key.key }}')" title="Copy full key">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </td>
+                            <td>
+                                {% if key.permissions %}
+                                {% for perm in key.permissions %}
+                                <span class="badge bg-secondary me-1">{{ perm }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="text-muted">None</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ key.rate_limit }}/min</td>
+                            <td>
+                                {% if key.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Revoked</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if key.last_used_at %}
+                                <span title="{{ key.last_used_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}">
+                                    {{ key.last_used_at.strftime('%Y-%m-%d') }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set stats = key_stats.get(key.id, {}) %}
+                                {{ stats.get('total_usage', 0) }}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('client.api_key_details', key_id=key.id) }}" 
+                                       class="btn btn-outline-info" title="View All Credentials">
+                                        <i class="fas fa-key"></i>
+                                    </a>
+                                    {% if key.is_active %}
+                                    <button class="btn btn-outline-secondary" title="Edit" disabled>
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-warning"
+                                        onclick="regenerateKey({{ key.id }}, '{{ key.name }}')" title="Regenerate Key">
+                                        <i class="fas fa-refresh"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger"
+                                        onclick="revokeKey({{ key.id }}, '{{ key.name }}')" title="Revoke">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-key fa-3x text-muted mb-3"></i>
+                <h5>No API Keys Yet</h5>
+                <p class="text-muted mb-4">Create your first API key to start integrating with our platform</p>
+                <a href="{{ url_for('client.api_keys') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Your First API Key
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- API Documentation Link -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="card-title mb-1">
+                        <i class="fas fa-book text-primary"></i> API Documentation
+                    </h5>
+                    <p class="card-text text-muted mb-0">
+                        Learn how to integrate with our API using your keys
+                    </p>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('client.api_docs') }}" class="btn btn-outline-primary">
+                        View Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revoke Modal -->
+<div class="modal fade" id="revokeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Revoke API Key</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to revoke the API key "<strong id="revokeKeyName"></strong>"?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All applications using this key will lose
+                    access immediately.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="revokeForm" method="POST" style="display: inline;">
+                    {{ csrf_token() }}
+                    <input type="hidden" name="api_key_id" id="revokeKeyId">
+                    <input type="hidden" name="confirm_revoke" value="y">
+                    <button type="submit" class="btn btn-danger">Revoke Key</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Regenerate Modal -->
+<div class="modal fade" id="regenerateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Regenerate API Key</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to regenerate the API key "<strong id="regenerateKeyName"></strong>"?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> The old key will be invalidated immediately. Update all applications with
+                    the new key.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="regenerateForm" method="POST" style="display: inline;">
+                    {{ csrf_token() }}
+                    <button type="submit" class="btn btn-warning">Regenerate Key</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function () {
+            // Show success message
+            const btn = event.target.closest('button');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check text-success"></i>';
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+            }, 2000);
+        }).catch(function (err) {
+            console.error('Could not copy text: ', err);
+            alert('Failed to copy to clipboard');
+        });
+    }
+
+    function revokeKey(keyId, keyName) {
+        document.getElementById('revokeKeyId').value = keyId;
+        document.getElementById('revokeKeyName').textContent = keyName;
+        document.getElementById('revokeForm').action = '/client/api-keys/' + keyId + '/revoke';
+        new bootstrap.Modal(document.getElementById('revokeModal')).show();
+    }
+
+    function regenerateKey(keyId, keyName) {
+        document.getElementById('regenerateKeyName').textContent = keyName;
+        document.getElementById('regenerateForm').action = '/client/api-keys/' + keyId + '/regenerate';
+        new bootstrap.Modal(document.getElementById('regenerateModal')).show();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,273 @@
+{% extends "client/base.html" %}
+
+{% block title %}Withdrawal Requests - PayCrypt{% endblock %}
+
+{% block styles %}
+<style>
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-approved {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .request-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--orange);
+    }
+
+    .request-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .filter-btn {
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-btn.active {
+        background: var(--orange);
+        color: white;
+        border-color: var(--orange);
+    }
+
+    .critical-notice {
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 107, 53, 0.05) 100%);
+        border: 1px solid rgba(255, 107, 53, 0.2);
+        color: #8B4513;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="bi bi-arrow-up-circle-fill me-2 text-primary"></i>Withdrawal Requests
+    </h1>
+    <div>
+        <a href="{{ url_for('client.create_withdrawal_request') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Create Request
+        </a>
+    </div>
+</div>
+
+<!-- Critical Notice for Flat-Rate Clients -->
+<div class="alert critical-notice mb-4">
+    <h5 class="alert-heading">
+        <i class="bi bi-info-circle-fill me-2"></i>Manual Withdrawal Processing
+    </h5>
+    <p class="mb-2">
+        <strong>As a flat-rate client, your withdrawal requests require manual approval and processing.</strong>
+    </p>
+    <p class="mb-0">
+        <small>
+            All requests are reviewed by our team. You'll receive status updates as your requests progress through
+            approval, processing, and completion.
+        </small>
+    </p>
+</div>
+
+<!-- Status Filter Buttons -->
+<div class="mb-4">
+    <div class="d-flex flex-wrap">
+        <a href="{{ url_for('client.withdrawal_requests', status='all') }}"
+            class="btn btn-outline-secondary filter-btn {% if status == 'all' %}active{% endif %}">
+            All ({{ status_counts.ALL }})
+        </a>
+        <a href="{{ url_for('client.withdrawal_requests', status='pending') }}"
+            class="btn btn-outline-warning filter-btn {% if status == 'pending' %}active{% endif %}">
+            Pending ({{ status_counts.PENDING }})
+        </a>
+        <a href="{{ url_for('client.withdrawal_requests', status='approved') }}"
+            class="btn btn-outline-info filter-btn {% if status == 'approved' %}active{% endif %}">
+            Approved ({{ status_counts.APPROVED }})
+        </a>
+        <a href="{{ url_for('client.withdrawal_requests', status='completed') }}"
+            class="btn btn-outline-success filter-btn {% if status == 'completed' %}active{% endif %}">
+            Completed ({{ status_counts.COMPLETED }})
+        </a>
+        <a href="{{ url_for('client.withdrawal_requests', status='rejected') }}"
+            class="btn btn-outline-danger filter-btn {% if status == 'rejected' %}active{% endif %}">
+            Rejected ({{ status_counts.REJECTED }})
+        </a>
+    </div>
+</div>
+
+<!-- Withdrawal Requests List -->
+{% if withdrawal_requests.items %}
+<div class="row">
+    {% for request in withdrawal_requests.items %}
+    <div class="col-lg-6 col-xl-4 mb-4">
+        <div class="card request-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-arrow-up-circle me-2"></i>{{ request.currency }} {{ "%.6f"|format(request.amount) }}
+                </h6>
+                {% set status_value = request.status.value if request.status and hasattr(request.status, 'value') else (request.status|string|lower if request.status else 'unknown') %}
+                <span class="status-badge status-{{ status_value }}">
+                    {{ status_value|title }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">User Wallet Address:</small>
+                    <code
+                        class="small">{{ request.user_wallet_address[:20] }}...{{ request.user_wallet_address[-10:] if request.user_wallet_address|length > 30 else request.user_wallet_address }}</code>
+                </div>
+
+                {% if request.user_id %}
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">User ID:</small>
+                    <span class="small">{{ request.user_id }}</span>
+                </div>
+                {% endif %}
+
+                {% if request.fee and request.fee > 0 %}
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Fee:</small>
+                    <span class="small">{{ "%.6f"|format(request.fee) }} {{ request.currency }}</span>
+                </div>
+                {% endif %}
+
+                {% if request.net_amount and request.net_amount != request.amount %}
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Net Amount:</small>
+                    <span class="small fw-bold">{{ "%.6f"|format(request.net_amount) }} {{ request.currency }}</span>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Created:</small>
+                    <span class="small">{{ request.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                </div>
+
+                {% set status_value = request.status.value if request.status and hasattr(request.status, 'value') else (request.status|string|lower if request.status else 'unknown') %}
+                {% if status_value in ['approved', 'completed'] and request.approved_at %}
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">{{ 'Completed' if status_value == 'completed' else 'Approved' }}:</small>
+                    <span class="small">{{ request.approved_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                </div>
+                {% endif %}
+
+                {% if status_value == 'rejected' and request.rejection_reason %}
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Rejection Reason:</small>
+                    <div class="alert alert-danger py-2 mb-0">
+                        <small>{{ request.rejection_reason }}</small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('client.view_withdrawal_request', request_id=request.id) }}"
+                    class="btn btn-outline-primary btn-sm w-100">
+                    <i class="bi bi-eye me-1"></i>View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if withdrawal_requests.pages > 1 %}
+<nav aria-label="Withdrawal requests pagination">
+    <ul class="pagination justify-content-center">
+        {% if withdrawal_requests.has_prev %}
+        <li class="page-item">
+            <a class="page-link"
+                href="{{ url_for('client.withdrawal_requests', page=withdrawal_requests.prev_num, status=status) }}">Previous</a>
+        </li>
+        {% endif %}
+
+        {% for page_num in withdrawal_requests.iter_pages() %}
+        {% if page_num %}
+        {% if page_num != withdrawal_requests.page %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('client.withdrawal_requests', page=page_num, status=status) }}">{{
+                page_num }}</a>
+        </li>
+        {% else %}
+        <li class="page-item active">
+            <span class="page-link">{{ page_num }}</span>
+        </li>
+        {% endif %}
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">...</span>
+        </li>
+        {% endif %}
+        {% endfor %}
+
+        {% if withdrawal_requests.has_next %}
+        <li class="page-item">
+            <a class="page-link"
+                href="{{ url_for('client.withdrawal_requests', page=withdrawal_requests.next_num, status=status) }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<!-- Empty State -->
+<div class="text-center py-5">
+    <i class="bi bi-arrow-up-circle display-1 text-muted mb-3"></i>
+    <h4 class="text-muted">No Withdrawal Requests</h4>
+    <p class="text-muted mb-4">
+        {% if status == 'pending' %}
+        No pending withdrawal requests found.
+        {% elif status == 'completed' %}
+        No completed withdrawal requests found.
+        {% elif status == 'rejected' %}
+        No rejected withdrawal requests found.
+        {% else %}
+        You haven't created any withdrawal requests yet.
+        {% endif %}
+    </p>
+    <a href="{{ url_for('client.create_withdrawal_request') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Create Your First Request
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Auto-refresh page every 60 seconds for status updates
+    setTimeout(function () {
+        if (window.location.search.includes('status=pending') || window.location.search.includes('status=approved')) {
+            window.location.reload();
+        }
+    }, 60000);
+</script>
+{% endblock %}

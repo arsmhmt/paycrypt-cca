@@ -1,0 +1,427 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Client Branding Settings{% endblock %}
+
+{% block styles %}
+<style>
+    .branding-preview {
+        background: linear-gradient(135deg, var(--primary-color, #6c63ff), var(--secondary-color, #FF6B35));
+        border-radius: 10px;
+        padding: 20px;
+        color: white;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .logo-preview {
+        max-height: 60px;
+        max-width: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 5px;
+        padding: 10px;
+    }
+    
+    .color-input-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .color-preview {
+        width: 40px;
+        height: 40px;
+        border-radius: 5px;
+        border: 2px solid #dee2e6;
+    }
+    
+    .brand-section {
+        border-left: 4px solid var(--primary);
+        padding-left: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .form-floating > .form-control:focus,
+    .form-floating > .form-control:not(:placeholder-shown) {
+        padding-top: 1.625rem;
+        padding-bottom: 0.625rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-paint-bucket me-2 text-primary"></i>
+            Client Branding Settings
+        </h1>
+        <div class="btn-group">
+            <a href="{{ url_for('admin.view_client', client_id=client.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back to Client
+            </a>
+        </div>
+    </div>
+    
+    <!-- Client Management Navigation -->
+    <div class="mb-4">
+        <ul class="nav nav-pills flex-wrap">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.view_client', client_id=client.id) }}">
+                    <i class="fas fa-user me-2"></i>Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_commission', client_id=client.id) }}">
+                    <i class="fas fa-percent me-2"></i>Commission
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('admin.clients_branding', client_id=client.id) }}">
+                    <i class="fas fa-paint-brush me-2"></i>Branding
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_rate_limits', client_id=client.id) }}">
+                    <i class="fas fa-gauge-high me-2"></i>Rate Limits
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_api_keys', client_id=client.id) }}">
+                    <i class="fas fa-key me-2"></i>API Keys
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_audit_logs', client_id=client.id) }}">
+                    <i class="fas fa-history me-2"></i>Audit Logs
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="row">
+        <!-- Form Column -->
+        <div class="col-lg-8">
+            <form method="POST" id="brandingForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <!-- Company Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-building me-2"></i>Company Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="company_name" name="company_name" 
+                                           value="{{ client.company_name or '' }}" placeholder="Company Name">
+                                    <label for="company_name">Company Name *</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="url" class="form-control" id="website" name="website" 
+                                           value="{{ client.website or '' }}" placeholder="https://example.com">
+                                    <label for="website">Website URL</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="contact_person" name="contact_person" 
+                                           value="{{ client.contact_person or '' }}" placeholder="Contact Person">
+                                    <label for="contact_person">Contact Person</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3">
+                                    <input type="email" class="form-control" id="contact_email" name="contact_email" 
+                                           value="{{ client.contact_email or '' }}" placeholder="contact@example.com">
+                                    <label for="contact_email">Contact Email</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-floating mb-3">
+                                    <input type="tel" class="form-control" id="contact_phone" name="contact_phone" 
+                                           value="{{ client.contact_phone or '' }}" placeholder="+1234567890">
+                                    <label for="contact_phone">Contact Phone</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Brand Identity -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-palette me-2"></i>Brand Identity
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="url" class="form-control" id="logo_url" name="logo_url" 
+                                           value="{{ client.logo_url or '' }}" placeholder="https://example.com/logo.png">
+                                    <label for="logo_url">Logo URL</label>
+                                    <div class="form-text">Recommended size: 200x60px, PNG/SVG format</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="brand_tagline" name="brand_tagline" 
+                                           value="{{ (client.settings or {}).get('brand_tagline', '') }}" 
+                                           placeholder="Your brand tagline">
+                                    <label for="brand_tagline">Brand Tagline</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control" id="brand_description" name="brand_description" 
+                                      style="height: 100px" placeholder="Brief description of your company">{{ (client.settings or {}).get('brand_description', '') }}</textarea>
+                            <label for="brand_description">Brand Description</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colors & Typography -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-palette2 me-2"></i>Colors & Typography
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="theme_color" class="form-label">Primary Brand Color</label>
+                                <div class="color-input-group mb-3">
+                                    <input type="color" class="form-control form-control-color" id="theme_color" 
+                                           name="theme_color" value="{{ client.theme_color or '#6c63ff' }}" title="Primary color">
+                                    <input type="text" class="form-control" id="theme_color_hex" 
+                                           value="{{ client.theme_color or '#6c63ff' }}" placeholder="#6c63ff" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="secondary_color" class="form-label">Secondary Brand Color</label>
+                                <div class="color-input-group mb-3">
+                                    <input type="color" class="form-control form-control-color" id="secondary_color" 
+                                           name="secondary_color" value="{{ (client.settings or {}).get('secondary_color', '#FF6B35') }}" title="Secondary color">
+                                    <input type="text" class="form-control" id="secondary_color_hex" 
+                                           value="{{ (client.settings or {}).get('secondary_color', '#FF6B35') }}" placeholder="#FF6B35" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <select class="form-control" id="font_family" name="font_family">
+                                        <option value="">Default System Font</option>
+                                        <option value="Arial, sans-serif" {% if (client.settings or {}).get('font_family') == 'Arial, sans-serif' %}selected{% endif %}>Arial</option>
+                                        <option value="Georgia, serif" {% if (client.settings or {}).get('font_family') == 'Georgia, serif' %}selected{% endif %}>Georgia</option>
+                                        <option value="'Times New Roman', serif" {% if (client.settings or {}).get('font_family') == "'Times New Roman', serif" %}selected{% endif %}>Times New Roman</option>
+                                        <option value="'Helvetica Neue', sans-serif" {% if (client.settings or {}).get('font_family') == "'Helvetica Neue', sans-serif" %}selected{% endif %}>Helvetica Neue</option>
+                                        <option value="'Roboto', sans-serif" {% if (client.settings or {}).get('font_family') == "'Roboto', sans-serif" %}selected{% endif %}>Roboto</option>
+                                        <option value="'Open Sans', sans-serif" {% if (client.settings or {}).get('font_family') == "'Open Sans', sans-serif" %}selected{% endif %}>Open Sans</option>
+                                    </select>
+                                    <label for="font_family">Font Family</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legal & Footer -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-file-text me-2"></i>Legal & Footer Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="url" class="form-control" id="privacy_policy_url" name="privacy_policy_url" 
+                                           value="{{ (client.settings or {}).get('privacy_policy_url', '') }}" 
+                                           placeholder="https://example.com/privacy">
+                                    <label for="privacy_policy_url">Privacy Policy URL</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input type="url" class="form-control" id="terms_of_service_url" name="terms_of_service_url" 
+                                           value="{{ (client.settings or {}).get('terms_of_service_url', '') }}" 
+                                           placeholder="https://example.com/terms">
+                                    <label for="terms_of_service_url">Terms of Service URL</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="footer_text" name="footer_text" 
+                                   value="{{ (client.settings or {}).get('footer_text', '') }}" 
+                                   placeholder="© 2025 Your Company. All rights reserved.">
+                            <label for="footer_text">Footer Text</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Customization -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-code-square me-2"></i>Advanced Customization
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control" id="custom_css" name="custom_css" 
+                                      style="height: 120px" placeholder="/* Custom CSS styles */">{{ (client.settings or {}).get('custom_css', '') }}</textarea>
+                            <label for="custom_css">Custom CSS</label>
+                            <div class="form-text">
+                                <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+                                Advanced users only. Custom CSS will be applied to payment pages.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mb-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle me-2"></i>Save Branding Settings
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-lg" onclick="resetForm()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Preview Column -->
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 20px;">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-eye me-2"></i>Live Preview
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="brandingPreview" class="branding-preview">
+                            <div class="mb-3">
+                                <img id="previewLogo" src="{{ client.logo_url or url_for('static', filename='img/paycrypt_logo_d.png') }}" 
+                                     alt="Logo" class="logo-preview" style="{% if not client.logo_url %}display: none;{% endif %}">
+                                <div id="fallbackLogo" style="{% if client.logo_url %}display: none;{% endif %}">
+                                    <h4 id="previewCompanyName">{{ client.company_name or 'Your Company' }}</h4>
+                                </div>
+                            </div>
+                            <p id="previewTagline" class="mb-2">{{ (client.settings or {}).get('brand_tagline', 'Your tagline here') }}</p>
+                            <p id="previewDescription" class="small mb-3">{{ (client.settings or {}).get('brand_description', 'Your brand description') }}</p>
+                            <div class="btn btn-light btn-sm">Sample Payment Button</div>
+                        </div>
+                        
+                        <div class="p-3">
+                            <h6>Color Palette</h6>
+                            <div class="d-flex gap-2 mb-3">
+                                <div class="color-preview" id="primaryColorPreview" title="Primary Color"></div>
+                                <div class="color-preview" id="secondaryColorPreview" title="Secondary Color"></div>
+                            </div>
+                            
+                            <h6>Typography</h6>
+                            <p id="fontPreview" class="mb-0">Sample text in selected font</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Real-time preview updates
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('brandingForm');
+    const preview = document.getElementById('brandingPreview');
+    
+    // Update preview colors
+    function updateColors() {
+        const primaryColor = document.getElementById('theme_color').value;
+        const secondaryColor = document.getElementById('secondary_color').value;
+        
+        // Update CSS custom properties
+        document.documentElement.style.setProperty('--primary-color', primaryColor);
+        document.documentElement.style.setProperty('--secondary-color', secondaryColor);
+        
+        // Update preview
+        preview.style.background = `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`;
+        document.getElementById('primaryColorPreview').style.backgroundColor = primaryColor;
+        document.getElementById('secondaryColorPreview').style.backgroundColor = secondaryColor;
+        
+        // Update hex inputs
+        document.getElementById('theme_color_hex').value = primaryColor;
+        document.getElementById('secondary_color_hex').value = secondaryColor;
+    }
+    
+    // Update text previews
+    function updateTextPreviews() {
+        const companyName = document.getElementById('company_name').value || 'Your Company';
+        const tagline = document.getElementById('brand_tagline').value || 'Your tagline here';
+        const description = document.getElementById('brand_description').value || 'Your brand description';
+        const fontFamily = document.getElementById('font_family').value || 'inherit';
+        
+        document.getElementById('previewCompanyName').textContent = companyName;
+        document.getElementById('previewTagline').textContent = tagline;
+        document.getElementById('previewDescription').textContent = description;
+        document.getElementById('fontPreview').style.fontFamily = fontFamily;
+        preview.style.fontFamily = fontFamily;
+    }
+    
+    // Update logo preview
+    function updateLogoPreview() {
+        const logoUrl = document.getElementById('logo_url').value;
+        const logoImg = document.getElementById('previewLogo');
+        const fallbackLogo = document.getElementById('fallbackLogo');
+        
+        if (logoUrl) {
+            logoImg.src = logoUrl;
+            logoImg.style.display = 'block';
+            fallbackLogo.style.display = 'none';
+        } else {
+            logoImg.style.display = 'none';
+            fallbackLogo.style.display = 'block';
+        }
+    }
+    
+    // Add event listeners
+    ['theme_color', 'secondary_color'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateColors);
+    });
+    
+    ['company_name', 'brand_tagline', 'brand_description', 'font_family'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateTextPreviews);
+    });
+    
+    document.getElementById('logo_url').addEventListener('input', updateLogoPreview);
+    
+    // Initialize preview
+    updateColors();
+    updateTextPreviews();
+    updateLogoPreview();
+});
+
+function resetForm() {
+    if (confirm('Are you sure you want to reset all changes?')) {
+        document.getElementById('brandingForm').reset();
+        location.reload();
+    }
+}
+</script>
+{% endblock %}

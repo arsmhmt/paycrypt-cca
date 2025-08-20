@@ -1,0 +1,175 @@
+{% extends "public_base.html" %}
+
+{% block title %}Select Payment Method - Paycrypt{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-coins me-2"></i>
+                        Package Activation Payment
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4>{{ package.name }}</h4>
+                        <p class="text-muted">Setup Fee: <strong>${{ setup_fee }}</strong> USD</p>
+                        <p class="small text-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            One-time activation fee required to start using Paycrypt services
+                        </p>
+                    </div>
+
+                    <h5 class="mb-3">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Choose Your Payment Method
+                    </h5>
+                    
+                    <p class="text-muted mb-4">
+                        Select your preferred cryptocurrency to pay the activation fee. 
+                        Amounts are calculated using current market rates.
+                    </p>
+
+                    <div class="row">
+                        {% for crypto in crypto_options %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card crypto-option h-100" 
+                                 onclick="selectCrypto('{{ crypto.symbol }}')" 
+                                 style="cursor: pointer; transition: all 0.3s ease;">
+                                <div class="card-body text-center">
+                                    <!-- Crypto Icon -->
+                                    <div class="crypto-icon mb-3">
+                                        <i class="fab fa-{{ crypto.icon }}" style="font-size: 2.5rem; color: #f7931a;"></i>
+                                    </div>
+                                    
+                                    <!-- Crypto Name -->
+                                    <h6 class="card-title">{{ crypto.name }}</h6>
+                                    <p class="card-text">
+                                        <strong>{{ crypto.symbol }}</strong>
+                                    </p>
+                                    
+                                    <!-- Amount -->
+                                    <div class="price-display">
+                                        <span class="crypto-amount">{{ crypto.formatted_amount }}</span>
+                                        <small class="text-muted d-block">
+                                            ≈ ${{ "%.2f"|format(crypto.rate) }} per {{ crypto.symbol }}
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- Select Button -->
+                                    <button class="btn btn-outline-primary btn-sm mt-2">
+                                        <i class="fas fa-arrow-right me-1"></i>
+                                        Select {{ crypto.symbol }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="fas fa-clock me-2"></i>Payment Window</h6>
+                        <p class="mb-0">
+                            You'll have <strong>24 hours</strong> to complete your payment once you select a cryptocurrency.
+                            Exchange rates are locked during this period.
+                        </p>
+                    </div>
+
+                    <!-- Security Notice -->
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-shield-alt me-2"></i>Security Notice</h6>
+                        <p class="mb-0">
+                            Only send the exact amount to the address provided. 
+                            Payments are processed automatically once confirmed on the blockchain.
+                        </p>
+                    </div>
+
+                    <!-- Back Button -->
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('main.pricing') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to Packages
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.crypto-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    border-color: #007bff !important;
+}
+
+.crypto-icon {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.crypto-amount {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.price-display {
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin: 10px 0;
+}
+
+.card.crypto-option {
+    border: 2px solid #e9ecef;
+}
+
+.card.crypto-option:hover .btn {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+</style>
+
+<script>
+function selectCrypto(cryptoSymbol) {
+    // Add loading state
+    const cards = document.querySelectorAll('.crypto-option');
+    cards.forEach(card => {
+        card.style.pointerEvents = 'none';
+        card.style.opacity = '0.7';
+    });
+    
+    // Show loading message
+    const selectedCard = event.currentTarget;
+    const btn = selectedCard.querySelector('.btn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Creating Payment...';
+    
+    // Redirect to create payment
+    window.location.href = `{{ url_for('package_payment.create_payment', package_id=package.id, crypto_currency='CRYPTO') }}`.replace('CRYPTO', cryptoSymbol);
+}
+
+// Add hover effects
+document.addEventListener('DOMContentLoaded', function() {
+    const cryptoCards = document.querySelectorAll('.crypto-option');
+    
+    cryptoCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.borderColor = '#007bff';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.borderColor = '#e9ecef';
+        });
+    });
+});
+</script>
+{% endblock %}

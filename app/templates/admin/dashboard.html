@@ -1,0 +1,1620 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard - Paycrypt Admin{% endblock %}
+
+{% block content %}
+{% set admin_prefix = url_for('admin.admin_dashboard')|replace('/dashboard', '') %}
+{% set base_url = url_for('admin.admin_dashboard')|replace('/admin120724/dashboard', '') %}
+
+<!-- Add base URL configuration for JavaScript -->
+<script>
+    window.APP_config = {
+        baseUrl: '{{ base_url }}',
+        adminPrefix: '{{ admin_prefix }}',
+        csrfToken: '{{ csrf_token() }}'
+    };
+</script>
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4">
+        <div class="mb-3 mb-md-0">
+            <h1 class="h3 mb-1 text-gray-800">Dashboard</h1>
+            <p class="text-muted mb-0">Welcome back, {{ current_user.username or 'Admin' }}! Here's what's happening.</p>
+        </div>
+        <div class="btn-toolbar">
+            <div class="btn-group me-2">
+                <!-- Currency Filter Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="currencyFilter"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-funnel me-1"></i>
+                        <span id="selectedCurrency">All Currencies</span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="currencyFilter">
+                        <li><a class="dropdown-item" href="#" data-currency="all">
+                                <i class="bi bi-globe me-2"></i>All Currencies
+                            </a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="#" data-currency="BTC">
+                                <i class="bi bi-currency-bitcoin me-2 text-warning"></i>{{ _('Bitcoin (BTC)') }}
+                            </a></li>
+                        <li><a class="dropdown-item" href="#" data-currency="ETH">
+                                <i class="bi bi-diamond me-2 text-primary"></i>{{ _('Ethereum (ETH)') }}
+                            </a></li>
+                        <li><a class="dropdown-item" href="#" data-currency="USDT">
+                                <i class="bi bi-currency-dollar me-2 text-success"></i>{{ _('Tether (USDT)') }}
+                            </a></li>
+                        <li><a class="dropdown-item" href="#" data-currency="LTC">
+                                <i class="bi bi-circle me-2 text-info"></i>{{ _('Litecoin (LTC)') }}
+                            </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    <i class="bi bi-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-pdf me-2"></i>PDF</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-excel me-2"></i>Excel</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-text me-2"></i>CSV</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-printer me-2"></i>Print</a></li>
+                </ul>
+                <a href="{{ url_for('admin.list_clients') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i> New Payment
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+
+    <!-- Row 1: Critical KPI Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Total Revenue Card -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stats-card border-left-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-primary fw-bold mb-1">{{ _('Total Revenue') }} ({{
+                                config.DEFAULT_CURRENCY }})</h6>
+                            <h3 class="mb-0">{{ "{:,.2f}".format(0) }}</h3>
+                            <p class="text-success small mb-0 mt-2">
+                                <i class="bi bi-arrow-up me-1"></i> 0.0% <span class="text-muted">{{ _('from last month') }}</span>
+                            </p>
+                        </div>
+                        <div class="icon-bg text-primary">
+                            <i class="bi bi-currency-bitcoin"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Transactions Card -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stats-card border-left-success h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-success fw-bold mb-1">Total Transactions</h6>
+                            <h3 class="mb-0">{{ "{:,}".format(total_transactions|default(0)) }}</h3>
+                            <p class="text-success small mb-0 mt-2">
+                                <i class="bi bi-arrow-up me-1"></i> 0.0% <span class="text-muted">from last month</span>
+                            </p>
+                        </div>
+                        <div class="icon-bg text-success">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Clients Card -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stats-card border-left-info h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-info fw-bold mb-1">Active Clients</h6>
+                            <h3 class="mb-0">{{ stats['total_clients'] }}</h3>
+                            <p class="text-success small mb-0 mt-2">
+                                <i class="bi bi-arrow-up me-1"></i> {{
+                                "{:.1f}%".format(stats.get('active_clients_change', 0)|default(0)) }} <span class="text-muted">from
+                                    last month</span>
+                            </p>
+                        </div>
+                        <div class="icon-bg text-info">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Withdrawals Card (CRITICAL) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stats-card border-left-danger h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-danger fw-bold mb-1">Pending Withdrawals</h6>
+                            <h3 class="mb-0">{{ stats['pending_withdrawals'] }}</h3>
+                            {% if stats['pending_withdrawals'] > 0 %}
+                            <p class="text-danger small mb-0 mt-2">
+                                <i class="bi bi-exclamation-triangle me-1"></i> <span class="text-muted">Requires
+                                    attention</span>
+                            </p>
+                            {% else %}
+                            <p class="text-success small mb-0 mt-2">
+                                <i class="bi bi-check-circle me-1"></i> <span class="text-muted">All processed</span>
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="icon-bg text-danger">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Primary Charts Section -->
+    <div class="row mb-4">
+        <!-- Transaction Volume Trends Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-graph-up me-2"></i>{{ _('Transaction Volume Trends') }} ({{
+                        config.DEFAULT_CURRENCY }})
+                    </h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="volumeDropdown" data-bs-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in"
+                            aria-labelledby="volumeDropdown">
+                            <div class="dropdown-header">{{ _('Time Range') }}:</div>
+                            <a class="dropdown-item" href="#" data-range="7">{{ _('Last 7 Days') }}</a>
+                            <a class="dropdown-item" href="#" data-range="30">{{ _('Last 30 Days') }}</a>
+                            <a class="dropdown-item" href="#" data-range="90">{{ _('Last 90 Days') }}</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#">{{ _('Export Data') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <div id="volumeTrendsChart" style="min-height: 350px; background: #f8fafc; position: relative;">
+                        </div>
+                        <div id="volumeTrendsChartFallback"
+                            style="display:none; color: red; position: absolute; top: 10px; left: 10px;">{{ _('Chart
+                            failed to load.') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Cryptocurrencies Chart -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4 h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-pie-chart me-2"></i>{{ _('Top Cryptocurrencies') }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="topCryptosChart" style="min-height: 350px; background: #f8fafc; position: relative;"></div>
+                    <div id="topCryptosChartFallback"
+                        style="display:none; color: red; position: absolute; top: 10px; left: 10px;">{{ _('Chart failed
+                        to load.') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Secondary KPI Cards -->
+    <div class="row g-4 mb-4">
+        <!-- 24h Volume Card -->
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card stats-card border-left-success h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-success fw-bold mb-1">24h Volume</h6>
+                            <h3 class="mb-0>{{ " {:,.6f}".format(stats.get('volume_24h', 0)) }}</h3>
+                                <p class="text-info small mb-0 mt-2">
+                                    <i class="bi bi-clock me-1"></i> <span class="text-muted">{{ _('Last 24 hours')
+                                        }}</span>
+                                </p>
+                        </div>
+                        <div class="icon-bg text-success">
+                            <i class="bi bi-speedometer2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Rate Card -->
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card stats-card border-left-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-warning fw-bold mb-1">Success Rate</h6>
+                            <h3 class="mb-0">{{ "{:.1f}%".format(stats.get('success_rate', 95.5)) }}</h3>
+                            <p class="text-success small mb-0 mt-2">
+                                <i class="bi bi-arrow-up me-1"></i> {{ "{:.1f}%".format(stats.get('success_rate_change',
+                                0)) }} <span class="text-muted">from last month</span>
+                            </p>
+                        </div>
+                        <div class="icon-bg text-warning">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commission Earned Card -->
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card stats-card border-left-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-primary fw-bold mb-1">Commission Earned</h6>
+                            <h3 class="mb-0">{{ "{:,.6f}".format(stats.get('total_commission', 0)) }}</h3>
+                            <p class="text-success small mb-0 mt-2">
+                                <i class="bi bi-arrow-up me-1"></i> {{ "{:.1f}%".format(stats.get('commission_change',
+                                0)) }} <span class="text-muted">from last month</span>
+                            </p>
+                        </div>
+                        <div class="icon-bg text-primary">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Overview -->
+    <div class="row" id="revenue-overview-row">
+        <!-- Revenue Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <!-- Card Header - Dropdown -->
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">{{ _('Transaction Volume Overview') }} ({{
+                        config.DEFAULT_CURRENCY }})</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="revenueDropdown" data-bs-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in"
+                            aria-labelledby="revenueDropdown">
+                            <div class="dropdown-header">{{ _('View Options') }}:</div>
+                            <a class="dropdown-item" href="#">{{ _('This Year') }}</a>
+                            <a class="dropdown-item" href="#">{{ _('This Month') }}</a>
+                            <a class="dropdown-item" href="#">{{ _('This Week') }}</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#">{{ _('Export Data') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card Body -->
+                <div class="card-body">
+                    <div class="chart-area">
+                        <div id="revenueChart" style="min-height: 300px; background: #f8fafc; position: relative;">
+                        </div>
+                        <div id="revenueChartFallback"
+                            style="display:none; color: red; position: absolute; top: 10px; left: 10px;">{{ _('Chart
+                            failed to load.') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">{{ _('Payment Methods') }}</h6>
+                </div>
+                <div class="card-body">
+                    <div id="paymentMethodsChart" style="min-height: 300px; background: #f8fafc; position: relative;">
+                    </div>
+                    <div id="paymentMethodsChartFallback"
+                        style="display:none; color: red; position: absolute; top: 10px; left: 10px;">{{ _('Chart failed
+                        to load.') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 4: Data Tables Section -->
+    <div class="row mb-4">
+        <!-- Recent Transactions Table -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow-sm animate-fade-in h-100">
+                <div
+                    class="card-header bg-white d-flex flex-column flex-md-row align-items-center justify-content-between py-3">
+                    <h6 class="card-title mb-2 mb-md-0">
+                        <i class="bi bi-clock-history me-2 text-primary"></i>{{ _('Recent Transactions') }}
+                    </h6>
+                    <div class="d-flex gap-2">
+                        <div class="input-group input-group-sm" style="max-width: 200px;">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-start-0" placeholder="{{ _('Search...') }}">
+                        </div>
+                        <a href="{{ url_for('admin.list_clients') }}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-arrow-right-circle me-1"></i> {{ _('View All') }}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-nowrap">{{ _('ID') }}</th>
+                                    <th class="text-nowrap">{{ _('Client') }}</th>
+                                    <th class="text-nowrap">{{ _('Date') }}</th>
+                                    <th class="text-end text-nowrap">{{ _('Amount') }}</th>
+                                    <th class="text-nowrap">{{ _('Status') }}</th>
+                                    <th class="text-center text-nowrap">{{ _('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="border-top-0">
+                                {% for transaction, client in recent_activity %}
+                                <tr>
+                                    <td class="font-weight-bold text-primary">#TX-{{ transaction.id }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <div class="avatar-title bg-light rounded-circle text-primary">
+                                                    {{ (client.company_name[:2] if client and client.company_name else
+                                                    'UN').upper() }}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="fw-medium">{{ client.company_name if client and
+                                                    client.company_name else 'Unknown' }}</div>
+                                                <small class="text-muted">{{ client.email if client and client.email
+                                                    else 'N/A' }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-nowrap">
+                                        <div>{{ transaction.created_at.strftime('%b %d, %Y') if transaction.created_at
+                                            else 'N/A' }}</div>
+                                        <small class="text-muted">{{ transaction.created_at.strftime('%H:%M') if
+                                            transaction.created_at else '' }}</small>
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <div>{{ "{:.6f}".format(transaction.btc_value or 0) }} {{ transaction.currency
+                                            or 'BTC' }}</div>
+                                        {% if transaction.amount and transaction.currency != 'BTC' %}
+                                        <small class="text-muted">≈ {{ "{:.2f}".format(transaction.amount) }} {{
+                                            transaction.currency }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set status_class = 'success' if transaction.status.value == 'completed' else
+                                        'warning' if transaction.status.value == 'pending' else 'danger' %}
+                                        {% set status_icon = 'check-circle-fill' if transaction.status.value ==
+                                        'completed' else 'hourglass-split' if transaction.status.value == 'pending' else
+                                        'x-circle-fill' %}
+                                        <span class="badge bg-{{ status_class }} bg-opacity-10 text-{{ status_class }}">
+                                            <i class="bi bi-{{ status_icon }} me-1"></i> {{
+                                            transaction.status.value.title() }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="#" class="btn btn-outline-primary" data-bs-toggle="tooltip"
+                                                title="{{ _('View Details') }}">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox me-2"></i>{{ _('No recent transactions found') }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Clients Table -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-star me-2 text-primary"></i>{{ _('Top Clients') }}
+                    </h6>
+                    <a href="{{ url_for('withdrawal_admin.withdrawal_reports') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-arrow-right-circle me-1"></i> {{ _('View Clients') }}
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            {% if top_clients %}
+                            {% for client in top_clients %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-3">
+                                            <div
+                                                class="avatar-title bg-primary bg-opacity-10 rounded-circle text-primary">
+                                                {{ (client.company_name[:2] if client.company_name else 'UN').upper() }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="fw-medium">{{ client.company_name or 'Unknown' }}</div>
+                                            <small class="text-muted">{{ client.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="fw-bold text-success">{{ "{:.4f}".format(client.total_volume or 0) }}
+                                        BTC</div>
+                                    <small class="text-muted">{{ client.transaction_count or 0 }} transactions</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted py-4">
+                                    <i class="bi bi-people me-2"></i{{ _('No client data available') }} </td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 5: System Health & Real-time Data -->
+    <div class="row mb-4">
+        <!-- System Health Status -->
+        <div class="col-xl-4 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-shield-check me-2 text-success"></i>{{ _('System Health') }}
+                    </h6>
+                    <span class="badge bg-success">{{ _('Online') }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="health-metrics">
+                        <!-- API Status -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="status-dot bg-success me-2"></div>
+                                <span class="small">{{ _('API Service') }}</span>
+                            </div>
+                            <span class="badge bg-success bg-opacity-10 text-success">{{ _('Healthy') }}</span>
+                        </div>
+
+                        <!-- Database -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="status-dot bg-success me-2"></div>
+                                <span class="small">{{ _('Database') }}</span>
+                            </div>
+                            <span class="badge bg-success bg-opacity-10 text-success">{{ _('Connected') }}</span>
+                        </div>
+
+                        <!-- Blockchain Networks -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="status-dot bg-warning me-2"></div>
+                                <span class="small">{{ _('Blockchain Sync') }}</span>
+                            </div>
+                            <span class="badge bg-warning bg-opacity-10 text-warning">{{ _('Syncing') }}</span>
+                        </div>
+
+                        <!-- System Load -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small">{{ _('System Load') }}</span>
+                            <span class="small text-muted">{{ stats.get('system_load', '12') }}%</span>
+                        </div>
+                        {% set system_load = stats.get('system_load', 12) %}
+                        <div class="progress mb-3 slim-progress-bar">
+                            <div class="progress-bar bg-success" style="width: {{ system_load }}%;"></div>
+                        </div>
+
+                        <!-- Uptime -->
+                        <div class="text-center mt-3">
+                            <div class="h6 mb-0 text-success">{{ stats.get('uptime_days', '99.9') }}%</div>
+                            <small class="text-muted">{{ _('Uptime (30 days)') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Currency Rates -->
+        <div class="col-xl-4 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-graph-up me-2 text-warning"></i>{{ _('Live Market Rates') }}
+                    </h6>
+                    <div class="text-success small">
+                        <i class="bi bi-arrow-clockwise"></i> {{ _('Live') }}
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div id="cryptoRates" class="crypto-rates">
+                        <!-- BTC -->
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded"
+                            style="background: #fff3cd;">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-currency-bitcoin text-warning me-2"></i>
+                                <div>
+                                    <div class="fw-medium">Bitcoin</div>
+                                    <small class="text-muted">BTC/USD</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">$<span id="btc-price">{{ "{:,.2f}".format(stats.get('btc_usd_rate',
+                                        45000)) }}</span></div>
+                                <small class="text-success">
+                                    <i class="bi bi-arrow-up"></i> <span id="btc-change">+2.3%</span>
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- ETH -->
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded"
+                            style="background: #cfe2ff;">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-diamond text-primary me-2"></i>
+                                <div>
+                                    <div class="fw-medium">Ethereum</div>
+                                    <small class="text-muted">ETH/USD</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">$<span id="eth-price">{{ "{:,.2f}".format(stats.get('eth_usd_rate',
+                                        3000)) }}</span></div>
+                                <small class="text-success">
+                                    <i class="bi bi-arrow-up"></i> <span id="eth-change">+1.8%</span>
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- USDT -->
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded"
+                            style="background: #d1edff;">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-currency-dollar text-success me-2"></i>
+                                <div>
+                                    <div class="fw-medium">Tether</div>
+                                    <small class="text-muted">USDT/USD</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">$<span id="usdt-price">1.00</span></div>
+                                <small class="text-muted">
+                                    <span id="usdt-change">0.0%</span>
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>{{ _('Updated') }}: <span id="rates-timestamp">{{
+                                    _('now') }}</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Growth Snapshot -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-trending-up me-2 text-success"></i>{{ _('Growth Snapshot') }}
+                    </h6>
+                    <small class="text-muted">{{ _('vs Last Month') }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Revenue Growth -->
+                        <div class="col-6">
+                            <div class="text-center p-2 rounded" style="background: #d1edff;">
+                                <div class="h5 mb-1 text-primary">
+                                    <i class="bi bi-arrow-up"></i> {{ "{:.1f}%".format(stats.get('revenue_growth',
+                                    15.3)) }}
+                                </div>
+                                <small class="text-muted">{{ _('Revenue') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Transactions Growth -->
+                        <div class="col-6">
+                            <div class="text-center p-2 rounded" style="background: #d4edda;">
+                                <div class="h5 mb-1 text-success">
+                                    <i class="bi bi-arrow-up"></i> {{ "{:.1f}%".format(stats.get('transactions_growth',
+                                    22.7)) }}
+                                </div>
+                                <small class="text-muted">{{ _('Transactions') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Clients Growth -->
+                        <div class="col-6">
+                            <div class="text-center p-2 rounded" style="background: #fff3cd;">
+                                <div class="h5 mb-1 text-warning">
+                                    <i class="bi bi-arrow-up"></i> {{ "{:.1f}%".format(stats.get('clients_growth', 8.9))
+                                    }}
+                                </div>
+                                <small class="text-muted">{{ _('Clients') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Commission Growth -->
+                        <div class="col-6">
+                            <div class="text-center p-2 rounded" style="background: #f8d7da;">
+                                <div class="h5 mb-1 text-info">
+                                    <i class="bi bi-arrow-up"></i> {{ "{:.1f}%".format(stats.get('commission_growth',
+                                    18.2)) }}
+                                </div>
+                                <small class="text-muted">{{ _('Commission') }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Overall Performance -->
+                    <div class="mt-3 text-center">
+                        <div class="badge bg-success bg-opacity-10 text-success px-3 py-2">
+                            <i class="bi bi-trophy me-1"></i> {{ _('Strong Growth Across All Metrics') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 6: Client Balances & Flagged Activity -->
+    <div class="row mb-4">
+        <!-- Client Balances Summary -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-wallet2 me-2 text-primary"></i>{{ _('Client Balances Summary') }}
+                    </h6>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" onclick="toggleBalanceView('chart')">
+                            <i class="bi bi-bar-chart"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="toggleBalanceView('table')">
+                            <i class="bi bi-table"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Chart View -->
+                    <div id="balanceChartView">
+                        <div id="clientBalancesChart" style="min-height: 300px; background: #f8fafc;"></div>
+                    </div>
+
+                    <!-- Table View -->
+                    <div id="balanceTableView" style="display: none;">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('Currency') }}</th>
+                                        <th class="text-end">{{ _('Total Balance') }}</th>
+                                        <th class="text-end">{{ _('Active Clients') }}</th>
+                                        <th class="text-end">{{ _('Avg Balance') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><i class="bi bi-currency-bitcoin text-warning me-2"></i>Bitcoin</td>
+                                        <td class="text-end fw-bold">{{ "{:.6f}".format(stats.get('total_btc_balance',
+                                            12.5430)) }} BTC</td>
+                                        <td class="text-end">{{ stats.get('btc_active_clients', 45) }}</td>
+                                        <td class="text-end">{{ "{:.6f}".format(stats.get('avg_btc_balance', 0.2787)) }}
+                                            BTC</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="bi bi-diamond text-primary me-2"></i>Ethereum</td>
+                                        <td class="text-end fw-bold">{{ "{:.4f}".format(stats.get('total_eth_balance',
+                                            156.7821)) }} ETH</td>
+                                        <td class="text-end">{{ stats.get('eth_active_clients', 38) }}</td>
+                                        <td class="text-end">{{ "{:.4f}".format(stats.get('avg_eth_balance', 4.1258)) }}
+                                            ETH</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="bi bi-currency-dollar text-success me-2"></i>Tether</td>
+                                        <td class="text-end fw-bold">{{ "{:,.2f}".format(stats.get('total_usdt_balance',
+                                            875430.50)) }} USDT</td>
+                                        <td class="text-end">{{ stats.get('usdt_active_clients', 52) }}</td>
+                                        <td class="text-end">{{ "{:,.2f}".format(stats.get('avg_usdt_balance',
+                                            16835.20)) }} USDT</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flagged Activity Panel -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle me-2 text-warning"></i>{{ _('Flagged Activity') }}
+                    </h6>
+                    <span class="badge bg-danger">{{ stats.get('flagged_activities', 3) }}</span>
+                </div>
+                <div class="card-body p-3">
+                    <div class="flagged-activities">
+                        <!-- High Fee Alert -->
+                        <div class="d-flex align-items-start mb-3 p-2 rounded" style="background: #fff3cd;">
+                            <div class="flex-shrink-0 me-2">
+                                <i class="bi bi-exclamation-circle text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small fw-medium">{{ _('High Transaction Fee') }}</div>
+                                <div class="small text-muted">{{ _('Client ID') }} #4782 - {{ _('Fee') }}: 0.0045 BTC
+                                </div>
+                                <small class="text-muted">{{ _('5 minutes ago') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Failed Withdrawal -->
+                        <div class="d-flex align-items-start mb-3 p-2 rounded" style="background: #f8d7da;">
+                            <div class="flex-shrink-0 me-2">
+                                <i class="bi bi-x-circle text-danger"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small fw-medium">{{ _('Failed Withdrawal') }}</div>
+                                <div class="small text-muted">{{ _('Multiple attempts') }} - Client #3921</div>
+                                <small class="text-muted">{{ _('12 minutes ago') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Suspicious Login -->
+                        <div class="d-flex align-items-start mb-3 p-2 rounded" style="background: #d1ecf1;">
+                            <div class="flex-shrink-0 me-2">
+                                <i class="bi bi-shield-exclamation text-info"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small fw-medium">{{ _('Suspicious Login') }}</div>
+                                <div class="small text-muted">{{ _('New IP location') }} - Admin User</div>
+                                <small class="text-muted">{{ _('28 minutes ago') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- View All Button -->
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-warning btn-sm w-100">
+                                <i class="bi bi-eye me-1"></i> {{ _('Review All Alerts') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 7: Operational Insights -->
+    <div class="row mb-4">
+        <!-- Pending Support Tickets -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-headset me-2 text-primary"></i>{{ _('Support Tickets') }}
+                    </h6>
+                    <span class="badge bg-warning">{{ stats.get('pending_tickets', 0) }} Pending</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-4 text-center">
+                            <div class="h4 mb-1 text-success">{{ stats.get('resolved_tickets', 0) }}</div>
+                            <small class="text-muted">{{ _('Resolved') }}</small>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="h4 mb-1 text-warning">{{ stats.get('pending_tickets', 0) }}</div>
+                            <small class="text-muted">{{ _('Pending') }}</small>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="h4 mb-1 text-info">{{ stats.get('total_tickets', 0) }}</div>
+                            <small class="text-muted">{{ _('Total') }}</small>
+                        </div>
+                    </div>
+                    {% if stats.get('pending_tickets', 0) > 0 %}
+                    <div class="mt-3">
+                        <a href="#" class="btn btn-warning btn-sm w-100">
+                            <i class="bi bi-arrow-right-circle me-1"></i> {{ _('Review Pending Tickets') }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Currency Rates Snapshot -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-graph-up me-2 text-primary"></i>Live Currency Rates
+                    </h6>
+                    <small class="text-muted">Updated: {{ current_time.strftime('%H:%M') }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-currency-bitcoin text-warning me-2"></i>
+                                <div>
+                                    <div class="fw-bold">BTC/USD</div>
+                                    <div class="text-success">${{ "{:,.2f}".format(stats.get('btc_usd_rate', 45000)) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-diamond text-info me-2"></i>
+                                <div>
+                                    <div class="fw-bold">ETH/USD</div>
+                                    <div class="text-success">${{ "{:,.2f}".format(stats.get('eth_usd_rate', 3000)) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-currency-dollar text-success me-2"></i>
+                                <div>
+                                    <div class="fw-bold">USD/TRY</div>
+                                    <div class="text-info">₺{{ "{:.2f}".format(stats.get('usd_try_rate', 32.50)) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-currency-exchange text-primary me-2"></i>
+                                <div>
+                                    <div class="fw-bold">BTC/TRY</div>
+                                    <div class="text-info">₺{{ "{:,.0f}".format(stats.get('btc_try_rate', 1500000)) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Action Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a href="{{ url_for('admin.list_clients') }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i> {{ _('New Payment') }}
+                        </a>
+                        <a href="{{ url_for('admin.list_clients') }}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-wallet2 me-1"></i> {{ _('View Withdrawals') }}
+                        </a>
+                        <a href="#" class="btn btn-info btn-sm">
+                            <i class="bi bi-person-plus me-1"></i> {{ _('Add Client') }}
+                        </a>
+                        <a href="{{ url_for('admin.list_clients') }}" class="btn btn-success btn-sm">
+                            <i class="bi bi-graph-up me-1"></i> {{ _('Analytics') }}
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary btn-sm" onclick="exportDashboardData()">
+                            <i class="bi bi-download me-1"></i> {{ _('Export Data') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    // Global chart instances
+    window.volumeTrendsChartInstance = null;
+    window.topCryptosChartInstance = null;
+
+    // Initialize everything when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize tooltips and popovers
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                trigger: 'hover'
+            });
+        });
+
+        // Initialize charts
+        initVolumeTrendsChart();
+        initTopCryptosChart();
+
+        // Add animation to cards on scroll
+        const animateOnScroll = function () {
+            const elements = document.querySelectorAll('.card, .stats-card, .card-hover');
+            elements.forEach(function (element) {
+                const position = element.getBoundingClientRect();
+                const screenPosition = window.innerHeight / 1.3;
+
+                if (position.top < screenPosition) {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }
+            });
+        };
+
+        // Initial check
+        animateOnScroll();
+
+        // Check on scroll
+        window.addEventListener('scroll', animateOnScroll);
+    });
+
+    // Volume Trends Chart
+    function initVolumeTrendsChart() {
+        try {
+            // Default data and labels
+            var defaultData = [10, 20, 15, 30, 25, 40, 35];
+            var defaultLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            
+            // Initialize chart data and labels with defaults
+            var chartData = defaultData.slice();
+            var chartLabels = defaultLabels.slice();
+            
+            // Parse chart data from template if available
+            try {
+                // Get chart data from template if defined
+                var templateDataStr = '{{ chart_data | tojson | safe if chart_data is defined else "" }}';
+                if (templateDataStr) {
+                    var templateData = JSON.parse(templateDataStr);
+                    if (Array.isArray(templateData) && templateData.length > 0) {
+                        chartData = templateData;
+                    }
+                }
+                
+                // Get chart labels from template if defined
+                var templateLabelsStr = '{{ chart_labels | tojson | safe if chart_labels is defined else "" }}';
+                if (templateLabelsStr) {
+                    var templateLabels = JSON.parse(templateLabelsStr);
+                    if (Array.isArray(templateLabels) && templateLabels.length > 0) {
+                        chartLabels = templateLabels;
+                    }
+                }
+                
+                // Ensure we have matching lengths for data and labels
+                if (chartData.length !== chartLabels.length) {
+                    console.warn('Chart data and labels length mismatch. Using default labels.');
+                    chartLabels = defaultLabels.slice(0, chartData.length);
+                }
+                
+            } catch (e) {
+                console.error('Error parsing chart data:', e);
+                chartData = defaultData;
+                chartLabels = defaultLabels;
+            }
+            
+            // Clean up any existing chart instance
+            if (window.volumeTrendsChartInstance) {
+                try {
+                    window.volumeTrendsChartInstance.destroy();
+                } catch (e) {
+                    console.warn('Error destroying previous chart instance:', e);
+                }
+            }
+            
+            // Initialize chart options
+            var options = {
+                series: [{
+                    name: 'Transaction Volume',
+                    data: chartData
+                }],
+                chart: {
+                    height: 350,
+                    type: 'area',
+                    toolbar: {
+                        show: true,
+                        tools: {
+                            download: true,
+                            selection: true,
+                            zoom: true,
+                            zoomin: true,
+                            zoomout: true,
+                            pan: true,
+                            reset: true
+                        }
+                    },
+                    zoom: { 
+                        enabled: true 
+                    },
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800,
+                        animateGradually: {
+                            enabled: true,
+                            delay: 150
+                        }
+                    },
+                    foreColor: '#6c757d',
+                    fontFamily: 'inherit'
+                },
+                colors: ['#4e73df'],
+                dataLabels: { 
+                    enabled: false 
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 3,
+                    lineCap: 'round'
+                },
+                xaxis: {
+                    categories: chartLabels,
+                    axisBorder: { 
+                        show: false 
+                    },
+                    axisTicks: { 
+                        show: false 
+                    },
+                    labels: {
+                        style: {
+                            colors: '#6c757d',
+                            fontSize: '12px',
+                            fontFamily: 'inherit'
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#6c757d',
+                            fontSize: '12px',
+                            fontFamily: 'inherit'
+                        },
+                        formatter: function(value) {
+                            return parseFloat(value).toFixed(6) + ' BTC';
+                        }
+                    }
+                },
+                grid: {
+                    borderColor: '#f1f1f1',
+                    strokeDashArray: 5,
+                    xaxis: { 
+                        lines: { 
+                            show: true 
+                        } 
+                    },
+                    yaxis: { 
+                        lines: { 
+                            show: true 
+                        } 
+                    }
+                },
+                tooltip: {
+                    theme: 'light',
+                    y: { 
+                        formatter: function(val) { 
+                            return val.toFixed(6) + ' BTC'; 
+                        } 
+                    },
+                    marker: { 
+                        show: true 
+                    }
+                },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.6,
+                        opacityTo: 0.1,
+                        stops: [0, 95, 100]
+                    }
+                }
+            };
+
+            // Initialize and render the chart
+            var chart = new ApexCharts(document.querySelector("#volumeTrendsChart"), options);
+            chart.render().then(() => {
+                document.getElementById('volumeTrendsChartFallback').style.display = 'none';
+                window.volumeTrendsChartInstance = chart;
+                console.log('Volume trends chart rendered');
+            }).catch((error) => {
+                console.error('Error rendering chart:', error);
+                document.getElementById('volumeTrendsChartFallback').style.display = 'block';
+            });
+            
+        } catch (e) {
+            console.error('Error initializing volume trends chart:', e);
+            document.getElementById('volumeTrendsChartFallback').style.display = 'block';
+        }
+    }
+    // Top Cryptocurrencies Chart
+    function initTopCryptosChart() {
+        if (window.topCryptosChartInstance) {
+            window.topCryptosChartInstance.destroy();
+        }
+        try {
+            var options = {
+                series: [75, 20, 5],
+                chart: {
+                    type: 'donut',
+                    height: 350,
+                    animations: {
+                        enabled: true,
+                        easing: 'easeinout',
+                        speed: 800
+                    },
+                    toolbar: { show: false }
+                },
+                colors: ['#f39c12', '#3498db', '#9b59b6'],
+                labels: ['Bitcoin (BTC)', 'Ethereum (ETH)', 'Others'],
+                dataLabels: { enabled: false },
+                legend: {
+                    position: 'bottom',
+                    horizontalAlign: 'center',
+                    fontSize: '13px',
+                    fontFamily: 'inherit',
+                    labels: { colors: '#6c757d' },
+                    itemMargin: { horizontal: 10, vertical: 10 },
+                    markers: { width: 8, height: 8, radius: 50 }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '65%',
+                            background: 'transparent',
+                            labels: {
+                                show: true,
+                                name: {
+                                    show: true,
+                                    fontSize: '14px',
+                                    fontFamily: 'inherit',
+                                    color: '#6c757d',
+                                    offsetY: 10
+                                },
+                                value: {
+                                    show: true,
+                                    fontSize: '20px',
+                                    fontFamily: 'inherit',
+                                    color: '#5a5c69',
+                                    offsetY: -10,
+                                    formatter: (val) => val + '%'
+                                },
+                                total: {
+                                    show: true,
+                                    showAlways: true,
+                                    label: 'Total',
+                                    color: '#6c757d',
+                                    fontSize: '14px',
+                                    fontFamily: 'inherit',
+                                    formatter: (w) => '100%'
+                                }
+                            }
+                        }
+                    }
+                },
+                responsive: [{
+                    breakpoint: 480,
+                    options: {
+                        chart: { height: 250 },
+                        legend: { position: 'bottom' }
+                    }
+                }]
+            };
+
+            var chart = new ApexCharts(document.querySelector("#topCryptosChart"), options);
+            chart.render().then(() => {
+                document.getElementById('topCryptosChartFallback').style.display = 'none';
+                window.topCryptosChartInstance = chart;
+                console.log('Top cryptos chart rendered');
+            }).catch(() => {
+                document.getElementById('topCryptosChartFallback').style.display = 'block';
+            });
+        } catch (e) {
+            document.getElementById('topCryptosChartFallback').style.display = 'block';
+            console.error('Error initializing top cryptos chart:', e);
+        }
+    }
+
+    // Export dashboard data function
+    function exportDashboardData() {
+        // You can implement CSV, PDF, or Excel export functionality here
+        console.log('Exporting dashboard data...');
+
+        // Example: Create a simple CSV download
+        const data = [
+            ['Metric', 'Value'],
+            ['Total Revenue', '{{ stats.get("total_volume", 0) }}'],
+            ['Total Transactions', '{{ stats.get("total_transactions", 0) }}'],
+            ['Active Clients', '{{ stats.get("total_clients", 0) }}'],
+            ['Pending Withdrawals', '{{ stats.get("pending_withdrawals", 0) }}']
+        ];
+
+        const csvContent = data.map(row => row.join(',')).join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'dashboard_stats.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    // Real-time updates (optional - you can implement WebSocket or polling)
+    function startRealTimeUpdates() {
+        // Implement real-time data updates if needed
+        setInterval(function () {
+            // Fetch updated stats and refresh charts/tables
+            // This is a placeholder for future implementation
+        }, 30000); // Update every 30 seconds
+    }
+
+    // Currency Filter Functionality
+    document.addEventListener('DOMContentLoaded', function () {
+        const currencyFilter = document.getElementById('currencyFilter');
+        const selectedCurrency = document.getElementById('selectedCurrency');
+
+        // Currency filter event listeners
+        document.querySelectorAll('[data-currency]').forEach(function (item) {
+            item.addEventListener('click', function (e) {
+                e.preventDefault();
+                const currency = this.getAttribute('data-currency');
+                const text = this.textContent.trim();
+
+                selectedCurrency.textContent = text;
+                filterDashboardByCurrency(currency);
+
+                // Store selection in localStorage
+                localStorage.setItem('selectedCurrency', currency);
+                localStorage.setItem('selectedCurrencyText', text);
+            });
+        });
+
+        // Restore currency filter from localStorage
+        const savedCurrency = localStorage.getItem('selectedCurrency');
+        const savedText = localStorage.getItem('selectedCurrencyText');
+        if (savedCurrency && savedText) {
+            selectedCurrency.textContent = savedText;
+            filterDashboardByCurrency(savedCurrency);
+        }
+    });
+
+    // Filter dashboard data by currency
+    function filterDashboardByCurrency(currency) {
+        console.log('Filtering dashboard by currency:', currency);
+
+        // Here you would typically make an AJAX call to get filtered data
+        // For now, we'll simulate the filtering with a loading state
+
+        // Show loading state
+        showLoadingState();
+
+        // Simulate API call
+        setTimeout(function () {
+            // Update dashboard sections based on currency
+            updateKPICards(currency);
+            updateCharts(currency);
+            updateTransactionTable(currency);
+
+            // Hide loading state
+            hideLoadingState();
+        }, 500);
+    }
+
+    // Update KPI cards based on currency filter
+    function updateKPICards(currency) {
+        // This would typically fetch real data from the backend
+        // For demo purposes, we'll show how it would work
+
+        if (currency === 'all') {
+            console.log('Showing all currency data');
+        } else {
+            console.log('Showing data for currency:', currency);
+        }
+    }
+
+    // Update charts based on currency filter
+    function updateCharts(currency) {
+        // Refresh volume trends chart with filtered data
+        if (window.volumeTrendsChartInstance) {
+            // In a real implementation, you'd fetch new data here
+            const newData = currency === 'BTC' ? [15, 25, 20, 35, 30, 45, 40] :
+                currency === 'ETH' ? [12, 18, 15, 28, 22, 35, 30] :
+                    [10, 20, 15, 30, 25, 40, 35]; // all/default
+
+            window.volumeTrendsChartInstance.updateSeries([{
+                name: `${currency} Volume`,
+                data: newData
+            }]);
+        }
+
+        // Refresh top cryptos chart if needed
+        if (window.topCryptosChartInstance) {
+            // Update chart data based on currency filter
+            console.log('Updating top cryptos chart for currency:', currency);
+        }
+    }
+
+    // Update transaction table based on currency filter
+    function updateTransactionTable(currency) {
+        // This would typically filter the transaction table
+        // For now, we'll just log the action
+        console.log('Filtering transaction table for currency:', currency);
+    }
+
+    // Balance view toggle functionality
+    function toggleBalanceView(view) {
+        const chartView = document.getElementById('balanceChartView');
+        const tableView = document.getElementById('balanceTableView');
+
+        if (view === 'chart') {
+            chartView.style.display = 'block';
+            tableView.style.display = 'none';
+
+            // Initialize balance chart if not already done
+            if (!window.clientBalancesChartInstance) {
+                initClientBalancesChart();
+            }
+        } else {
+            chartView.style.display = 'none';
+            tableView.style.display = 'block';
+        }
+    }
+
+    // Initialize client balances chart
+    function initClientBalancesChart() {
+        try {
+            const options = {
+                series: [
+                    12.5430,  // Default BTC balance
+                    156.7821, // Default ETH balance
+                    875.43    // Default USDT balance (scaled down)
+                ],
+    chart: {
+        type: 'donut',
+            height: 300
+    },
+    labels: ['Bitcoin (BTC)', 'Ethereum (ETH)', 'Tether (USDT)'],
+        colors: ['#f7931a', '#627eea', '#26a17b'],
+            plotOptions: {
+        pie: {
+            donut: {
+                size: '70%',
+                    labels: {
+                    show: true,
+                        name: {
+                        show: true,
+                            fontSize: '14px',
+                                fontWeight: 600
+                    },
+                    value: {
+                        show: true,
+                            fontSize: '16px',
+                                fontWeight: 700
+                    },
+                    total: {
+                        show: true,
+                            label: 'Total Value',
+                                fontSize: '14px',
+                                    fontWeight: 600,
+                                        formatter: function () {
+                                            return '$1,234,567'  // Default total value
+                                        }
+                    }
+                }
+            }
+        }
+    },
+    legend: {
+        position: 'bottom',
+            fontSize: '12px'
+    },
+    dataLabels: {
+        enabled: true,
+            formatter: function (val) {
+                return Math.round(val) + '%'
+            }
+    }
+            };
+
+    const chart = new ApexCharts(document.querySelector("#clientBalancesChart"), options);
+    chart.render().then(() => {
+        window.clientBalancesChartInstance = chart;
+        console.log('Client balances chart rendered');
+    });
+        } catch (e) {
+        console.error('Error initializing client balances chart:', e);
+    }
+    }
+
+    // Real-time currency rates update
+    function updateCurrencyRates() {
+        // This would typically fetch real-time rates from an API
+        // For demo purposes, we'll simulate rate updates
+
+        const btcPrice = document.getElementById('btc-price');
+        const ethPrice = document.getElementById('eth-price');
+        const usdtPrice = document.getElementById('usdt-price');
+        const btcChange = document.getElementById('btc-change');
+        const ethChange = document.getElementById('eth-change');
+        const timestamp = document.getElementById('rates-timestamp');
+
+        if (btcPrice && ethPrice && timestamp) {
+            // Simulate price fluctuations
+            const btcVariation = (Math.random() - 0.5) * 1000; // ±$500 variation
+            const ethVariation = (Math.random() - 0.5) * 100;  // ±$50 variation
+
+            const currentBtc = parseFloat(btcPrice.textContent.replace(/,/g, '')) + btcVariation;
+            const currentEth = parseFloat(ethPrice.textContent.replace(/,/g, '')) + ethVariation;
+
+            btcPrice.textContent = new Intl.NumberFormat().format(Math.round(currentBtc));
+            ethPrice.textContent = new Intl.NumberFormat().format(Math.round(currentEth));
+
+            // Update change percentages
+            const btcChangePercent = ((Math.random() - 0.5) * 10).toFixed(1); // ±5% variation
+            const ethChangePercent = ((Math.random() - 0.5) * 8).toFixed(1);  // ±4% variation
+
+            btcChange.textContent = (btcChangePercent > 0 ? '+' : '') + btcChangePercent + '%';
+            ethChange.textContent = (ethChangePercent > 0 ? '+' : '') + ethChangePercent + '%';
+
+            // Update colors based on change
+            btcChange.className = btcChangePercent > 0 ? 'text-success' : 'text-danger';
+            ethChange.className = ethChangePercent > 0 ? 'text-success' : 'text-danger';
+
+            // Update timestamp
+            timestamp.textContent = new Date().toLocaleTimeString();
+        }
+    }
+
+    // Loading state functions
+    function showLoadingState() {
+        // Add loading overlays to dashboard sections
+        const sections = document.querySelectorAll('.card-body');
+        sections.forEach(function (section) {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay d-flex align-items-center justify-content-center';
+            overlay.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 10;';
+            overlay.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+
+            if (section.style.position !== 'relative') {
+                section.style.position = 'relative';
+            }
+            section.appendChild(overlay);
+        });
+    }
+
+        // Real-time currency rates update
+        function updateCurrencyRates() {
+            // This would typically fetch real-time rates from an API
+            // For demo purposes, we'll simulate rate updates
+
+            const btcPrice = document.getElementById('btc-price');
+            const ethPrice = document.getElementById('eth-price');
+            const usdtPrice = document.getElementById('usdt-price');
+            const btcChange = document.getElementById('btc-change');
+            const ethChange = document.getElementById('eth-change');
+            const timestamp = document.getElementById('rates-timestamp');
+
+            if (btcPrice && ethPrice && timestamp) {
+                // Simulate price fluctuations
+                const btcVariation = (Math.random() - 0.5) * 1000; // ±$500 variation
+                const ethVariation = (Math.random() - 0.5) * 100;  // ±$50 variation
+
+                const currentBtc = parseFloat(btcPrice.textContent.replace(/,/g, '')) + btcVariation;
+                const currentEth = parseFloat(ethPrice.textContent.replace(/,/g, '')) + ethVariation;
+
+                btcPrice.textContent = new Intl.NumberFormat().format(Math.round(currentBtc));
+                ethPrice.textContent = new Intl.NumberFormat().format(Math.round(currentEth));
+
+                // Update change percentages
+                const btcChangePercent = ((Math.random() - 0.5) * 10).toFixed(1); // ±5% variation
+                const ethChangePercent = ((Math.random() - 0.5) * 8).toFixed(1);  // ±4% variation
+
+                btcChange.textContent = (btcChangePercent > 0 ? '+' : '') + btcChangePercent + '%';
+                ethChange.textContent = (ethChangePercent > 0 ? '+' : '') + ethChangePercent + '%';
+
+                // Update colors based on change
+                btcChange.className = btcChangePercent > 0 ? 'text-success' : 'text-danger';
+                ethChange.className = ethChangePercent > 0 ? 'text-success' : 'text-danger';
+
+                // Update timestamp
+                timestamp.textContent = new Date().toLocaleTimeString();
+            }
+        }
+
+        // Loading state functions
+        function showLoadingState() {
+            // Add loading overlays to dashboard sections
+            const sections = document.querySelectorAll('.card-body');
+            sections.forEach(function (section) {
+                const overlay = document.createElement('div');
+                overlay.className = 'loading-overlay d-flex align-items-center justify-content-center';
+                overlay.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 10;';
+                overlay.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+
+                if (section.style.position !== 'relative') {
+                    section.style.position = 'relative';
+                }
+                section.appendChild(overlay);
+            });
+        }
+
+        function hideLoadingState() {
+            // Remove loading overlays
+            const overlays = document.querySelectorAll('.loading-overlay');
+            overlays.forEach(function (overlay) {
+                overlay.remove();
+            });
+        }
+
+        // Initialize real-time updates
+        document.addEventListener('DOMContentLoaded', function () {
+            // Set up base URLs
+            const baseUrl = '{{ url_for("admin.admin_dashboard")|replace("/admin120724/dashboard", "") }}';
+            const adminPrefix = '{{ url_for("admin.admin_dashboard")|replace("/dashboard", "") }}';
+
+            // Set up AJAX headers
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token() }}');
+                    }
+                }
+            });
+
+            // Update currency rates every 30 seconds
+            setInterval(updateCurrencyRates, 30000);
+
+            // Initialize balance chart on page load
+            initClientBalancesChart();
+        });
+    </script>
+</script>
+{% endblock %}

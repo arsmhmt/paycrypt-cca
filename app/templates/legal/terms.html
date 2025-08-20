@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Terms of Service') }} - {{ _('Crypto Payment Gateway') }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">{{ _('Terms of Service') }}</h1>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h2>{{ _('1. Introduction') }}</h2>
+                        <p>{{ _('Welcome to our Crypto Payment Gateway service. By using our services, you agree to these terms. Please read them carefully.') }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('2. Our Services') }}</h2>
+                        <p>{{ _('We provide a platform for processing cryptocurrency payments. Our services include payment processing, wallet management, and related features.') }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('3. Account Registration') }}</h2>
+                        <p>{{ _('To use our services, you must register for an account and provide accurate information. You are responsible for maintaining the security of your account.') }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('4. Fees and Payments') }}</h2>
+                        <p>{{ _('Our fees are disclosed during the registration process. We may change our fees with 30 days\' notice.') }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('5. Prohibited Activities') }}</h2>
+                        <p>{{ _('You may not use our services for illegal activities, fraud, money laundering, or any other unlawful purpose.') }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('6. Limitation of Liability') }}</h2>
+                        <p>{{ _('We are not liable for any indirect, incidental, or consequential damages arising from your use of our services.') }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2>{{ _('7. Changes to Terms') }}</h2>
+                        <p>{{ _('We may modify these terms at any time. Continued use of our services constitutes acceptance of the modified terms.') }}</p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <p class="mb-0">{{ _('Last updated: July 7, 2025') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

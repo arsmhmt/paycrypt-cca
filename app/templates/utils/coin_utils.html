@@ -1,0 +1,83 @@
+{# Template utilities for working with coins #}
+
+{% macro coin_icon(coin_symbol) %}
+    {# Render a coin icon with the correct CSS class #}
+    <i class="{{ get_coin_icon(coin_symbol) }}" 
+       title="{{ get_coin_display_name(coin_symbol) }} ({{ coin_symbol|upper }})"></i>
+{% endmacro %}
+
+{% macro coin_name(coin_symbol) %}
+    {# Display a coin's display name with fallback to symbol #}
+    {{ get_coin_display_name(coin_symbol) }}
+{% endmacro %}
+
+{% macro coin_selector(selected_coin=None, name='coin', id=None, class='form-select', include_all=False) %}
+    {# Render a coin selector dropdown #}
+    <select name="{{ name }}" id="{{ id or name }}" class="{{ class }}">
+        {% if include_all %}
+            <option value="">All Coins</option>
+        {% endif %}
+        
+        {% for coin in allowed_coins %}
+            <option value="{{ coin.symbol }}" 
+                    {% if selected_coin|lower == coin.symbol|lower %}selected{% endif %}>
+                {{ coin.name }} ({{ coin.symbol }})
+            </option>
+        {% endfor %}
+    </select>
+{% endmacro %}
+
+{% macro coin_badge(coin_symbol, show_icon=True) %}
+    {# Render a badge for a coin with optional icon #}
+    <span class="badge bg-secondary d-inline-flex align-items-center">
+        {% if show_icon %}
+            {{ coin_icon(coin_symbol) }}
+        {% endif %}
+        <span class="ms-1">{{ coin_name(coin_symbol) }}</span>
+    </span>
+{% endmacro %}
+
+{% macro coin_balance(amount, coin_symbol, show_coin_name=True) %}
+    {# Format a coin amount with the correct number of decimals #}
+    {% set coin = get_coin_by_symbol(coin_symbol) %}
+    {% set decimals = coin.decimals if coin else 8 %}
+    {% set formatted_amount = "%0.*f"|format(decimals, amount) %}
+    
+    <span class="coin-balance" title="{{ formatted_amount }} {{ coin_symbol|upper }}">
+        {{ formatted_amount }}
+        {% if show_coin_name %}
+            <span class="ms-1">{{ coin_symbol|upper }}</span>
+        {% endif %}
+    </span>
+{% endmacro %}
+
+{% macro coin_restriction_banner(required_coin=None, required_package=None) %}
+    {# Show a banner when a coin or feature is restricted #}
+    <div class="alert alert-warning">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-lock me-2"></i>
+            <div>
+                {% if required_coin %}
+                    <h5 class="alert-heading mb-1">Coin Restricted</h5>
+                    <p class="mb-0">
+                        The coin <strong>{{ required_coin|upper }}</strong> is not available in your current plan.
+                    </p>
+                {% elif required_package %}
+                    <h5 class="alert-heading mb-1">Plan Upgrade Required</h5>
+                    <p class="mb-0">
+                        This feature requires the <strong>{{ required_package }}</strong> plan or higher.
+                    </p>
+                {% else %}
+                    <h5 class="alert-heading mb-1">Access Restricted</h5>
+                    <p class="mb-0">
+                        This feature is not available in your current plan.
+                    </p>
+                {% endif %}
+                
+                <a href="{{ url_for('billing.upgrade') }}" class="btn btn-sm btn-warning mt-2">
+                    <i class="fas fa-arrow-up me-1"></i> Upgrade Plan
+                </a>
+            </div>
+        </div>
+    </div>
+{% endmacro %}

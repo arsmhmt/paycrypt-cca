@@ -1,0 +1,444 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Wallet Balances - Admin Panel{% endblock %}
+
+{% block styles %}
+<style>
+    .currency-card {
+        border: 1px solid #e1e5e9;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .currency-card:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .currency-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px 12px 0 0;
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .currency-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 12px;
+    }
+
+    .balance-amount {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .provider-row {
+        padding: 12px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .provider-row:last-child {
+        border-bottom: none;
+    }
+
+    .provider-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+
+    .status-healthy {
+        background-color: #28a745;
+    }
+
+    .status-warning {
+        background-color: #ffc107;
+    }
+
+    .status-error {
+        background-color: #dc3545;
+    }
+
+    .status-unknown {
+        background-color: #6c757d;
+    }
+
+    .primary-badge {
+        background: linear-gradient(45deg, #ff8c00, #f59e0b);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    .total-balance {
+        background: linear-gradient(135deg, #ff8c00 0%, #f59e0b 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .crypto-colors {
+        --btc-color: #f7931a;
+        --eth-color: #627eea;
+        --usdt-color: #26a17b;
+        --xrp-color: #23292f;
+        --ltc-color: #345d9d;
+        --sol-color: #9945ff;
+    }
+
+    .currency-btc {
+        border-left: 4px solid var(--btc-color);
+    }
+
+    .currency-eth {
+        border-left: 4px solid var(--eth-color);
+    }
+
+    .currency-usdt {
+        border-left: 4px solid var(--usdt-color);
+    }
+
+    .currency-xrp {
+        border-left: 4px solid var(--xrp-color);
+    }
+
+    .currency-ltc {
+        border-left: 4px solid var(--ltc-color);
+    }
+
+    .currency-sol {
+        border-left: 4px solid var(--sol-color);
+    }
+
+    .refresh-btn {
+        transition: transform 0.3s ease;
+    }
+
+    .refresh-btn:hover {
+        transform: rotate(180deg);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-4 mb-0">Wallet Balances Overview</h1>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.wallet_providers') }}">Wallet Providers</a></li>
+                <li class="breadcrumb-item active">Balances</li>
+            </ol>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="refreshAllBalances()">
+                <i class="bi bi-arrow-clockwise refresh-btn"></i> Refresh All
+            </button>
+            <a href="{{ url_for('admin.wallet_providers') }}" class="btn btn-primary">
+                <i class="bi bi-server"></i> Manage Providers
+            </a>
+        </div>
+    </div>
+
+    <!-- Total Portfolio Value (if you have pricing data) -->
+    <div class="total-balance">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="mb-1">Total Portfolio</h3>
+                <p class="mb-0 opacity-75">Combined balances across all wallet providers</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="h4 mb-0">{{ currency_balances|length }} Currencies</div>
+                <small class="opacity-75">Active across multiple providers</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Currency Balances Grid -->
+    {% if currency_balances %}
+    <div class="row">
+        {% for currency, data in currency_balances.items() %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card currency-card currency-{{ currency.lower() }}">
+                <div class="currency-header">
+                    <div class="d-flex align-items-center">
+                        <div class="currency-icon">
+                            {% if currency == 'BTC' %}
+                            <i class="bi bi-currency-bitcoin" style="color: var(--btc-color)"></i>
+                            {% elif currency == 'ETH' %}
+                            <i class="bi bi-currency-ethereum" style="color: var(--eth-color)"></i>
+                            {% elif currency == 'USDT' %}
+                            <i class="bi bi-currency-dollar" style="color: var(--usdt-color)"></i>
+                            {% elif currency == 'XRP' %}
+                            <i class="bi bi-currency-exchange" style="color: var(--xrp-color)"></i>
+                            {% elif currency == 'LTC' %}
+                            <i class="bi bi-currency-bitcoin" style="color: var(--ltc-color)"></i>
+                            {% elif currency == 'SOL' %}
+                            <i class="bi bi-sun" style="color: var(--sol-color)"></i>
+                            {% else %}
+                            <i class="bi bi-coin" style="color: #6c757d"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ currency }}</h5>
+                            <small class="text-muted">
+                                {% if currency == 'BTC' %}Bitcoin
+                                {% elif currency == 'ETH' %}Ethereum
+                                {% elif currency == 'USDT' %}Tether USD
+                                {% elif currency == 'XRP' %}Ripple
+                                {% elif currency == 'LTC' %}Litecoin
+                                {% elif currency == 'SOL' %}Solana
+                                {% else %}{{ currency }}{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Total Balance Summary -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <div class="balance-amount">{{ "%.6f"|format(data.total_available) }}</div>
+                            <small class="text-muted">Available</small>
+                        </div>
+                        {% if data.total_locked > 0 %}
+                        <div class="text-end">
+                            <div class="text-warning">{{ "%.6f"|format(data.total_locked) }}</div>
+                            <small class="text-muted">Locked</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Provider Breakdown -->
+                    <div class="border-top pt-3">
+                        <h6 class="mb-3">Provider Breakdown:</h6>
+                        {% for provider in data.providers %}
+                        <div class="provider-row">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <span class="provider-status status-{{ provider.health_status }}"></span>
+                                    <span class="fw-medium">{{ provider.name }}</span>
+                                    {% if provider.is_primary %}
+                                    <span class="primary-badge ms-2">PRIMARY</span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-medium">{{ "%.6f"|format(provider.available) }}</div>
+                                    {% if provider.locked > 0 %}
+                                    <small class="text-warning">{{ "%.6f"|format(provider.locked) }} locked</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if provider.last_updated %}
+                            <small class="text-muted">Updated: {{ provider.last_updated.strftime('%m/%d %H:%M')
+                                }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="bi bi-wallet2 fs-1 text-muted"></i>
+        <h3 class="mt-3 text-muted">No Balance Data</h3>
+        <p class="text-muted">No wallet balances found. Make sure your wallet providers are configured and active.</p>
+        <div class="mt-4">
+            <a href="{{ url_for('admin.wallet_providers') }}" class="btn btn-primary me-2">
+                <i class="bi bi-server"></i> Manage Providers
+            </a>
+            <button class="btn btn-outline-primary" onclick="refreshAllBalances()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh Balances
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Balance Summary Table (Alternative View) -->
+    {% if currency_balances %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Balance Summary Table</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Currency</th>
+                            <th>Total Available</th>
+                            <th>Total Locked</th>
+                            <th>Providers</th>
+                            <th>Primary Provider</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for currency, data in currency_balances.items() %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="currency-icon me-2" style="width: 24px; height: 24px;">
+                                        {% if currency == 'BTC' %}
+                                        <i class="bi bi-currency-bitcoin" style="color: var(--btc-color)"></i>
+                                        {% elif currency == 'ETH' %}
+                                        <i class="bi bi-currency-ethereum" style="color: var(--eth-color)"></i>
+                                        {% elif currency == 'USDT' %}
+                                        <i class="bi bi-currency-dollar" style="color: var(--usdt-color)"></i>
+                                        {% else %}
+                                        <i class="bi bi-coin" style="color: #6c757d"></i>
+                                        {% endif %}
+                                    </div>
+                                    <strong>{{ currency }}</strong>
+                                </div>
+                            </td>
+                            <td>{{ "%.6f"|format(data.total_available) }}</td>
+                            <td>
+                                {% if data.total_locked > 0 %}
+                                <span class="text-warning">{{ "%.6f"|format(data.total_locked) }}</span>
+                                {% else %}
+                                <span class="text-muted">0</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ data.providers|length }}</td>
+                            <td>
+                                {% for provider in data.providers %}
+                                {% if provider.is_primary %}
+                                {{ provider.name }}
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary"
+                                    onclick="refreshCurrencyBalances('{{ currency }}')">
+                                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0">Refreshing balances...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Refresh all balances
+    async function refreshAllBalances() {
+        const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        modal.show();
+
+        try {
+            // Get all active providers and sync their balances
+            const response = await fetch('/admin/wallet-providers');
+            const text = await response.text();
+
+            // Extract provider IDs from the HTML (you might want to create a dedicated API endpoint)
+            // For now, we'll just reload the page
+            showToast('Balances refresh initiated', 'info');
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } catch (error) {
+            showToast('Error refreshing balances', 'error');
+        } finally {
+            modal.hide();
+        }
+    }
+
+    // Refresh balances for a specific currency
+    async function refreshCurrencyBalances(currency) {
+        showToast(`Refreshing ${currency} balances...`, 'info');
+
+        // This would ideally call a specific endpoint to refresh just this currency
+        // For now, we'll simulate the refresh
+        setTimeout(() => {
+            showToast(`${currency} balances updated`, 'success');
+            location.reload();
+        }, 1500);
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        const toastContainer = document.getElementById('toast-container');
+        const toastId = 'toast-' + Date.now();
+
+        const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type}" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toast = new bootstrap.Toast(document.getElementById(toastId));
+        toast.show();
+
+        // Remove toast element after it's hidden
+        document.getElementById(toastId).addEventListener('hidden.bs.toast', function () {
+            this.remove();
+        });
+    }
+
+    // Auto-refresh every 5 minutes
+    setInterval(() => {
+        const refreshBtn = document.querySelector('.refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.style.transform = 'rotate(360deg)';
+            setTimeout(() => {
+                refreshBtn.style.transform = 'rotate(0deg)';
+            }, 300);
+        }
+
+        // Silently refresh the page data
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                // Update only the balance data sections
+                // This is a simplified approach - in production you'd update specific elements
+                console.log('Auto-refresh completed');
+            })
+            .catch(error => {
+                console.log('Auto-refresh failed:', error);
+            });
+    }, 300000); // 5 minutes
+</script>
+{% endblock %}

@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+
+{% block title %}Yield Farming Calculator - DeFi Returns Calculator - PayCrypt{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card bg-gradient-info text-white mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-calculator me-2"></i>
+                                DeFi Yield Farming Calculator
+                            </h2>
+                            <p class="mb-0 opacity-90">
+                                Calculate potential returns and impermanent loss from DeFi yield farming
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="badge bg-light text-info fs-6 px-3 py-2">
+                                <i class="fas fa-chart-pie me-1"></i>
+                                Advanced Analytics
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculator Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-seedling me-2 text-primary"></i>
+                        Yield Farming Parameters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="pool_type" class="form-label">
+                                <i class="fas fa-water me-1"></i>
+                                Pool Type
+                            </label>
+                            <select name="pool_type" id="pool_type" class="form-select" required>
+                                <option value="">Select pool type...</option>
+                                <option value="LP_STABLECOIN" {% if request.form.get('pool_type') == 'LP_STABLECOIN' %}selected{% endif %}>Stablecoin LP</option>
+                                <option value="LP_VOLATILE" {% if request.form.get('pool_type') == 'LP_VOLATILE' %}selected{% endif %}>Volatile Token LP</option>
+                                <option value="SINGLE_STAKING" {% if request.form.get('pool_type') == 'SINGLE_STAKING' %}selected{% endif %}>Single Token Staking</option>
+                                <option value="LEVERAGED_FARMING" {% if request.form.get('pool_type') == 'LEVERAGED_FARMING' %}selected{% endif %}>Leveraged Farming</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="token_a" class="form-label">
+                                <i class="fas fa-coins me-1"></i>
+                                Token A
+                            </label>
+                            <input type="text" 
+                                   name="token_a" 
+                                   id="token_a" 
+                                   class="form-control" 
+                                   placeholder="ETH, USDC..." 
+                                   value="{{ request.form.get('token_a', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="token_b" class="form-label">
+                                <i class="fas fa-coins me-1"></i>
+                                Token B
+                            </label>
+                            <input type="text" 
+                                   name="token_b" 
+                                   id="token_b" 
+                                   class="form-control" 
+                                   placeholder="USDT, DAI..." 
+                                   value="{{ request.form.get('token_b', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="amount" class="form-label">
+                                <i class="fas fa-dollar-sign me-1"></i>
+                                Amount ($)
+                            </label>
+                            <input type="number" 
+                                   name="amount" 
+                                   id="amount" 
+                                   class="form-control" 
+                                   placeholder="1000" 
+                                   step="0.01"
+                                   min="0.01"
+                                   required
+                                   value="{{ request.form.get('amount', '') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="apy" class="form-label">
+                                <i class="fas fa-percentage me-1"></i>
+                                APY (%)
+                            </label>
+                            <input type="number" 
+                                   name="apy" 
+                                   id="apy" 
+                                   class="form-control" 
+                                   placeholder="25.5" 
+                                   step="0.1"
+                                   min="0"
+                                   max="10000"
+                                   required
+                                   value="{{ request.form.get('apy', '') }}">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-info w-100">
+                                <i class="fas fa-calculator me-1"></i>
+                                Calculate
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if calculation %}
+            <!-- Risk Assessment -->
+            <div class="card mb-4 border-{{ 'danger' if calculation.risk_assessment.level in ['VERY HIGH', 'HIGH'] else ('warning' if calculation.risk_assessment.level == 'MEDIUM' else 'success') }}">
+                <div class="card-header bg-{{ 'danger' if calculation.risk_assessment.level in ['VERY HIGH', 'HIGH'] else ('warning' if calculation.risk_assessment.level == 'MEDIUM' else 'success') }} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Risk Assessment
+                        </h5>
+                        <div class="badge bg-light text-{{ 'danger' if calculation.risk_assessment.level in ['VERY HIGH', 'HIGH'] else ('warning' if calculation.risk_assessment.level == 'MEDIUM' else 'success') }} fs-6">
+                            {{ calculation.risk_assessment.level }} RISK
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="mb-3">{{ calculation.risk_assessment.description }}</p>
+                            <h6 class="text-muted mb-2">Recommendations:</h6>
+                            <ul class="mb-0">
+                                {% for rec in calculation.risk_assessment.recommendations %}
+                                <li class="mb-1">{{ rec }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="display-4 mb-2">
+                                {% if calculation.risk_assessment.level == 'VERY HIGH' %}
+                                    <i class="fas fa-skull-crossbones text-danger"></i>
+                                {% elif calculation.risk_assessment.level == 'HIGH' %}
+                                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                                {% elif calculation.risk_assessment.level == 'MEDIUM' %}
+                                    <i class="fas fa-exclamation-circle text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-shield-check text-success"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Returns Calculation -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Projected Returns
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Period</th>
+                                            <th>Days</th>
+                                            <th>Simple Interest</th>
+                                            <th>Compound Interest</th>
+                                            <th>Profit (Compound)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for period, data in calculation.returns.items() %}
+                                        <tr>
+                                            <td class="fw-bold text-capitalize">{{ period }}</td>
+                                            <td>{{ data.days }}</td>
+                                            <td class="text-info">${{ "{:,.2f}".format(data.simple) }}</td>
+                                            <td class="text-success">${{ "{:,.2f}".format(data.compound) }}</td>
+                                            <td class="text-primary fw-bold">${{ "{:,.2f}".format(data.profit_compound) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Pool Summary
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="border-start border-primary border-3 ps-3">
+                                        <small class="text-muted">Pool Type</small>
+                                        <div class="fw-bold">{{ calculation.pool_info.type.replace('_', ' ').title() }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border-start border-success border-3 ps-3">
+                                        <small class="text-muted">Initial Amount</small>
+                                        <div class="fw-bold">${{ "{:,.2f}".format(calculation.pool_info.initial_amount) }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border-start border-info border-3 ps-3">
+                                        <small class="text-muted">APY</small>
+                                        <div class="fw-bold">{{ calculation.pool_info.apy }}%</div>
+                                    </div>
+                                </div>
+                                {% if calculation.pool_info.token_a %}
+                                <div class="col-6">
+                                    <div class="border-start border-warning border-3 ps-3">
+                                        <small class="text-muted">Token A</small>
+                                        <div class="fw-bold">{{ calculation.pool_info.token_a }}</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if calculation.pool_info.token_b %}
+                                <div class="col-6">
+                                    <div class="border-start border-secondary border-3 ps-3">
+                                        <small class="text-muted">Token B</small>
+                                        <div class="fw-bold">{{ calculation.pool_info.token_b }}</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Impermanent Loss Analysis -->
+            <div class="card border-warning mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-area me-2"></i>
+                        Impermanent Loss Scenarios
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Potential impermanent loss based on token price changes (applies to LP pools only)
+                    </p>
+                    <div class="row g-3">
+                        {% for price_change, il_percent in calculation.impermanent_loss.items() %}
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <div class="card border-light h-100">
+                                <div class="card-body text-center">
+                                    <div class="h6 mb-2 {% if price_change.startswith('-') %}text-danger{% else %}text-success{% endif %}">
+                                        {{ price_change }} Price Change
+                                    </div>
+                                    <div class="h5 mb-0 {% if il_percent < -5 %}text-danger{% elif il_percent < -2 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ il_percent }}% IL
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- DeFi Protocols -->
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-secondary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-layer-group me-2"></i>
+                                Popular DeFi Protocols
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded">
+                                        <i class="fas fa-unicorn text-primary mb-2" style="font-size: 2rem;"></i>
+                                        <h6>Uniswap</h6>
+                                        <small class="badge bg-success">5-50% APY</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded">
+                                        <i class="fas fa-seedling text-success mb-2" style="font-size: 2rem;"></i>
+                                        <h6>Compound</h6>
+                                        <small class="badge bg-info">2-15% APY</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded">
+                                        <i class="fas fa-coins text-warning mb-2" style="font-size: 2rem;"></i>
+                                        <h6>Aave</h6>
+                                        <small class="badge bg-primary">3-20% APY</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded">
+                                        <i class="fas fa-pancake-stack text-warning mb-2" style="font-size: 2rem;"></i>
+                                        <h6>PancakeSwap</h6>
+                                        <small class="badge bg-warning text-dark">10-200% APY</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-graduation-cap me-2"></i>
+                                DeFi Education
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="text-primary">Key Concepts:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong>APY:</strong> <small>Annual Percentage Yield including compound interest</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Impermanent Loss:</strong> <small>Loss from price divergence in LP tokens</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Liquidity Pool:</strong> <small>Smart contract holding two tokens for trading</small>
+                                </li>
+                                <li class="mb-0">
+                                    <strong>Yield Farming:</strong> <small>Earning rewards by providing liquidity</small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Table styling */
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Form styling */
+#token_a, #token_b {
+    text-transform: uppercase;
+}
+
+/* IL card colors */
+.card.border-light .card-body {
+    background-color: #f8f9fa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+}
+</style>
+
+<script>
+// Auto-uppercase token inputs
+document.getElementById('token_a').addEventListener('input', function(e) {
+    e.target.value = e.target.value.toUpperCase();
+});
+
+document.getElementById('token_b').addEventListener('input', function(e) {
+    e.target.value = e.target.value.toUpperCase();
+});
+
+// Pool type change handler
+document.getElementById('pool_type').addEventListener('change', function(e) {
+    const tokenBField = document.getElementById('token_b');
+    const tokenBLabel = tokenBField.previousElementSibling;
+    
+    if (e.target.value === 'SINGLE_STAKING') {
+        tokenBField.disabled = true;
+        tokenBField.value = '';
+        tokenBField.placeholder = 'Not required';
+        tokenBLabel.classList.add('text-muted');
+    } else {
+        tokenBField.disabled = false;
+        tokenBField.placeholder = 'USDT, DAI...';
+        tokenBLabel.classList.remove('text-muted');
+    }
+});
+
+// APY input validation and warnings
+document.getElementById('apy').addEventListener('input', function(e) {
+    const apy = parseFloat(e.target.value);
+    const warningDiv = document.getElementById('apy-warning') || document.createElement('div');
+    warningDiv.id = 'apy-warning';
+    warningDiv.className = 'form-text';
+    
+    if (apy > 100) {
+        warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle text-danger me-1"></i>Very high APY! Extreme risk of impermanent loss or rug pull.';
+        warningDiv.className = 'form-text text-danger';
+    } else if (apy > 50) {
+        warningDiv.innerHTML = '<i class="fas fa-exclamation-circle text-warning me-1"></i>High APY - consider the risks carefully.';
+        warningDiv.className = 'form-text text-warning';
+    } else if (apy > 0) {
+        warningDiv.innerHTML = '<i class="fas fa-info-circle text-info me-1"></i>Reasonable APY range.';
+        warningDiv.className = 'form-text text-info';
+    } else {
+        warningDiv.innerHTML = '';
+    }
+    
+    // Add warning div if it doesn't exist
+    if (!document.getElementById('apy-warning')) {
+        e.target.parentNode.appendChild(warningDiv);
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Trigger pool type change to set initial state
+    document.getElementById('pool_type').dispatchEvent(new Event('change'));
+});
+</script>
+{% endblock %}

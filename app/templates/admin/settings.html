@@ -1,0 +1,152 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Settings - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-gear me-2"></i>Settings
+        </h1>
+        <div>
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-x-lg me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Settings Navigation -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="nav nav-pills mb-3" id="settingsTabs" role="tablist">
+                <button class="nav-link active" id="system-tab" data-bs-toggle="pill" data-bs-target="#system-settings"
+                    type="button" role="tab">
+                    <i class="bi bi-globe me-2"></i>System
+                </button>
+                <button class="nav-link" id="payment-tab" data-bs-toggle="pill" data-bs-target="#payment-settings"
+                    type="button" role="tab">
+                    <i class="bi bi-credit-card me-2"></i>Payment
+                </button>
+                <button class="nav-link" id="notification-tab" data-bs-toggle="pill"
+                    data-bs-target="#notification-settings" type="button" role="tab">
+                    <i class="bi bi-bell me-2"></i>Notification
+                </button>
+                <button class="nav-link" id="security-tab" data-bs-toggle="pill" data-bs-target="#security-settings"
+                    type="button" role="tab">
+                    <i class="bi bi-shield-lock me-2"></i>Security
+                </button>
+                <button class="nav-link" id="email-tab" data-bs-toggle="pill" data-bs-target="#email-settings"
+                    type="button" role="tab">
+                    <i class="bi bi-envelope me-2"></i>Email
+                </button>
+                <button class="nav-link" id="integration-tab" data-bs-toggle="pill"
+                    data-bs-target="#integration-settings" type="button" role="tab">
+                    <i class="bi bi-link-45deg me-2"></i>Integration
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="tab-content" id="settingsContent">
+        <!-- System Settings -->
+        <div class="tab-pane fade show active" id="system-settings" role="tabpanel">
+            {% set _form = form %}
+            {% set _settings = settings.system %}
+            {% set _setting_type = 'system' %}
+            {% include 'admin/_settings_form.html' %}
+        </div>
+
+        <!-- Payment Settings -->
+        <div class="tab-pane fade" id="payment-settings" role="tabpanel">
+            {% set _form = form %}
+            {% set _settings = settings.payment %}
+            {% set _setting_type = 'payment' %}
+            {% include 'admin/_settings_form.html' %}
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="tab-pane fade" id="notification-settings" role="tabpanel">
+            {% set _form = form %}
+            {% set _settings = settings.notification %}
+            {% set _setting_type = 'notification' %}
+            {% include 'admin/_settings_form.html' %}
+        </div>
+
+        <!-- Security Settings -->
+        <div class="tab-pane fade" id="security-settings" role="tabpanel">
+            {% set _form = form %}
+            {% set _settings = settings.security %}
+            {% set _setting_type = 'security' %}
+            {% include 'admin/_settings_form.html' %}
+        </div>
+
+        <!-- Email Settings -->
+        <div class="tab-pane fade" id="email-settings" role="tabpanel">
+            {% set _form = form %}
+            {% set _settings = settings.email %}
+            {% set _setting_type = 'email' %}
+            {% include 'admin/_settings_form.html' %}
+        </div>
+
+        <!-- Integration Settings -->
+        <div class="tab-pane fade" id="integration-settings" role="tabpanel">
+            {% set _form = form %}
+            {% set _settings = settings.integration %}
+            {% set _setting_type = 'integration' %}
+            {% include 'admin/_settings_form.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Initialize tabs
+        const tabTriggerList = [].slice.call(document.querySelectorAll('#settingsTabs button'));
+        tabTriggerList.map(function (tabTriggerEl) {
+            return new bootstrap.Tab(tabTriggerEl);
+        });
+
+        // Handle tab change
+        document.querySelectorAll('#settingsTabs button').forEach(button => {
+            button.addEventListener('click', function () {
+                const settingType = this.getAttribute('data-bs-target').replace('#', '');
+                // Update form fields based on setting type
+                updateFormFields(settingType);
+            });
+        });
+
+        function updateFormFields(settingType) {
+            // Clear existing fields
+            const form = document.querySelector('form');
+            if (form) {
+                form.innerHTML = '';
+
+                // Add hidden CSRF token
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = 'csrf_token';
+                csrf.value = '{{ csrf_token() }}';
+                form.appendChild(csrf);
+
+                // Add setting type field
+                const typeField = document.createElement('input');
+                typeField.type = 'hidden';
+                typeField.name = 'setting_type';
+                typeField.value = settingType;
+                form.appendChild(typeField);
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,454 @@
+{% extends "admin/clients/base.html" %}
+
+{% block client_header %}{{ title }}{% endblock %}
+
+{% block client_actions %}
+    <a href="{{ url_for('client.list') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Clients
+    </a>
+{% endblock %}
+
+{% block client_content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Client Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('client.new_client') if not client else url_for('client.edit_client', client_id=client.id) }}" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    {% if not client %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.username.label(class="form-label") }}
+                                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                                {% for error in form.username.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.password.label(class="form-label") }}
+                                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                                {% for error in form.password.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                                <div class="form-text">Set a password for client panel login</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.company_name.label(class="form-label") }}
+                                {{ form.company_name(class="form-control" + (" is-invalid" if form.company_name.errors else "")) }}
+                                {% for error in form.company_name.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.email.label(class="form-label") }}
+                                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                {% for error in form.email.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.contact_person.label(class="form-label") }}
+                                {{ form.contact_person(class="form-control" + (" is-invalid" if form.contact_person.errors else "")) }}
+                                {% for error in form.contact_person.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.phone.label(class="form-label") }}
+                                {{ form.phone(class="form-control" + (" is-invalid" if form.phone.errors else "")) }}
+                                {% for error in form.phone.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.contact_email.label(class="form-label") }}
+                                {{ form.contact_email(class="form-control" + (" is-invalid" if form.contact_email.errors else "")) }}
+                                {% for error in form.contact_email.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.contact_phone.label(class="form-label") }}
+                                {{ form.contact_phone(class="form-control" + (" is-invalid" if form.contact_phone.errors else "")) }}
+                                {% for error in form.contact_phone.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.website.label(class="form-label") }}
+                        <div class="input-group">
+                            <span class="input-group-text">https://</span>
+                            {{ form.website(class="form-control" + (" is-invalid" if form.website.errors else "")) }}
+                            {% for error in form.website.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="3") }}
+                        {% for error in form.notes.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h5 class="mb-3">API & Integration</h5>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.api_key.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.api_key(class="form-control" + (" is-invalid" if form.api_key.errors else ""), readonly=not form.api_key.data) }}
+                                    {% if form.api_key.data %}
+                                    <button class="btn btn-outline-secondary" type="button" id="toggleApiKey">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('api_key')">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% if not form.api_key.data %}
+                                    <div class="form-text">API key will be generated automatically</div>
+                                {% else %}
+                                    <div class="form-text">Keep this key secure and never share it</div>
+                                {% endif %}
+                                {% for error in form.api_key.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.webhook_url.label(class="form-label") }}
+                                {{ form.webhook_url(class="form-control" + (" is-invalid" if form.webhook_url.errors else "")) }}
+                                <div class="form-text">URL to receive payment notifications</div>
+                                {% for error in form.webhook_url.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.rate_limit.label(class="form-label") }}
+                                {{ form.rate_limit(class="form-control" + (" is-invalid" if form.rate_limit.errors else "")) }}
+                                <div class="form-text">Maximum API requests per day</div>
+                                {% for error in form.rate_limit.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <div class="form-check form-switch mt-2">
+                                    {{ form.is_active(class="form-check-input" + (" is-invalid" if form.is_active.errors else ""), role="switch") }}
+                                    <label class="form-check-label" for="is_active">
+                                        {{ 'Active' if form.is_active.data else 'Inactive' }}
+                                    </label>
+                                </div>
+                                {% for error in form.is_active.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h5 class="mb-3">Commissions</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.deposit_commission_rate.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.deposit_commission_rate(class="form-control" + (" is-invalid" if form.deposit_commission_rate.errors else "")) }}
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text">Commission on deposit transactions</div>
+                                {% for error in form.deposit_commission_rate.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.withdrawal_commission_rate.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.withdrawal_commission_rate(class="form-control" + (" is-invalid" if form.withdrawal_commission_rate.errors else "")) }}
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text">Commission on withdrawal transactions</div>
+                                {% for error in form.withdrawal_commission_rate.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('client.list_clients') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-lg me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Client Stats</h5>
+            </div>
+            <div class="card-body">
+                {% if client %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Created</span>
+                        <span>{{ client.created_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Last Updated</span>
+                        <span>{{ client.updated_at.strftime('%b %d, %Y') if client.updated_at else 'Never' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Total Payments</span>
+                        <span>{{ client.payments.count() }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-0">
+                        <span class="text-muted">Total Withdrawals</span>
+                        <span>{{ client.withdrawal_requests.count() }}</span>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-info-circle d-block fs-1 mb-2"></i>
+                        <p class="mb-0">Client stats will be available after saving</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Danger Zone</h5>
+            </div>
+            <div class="card-body">
+                {% if client %}
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deactivateClientModal">
+                            <i class="bi bi-x-circle me-1"></i>
+                            {{ 'Deactivate' if client.is_active else 'Activate' }} Client
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteClientModal" {{ 'disabled' if not current_user.is_superadmin }}>
+                            <i class="bi bi-trash me-1"></i> Delete Client
+                        </button>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-exclamation-triangle d-block fs-1 mb-2"></i>
+                        <p class="mb-0">Dangerous actions will be available after saving</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if client %}
+<!-- Deactivate Client Modal -->
+<div class="modal fade" id="deactivateClientModal" tabindex="-1" aria-labelledby="deactivateClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deactivateClientModalLabel">
+                    {{ 'Deactivate' if client.is_active else 'Activate' }} Client
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to {{ 'deactivate' if client.is_active else 'activate' }} <strong>{{ client.company_name }}</strong>?</p>
+                {% if client.is_active %}
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    Deactivating this client will prevent them from accessing the API and making any transactions.
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    Activating this client will restore their access to the API and allow transactions.
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('client.toggle_client_status', client_id=client.id) }}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-{{ 'danger' if client.is_active else 'success' }}">
+                        <i class="bi bi-{{ 'x-circle' if client.is_active else 'check-circle' }} me-1"></i>
+                        {{ 'Deactivate' if client.is_active else 'Activate' }} Client
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Client Modal -->
+<div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger" id="deleteClientModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    Delete Client
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you absolutely sure you want to delete <strong>{{ client.company_name }}</strong>?</p>
+                <div class="alert alert-danger">
+                    <h6 class="alert-heading">This action cannot be undone!</h6>
+                    <p class="mb-0">
+                        This will permanently delete the client and all associated data including:
+                    </p>
+                    <ul class="mb-0">
+                        <li>All payment records</li>
+                        <li>All withdrawal requests</li>
+                        <li>API access and settings</li>
+                        <li>Transaction history</li>
+                    </ul>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                    <label class="form-check-label" for="confirmDelete">
+                        I understand that this action is irreversible
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('client.delete_client', client_id=client.id) }}" method="post" class="d-inline" id="deleteForm">
+                    <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                        <i class="bi bi-trash me-1"></i> Delete Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Toggle API key visibility
+    const toggleApiKey = document.getElementById('toggleApiKey');
+    if (toggleApiKey) {
+        toggleApiKey.addEventListener('click', function() {
+            const apiKeyInput = document.getElementById('api_key');
+            const icon = this.querySelector('i');
+            
+            if (apiKeyInput.type === 'password') {
+                apiKeyInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                apiKeyInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+    }
+    
+    // Copy to clipboard
+    function copyToClipboard(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        
+        el.select();
+        el.setSelectionRange(0, 99999); // For mobile devices
+        
+        try {
+            // Copy the text inside the text field
+            document.execCommand('copy');
+            
+            // Show tooltip
+            const tooltip = new bootstrap.Tooltip(el, {
+                title: 'Copied!',
+                trigger: 'manual',
+                placement: 'top'
+            });
+            tooltip.show();
+            
+            // Hide tooltip after 2 seconds
+            setTimeout(() => {
+                tooltip.hide();
+                // Clean up the tooltip instance
+                setTimeout(() => tooltip.dispose(), 150);
+            }, 2000);
+            
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    }
+    
+    // Enable/disable delete button based on confirmation
+    const confirmDelete = document.getElementById('confirmDelete');
+    const deleteButton = document.getElementById('deleteButton');
+    if (confirmDelete && deleteButton) {
+        confirmDelete.addEventListener('change', function() {
+            deleteButton.disabled = !this.checked;
+        });
+    }
+    
+    // Toggle status label text
+    const statusSwitch = document.getElementById('is_active');
+    const statusLabel = statusSwitch?.nextElementSibling;
+    if (statusSwitch && statusLabel) {
+        statusSwitch.addEventListener('change', function() {
+            statusLabel.textContent = this.checked ? 'Active' : 'Inactive';
+        });
+    }
+</script>
+{% endblock %}

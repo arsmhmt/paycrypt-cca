@@ -1,0 +1,1875 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}{{ _('Clients') }} - Admin{% endblock %}
+
+{% block styles %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<style>
+    /* Enhanced Stats Cards */
+    .stats-card {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        border: none;
+        border-radius: 15px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        z-index: 1;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(79, 70, 229, 0.2);
+    }
+
+    .stats-card .card-body {
+        position: relative;
+        z-index: 2;
+        color: white;
+    }
+
+    .stats-card-primary {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    }
+
+    .stats-card-success {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    }
+
+    .stats-card-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+    }
+
+    .stats-card-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    }
+
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .stats-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.9;
+    }
+
+    .stats-icon {
+        font-size: 3rem;
+        opacity: 0.3;
+    }
+
+    /* Enhanced Table */
+    .enhanced-table {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .enhanced-table .table {
+        margin-bottom: 0;
+    }
+
+    .enhanced-table .table thead th {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: none;
+        padding: 1rem;
+    }
+
+    .enhanced-table .table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .enhanced-table .table tbody tr:hover {
+        background-color: #f8f9ff;
+        transform: scale(1.01);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .enhanced-table .table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border: none;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-active {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        color: white;
+    }
+
+    .status-inactive {
+        background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
+        color: white;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+        margin: 0 2px;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: white;
+    }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        color: white;
+    }
+
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.1;
+    }
+
+    .page-header .container-fluid {
+        position: relative;
+        z-index: 2;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    /* Loading Animation */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #4f46e5;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+
+    /* Client Table Specific Styles */
+    .client-id-badge {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 10px rgba(79, 70, 229, 0.2);
+    }
+
+    .client-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        object-fit: cover;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .client-avatar-placeholder {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
+    }
+
+    .client-name {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .website-link {
+        color: #4f46e5;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+    }
+
+    .website-link:hover {
+        color: #7c3aed;
+        transform: translateX(5px);
+    }
+
+    .package-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .package-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .commission-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .commission-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .commission-rate {
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+
+    .commission-rate.success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .commission-rate.info {
+        background-color: #cce7ff;
+        color: #004085;
+    }
+
+    .balance-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .balance-amount {
+        font-weight: 700;
+        font-size: 1.1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 8px;
+    }
+
+    .balance-amount.positive {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .balance-amount.negative {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .balance-amount.zero {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+
+    .status-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .status-company {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+    }
+
+    .status-individual {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: white;
+    }
+
+    .status-package {
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        color: white;
+    }
+
+    .status-flat {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: white;
+    }
+
+    .status-commission {
+        background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+        color: white;
+    }
+
+    .status-active {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: white;
+    }
+
+    .status-inactive {
+        background: linear-gradient(135deg, #6b7280 0%, #374151 100%);
+        color: white;
+    }
+
+    .status-verified {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+        color: white;
+    }
+
+    .last-active {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .activity-date {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.9rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons .btn {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        min-width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Enhanced Filter Bar */
+    .filter-bar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #dee2e6;
+    }
+
+    .filter-bar .form-control,
+    .filter-bar .form-select {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        transition: all 0.3s ease;
+        height: 32px;
+    }
+
+    .filter-bar .form-control:focus,
+    .filter-bar .form-select:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 0.15rem rgba(79, 70, 229, 0.2);
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.3rem;
+        align-items: end;
+    }
+
+    .filter-actions .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        font-weight: 500;
+        height: 32px;
+        min-width: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .filter-bar .form-label {
+        margin-bottom: 0.3rem;
+        font-size: 0.7rem !important;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 1.8rem;
+        }
+
+        .page-subtitle {
+            font-size: 0.9rem;
+        }
+
+        .stats-number {
+            font-size: 1.8rem;
+        }
+
+        .quick-stats .row {
+            text-align: center;
+        }
+
+        .quick-stat-item {
+            border-right: none;
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.5rem 0.2rem;
+        }
+
+        .quick-stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .quick-stat-number {
+            font-size: 1.1rem;
+        }
+
+        .filter-bar .col-md-4,
+        .filter-bar .col-md-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .clients-table-compact .table td,
+        .clients-table-compact .table th {
+            padding: 0.4rem 0.2rem;
+            font-size: 0.7rem;
+        }
+
+        .client-name-compact {
+            font-size: 0.75rem;
+        }
+
+        .action-btn-compact {
+            min-width: 24px;
+            height: 24px;
+            padding: 0.2rem;
+        }
+
+        .table-header-compact {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .table-actions-compact {
+            justify-content: center;
+        }
+
+        .enhanced-table {
+            margin: 0 -15px;
+            border-radius: 0;
+        }
+    }
+
+    /* Print Styles */
+    @media print {
+
+        .filter-bar,
+        .page-header,
+        .action-buttons-compact,
+        .loading-overlay {
+            display: none !important;
+        }
+
+        .clients-table-compact {
+            font-size: 0.6rem;
+        }
+
+        .quick-stats {
+            border: 1px solid #000;
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* Compact Table Design */
+    .clients-table-compact {
+        font-size: 0.75rem;
+    }
+
+    .clients-table-compact .table th {
+        padding: 0.6rem 0.4rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        line-height: 1.2;
+    }
+
+    .clients-table-compact .table td {
+        padding: 0.6rem 0.4rem;
+        vertical-align: middle;
+        font-size: 0.75rem;
+        line-height: 1.3;
+    }
+
+    .client-avatar-compact {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        object-fit: cover;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .client-avatar-placeholder-compact {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+        box-shadow: 0 1px 4px rgba(79, 70, 229, 0.2);
+    }
+
+    .client-name-compact {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.8rem;
+        margin-bottom: 0.15rem;
+        line-height: 1.2;
+    }
+
+    .client-meta {
+        font-size: 0.65rem;
+        color: #6c757d;
+        margin-top: 0.15rem;
+        line-height: 1.1;
+    }
+
+    .status-badge-compact {
+        padding: 0.2rem 0.4rem;
+        border-radius: 10px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        display: inline-block;
+        line-height: 1;
+    }
+
+    .action-buttons-compact {
+        display: flex;
+        gap: 0.15rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn-compact {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.65rem;
+        border-radius: 4px;
+        min-width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn-compact:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .commission-display {
+        font-size: 0.65rem;
+        line-height: 1.2;
+    }
+
+    .commission-rate-compact {
+        font-weight: 600;
+        padding: 0.1rem 0.25rem;
+        border-radius: 3px;
+        font-size: 0.6rem;
+        display: inline-block;
+        min-width: 35px;
+        text-align: center;
+        line-height: 1.1;
+    }
+
+    .balance-display-compact {
+        font-weight: 600;
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+
+    .balance-meta {
+        font-size: 0.6rem;
+        color: #6c757d;
+        margin-top: 0.1rem;
+        line-height: 1.1;
+    }
+
+    /* Quick Stats Bar */
+    .quick-stats {
+        background: white;
+        border-radius: 8px;
+        padding: 0.8rem;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e9ecef;
+    }
+
+    .quick-stat-item {
+        text-align: center;
+        padding: 0.3rem;
+        border-right: 1px solid #e9ecef;
+    }
+
+    .quick-stat-item:last-child {
+        border-right: none;
+    }
+
+    .quick-stat-number {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.1rem;
+        line-height: 1;
+    }
+
+    .quick-stat-label {
+        font-size: 0.65rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        font-weight: 500;
+        margin-bottom: 0.1rem;
+        line-height: 1;
+    }
+
+    .quick-stat-change {
+        font-size: 0.6rem;
+        margin-top: 0.1rem;
+        line-height: 1;
+    }
+
+    .quick-stat-change.positive {
+        color: #28a745;
+    }
+
+    .quick-stat-change.negative {
+        color: #dc3545;
+    }
+
+    .quick-stat-change.neutral {
+        color: #6c757d;
+    }
+
+    /* Table Header Improvements */
+    .table-header-compact {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .table-title-compact {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+    }
+
+    .table-subtitle-compact {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        margin-bottom: 0;
+    }
+
+    .table-actions-compact {
+        display: flex;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+    }
+
+    .table-actions-compact .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+</div>
+
+<!-- Toast Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11;">
+    <div id="toast-container"></div>
+</div>
+
+<div class="container-fluid">
+    <!-- Enhanced Page Header -->
+    <div class="page-header animate__animated animate__fadeInDown">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="page-title">
+                        <i class="bi bi-people-fill me-3"></i>{{ _('Client Management') }}
+                    </h1>
+                    <p class="page-subtitle">
+                        {{ _('Manage your clients, view statistics, and track commissions') }}
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="btn-group" role="group">
+                        <a href="#" class="btn btn-light btn-lg action-btn">
+                            <i class="bi bi-plus-circle me-2"></i>{{ _('Add New Client') }}
+                        </a>
+                        <button type="button" class="btn btn-light btn-lg action-btn" onclick="exportClients()">
+                            <i class="bi bi-file-earmark-arrow-down me-2"></i>{{ _('Export') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Stats Cards -->
+    <div class="row mb-5">
+        <!-- Total Clients Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card stats-card-primary shadow-lg animate__animated animate__fadeInUp">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="stats-label">{{ _('Total Clients') }}</div>
+                            <div class="stats-number">{{ clients.total }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Clients Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card stats-card-success shadow-lg animate__animated animate__fadeInUp"
+                style="animation-delay: 0.1s;">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="stats-label">{{ _('Active Clients') }}</div>
+                            <div class="stats-number">{{ clients.items|selectattr('is_active')|list|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Commission Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card stats-card-info shadow-lg animate__animated animate__fadeInUp"
+                style="animation-delay: 0.2s;">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="stats-label">{{ _('Total Commissions') }}</div>
+                            <div class="stats-number">${{ "%.0f"|format((commission_stats.total_30d|default(0)) if
+                                commission_stats else 0) }}</div>
+                            <small class="text-white-50">{{ _('Last 30 days') }}</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Commission Rate -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card stats-card-warning shadow-lg animate__animated animate__fadeInUp"
+                style="animation-delay: 0.3s;">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="stats-label">{{ _('Avg. Commission') }}</div>
+                            <div class="stats-number">{{ "%.1f"|format((commission_stats.avg_rate|default(0)) if
+                                commission_stats else 0) }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage stats-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Bar -->
+    <div class="quick-stats animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
+        <div class="row g-0">
+            <div class="col-md-2">
+                <div class="quick-stat-item">
+                    <div class="quick-stat-number">{{ clients.total }}</div>
+                    <div class="quick-stat-label">{{ _('Total Clients') }}</div>
+                    <div class="quick-stat-change positive">
+                        <i class="bi bi-arrow-up"></i> +5.2%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="quick-stat-item">
+                    <div class="quick-stat-number">{{ clients.items|selectattr('is_active')|list|length }}</div>
+                    <div class="quick-stat-label">{{ _('Active') }}</div>
+                    <div class="quick-stat-change positive">
+                        <i class="bi bi-arrow-up"></i> +2.1%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="quick-stat-item">
+                    <div class="quick-stat-number">{{ clients.items|selectattr('is_verified')|list|length }}</div>
+                    <div class="quick-stat-label">{{ _('Verified') }}</div>
+                    <div class="quick-stat-change neutral">
+                        <i class="bi bi-dash"></i> 0%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="quick-stat-item">
+                    <div class="quick-stat-number">${{ "%.0f"|format((commission_stats.total_30d|default(0)) if
+                        commission_stats else 0) }}</div>
+                    <div class="quick-stat-label">{{ _('Revenue') }}</div>
+                    <div class="quick-stat-change positive">
+                        <i class="bi bi-arrow-up"></i> +12.8%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="quick-stat-item">
+                    <div class="quick-stat-number">{{ "%.1f"|format((commission_stats.avg_rate|default(0)) if
+                        commission_stats else 0) }}%</div>
+                    <div class="quick-stat-label">{{ _('Avg Comm') }}</div>
+                    <div class="quick-stat-change negative">
+                        <i class="bi bi-arrow-down"></i> -0.3%
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="quick-stat-item">
+                    <div class="quick-stat-number">{{ clients.items|selectattr('package_id')|list|length }}</div>
+                    <div class="quick-stat-label">{{ _('With Package') }}</div>
+                    <div class="quick-stat-change positive">
+                        <i class="bi bi-arrow-up"></i> +7.4%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Filter Bar -->
+    <div class="filter-bar animate__animated animate__fadeInUp" style="animation-delay: 0.5s;">
+        <form method="GET" action="{{ url_for('admin.reports') }}" class="row g-2">
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="bi bi-search me-1"></i>{{ _('Search') }}
+                </label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="search" class="form-control"
+                        placeholder="{{ _('Company, name, email, phone...') }}"
+                        value="{{ request.args.get('search', '') }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">
+                    <i class="bi bi-toggle-on me-1"></i>{{ _('Status') }}
+                </label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">{{ _('All Status') }}</option>
+                    <option value="active" {{ 'selected' if request.args.get('status')=='active' }}>{{ _('Active') }}
+                    </option>
+                    <option value="inactive" {{ 'selected' if request.args.get('status')=='inactive' }}>{{ _('Inactive')
+                        }}
+                    </option>
+                    <option value="verified" {{ 'selected' if request.args.get('status')=='verified' }}>{{ _('Verified')
+                        }}
+                    </option>
+                    <option value="pending" {{ 'selected' if request.args.get('status')=='pending' }}>{{ _('Pending') }}
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">
+                    <i class="bi bi-building me-1"></i>{{ _('Type') }}
+                </label>
+                <select name="type" class="form-select form-select-sm">
+                    <option value="">{{ _('All Types') }}</option>
+                    <option value="COMPANY" {{ 'selected' if request.args.get('type')=='COMPANY' }}>{{ _('Company') }}
+                    </option>
+                    <option value="INDIVIDUAL" {{ 'selected' if request.args.get('type')=='INDIVIDUAL' }}>{{
+                        _('Individual') }}
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">
+                    <i class="bi bi-box me-1"></i>{{ _('Package') }}
+                </label>
+                <select name="package" class="form-select form-select-sm">
+                    <option value="">{{ _('All Packages') }}</option>
+                    <option value="no_package" {{ 'selected' if request.args.get('package')=='no_package' }}>{{ _('No
+                        Package') }}
+                    </option>
+                    <option value="basic" {{ 'selected' if request.args.get('package')=='basic' }}>{{ _('Basic') }}
+                    </option>
+                    <option value="premium" {{ 'selected' if request.args.get('package')=='premium' }}>{{ _('Premium')
+                        }}</option>
+                    <option value="enterprise" {{ 'selected' if request.args.get('package')=='enterprise' }}>{{
+                        _('Enterprise') }}
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">
+                    <i class="bi bi-funnel me-1"></i>{{ _('Actions') }}
+                </label>
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary btn-sm" title="{{ _('Apply Filters') }}">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                    <a href="{{ url_for('admin.reports') }}" class="btn btn-outline-secondary btn-sm"
+                        title="{{ _('Clear Filters') }}">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-success btn-sm" onclick="exportFilteredClients()"
+                        title="{{ _('Export Results') }}">
+                        <i class="bi bi-download"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <!-- Enhanced Clients Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="enhanced-table clients-table-compact animate__animated animate__fadeInUp"
+                style="animation-delay: 0.6s;">
+                <div class="table-header-compact d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="table-title-compact">
+                            <i class="bi bi-people me-2"></i>{{ _('Clients Directory') }}
+                        </div>
+                        <div class="table-subtitle-compact">
+                            {{ _('Manage and monitor all your clients') }} • {{ clients.total }} {{ _('total') }}
+                        </div>
+                    </div>
+                    <div class="table-actions-compact">
+                        <button type="button" class="btn btn-light btn-sm" id="refreshTable">
+                            <i class="bi bi-arrow-clockwise me-1"></i> {{ _('Refresh') }}
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm" onclick="exportClients()">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i> {{ _('Export') }}
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm" onclick="showKeyboardShortcuts()"
+                            title="{{ _('Keyboard Shortcuts') }}">
+                            <i class="bi bi-keyboard"></i>
+                        </button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-light btn-sm dropdown-toggle"
+                                data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="filterTable('all')">
+                                        <i class="bi bi-list me-2"></i>{{ _('All Clients') }}
+                                    </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterTable('active')">
+                                        <i class="bi bi-check-circle me-2"></i>{{ _('Active Only') }}
+                                    </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterTable('inactive')">
+                                        <i class="bi bi-x-circle me-2"></i>{{ _('Inactive Only') }}
+                                    </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterTable('verified')">
+                                        <i class="bi bi-patch-check me-2"></i>{{ _('Verified Only') }}
+                                    </a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="#" onclick="showBulkActions()">
+                                        <i class="bi bi-check2-all me-2"></i>{{ _('Bulk Actions') }}
+                                    </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="clientsTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th width="5%">{{ _('ID') }}</th>
+                                    <th width="20%">{{ _('Client') }}</th>
+                                    <th width="15%">{{ _('Contact') }}</th>
+                                    <th width="10%">{{ _('Package') }}</th>
+                                    <th width="12%">{{ _('Commission') }}</th>
+                                    <th width="10%">{{ _('Balance') }}</th>
+                                    <th width="12%">{{ _('Status') }}</th>
+                                    <th width="8%">{{ _('Last Active') }}</th>
+                                    <th width="8%">{{ _('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if clients.items %}
+                                {% for client in clients.items %}
+                                <tr data-client-id="{{ client.id }}" class="align-middle">
+                                    <td>
+                                        <div class="client-id-badge">#{{ client.id }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0 me-2">
+                                                {% if client.logo_url %}
+                                                <img src="{{ client.logo_url }}" alt="Logo"
+                                                    class="client-avatar-compact">
+                                                {% else %}
+                                                <div class="client-avatar-placeholder-compact">
+                                                    {{ (client.company_name or client.name or 'C')|first|upper }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="client-name-compact">{{ client.company_name or client.name
+                                                    or 'Unnamed Client' }}</div>
+                                                <div class="d-flex align-items-center gap-1 mt-1">
+                                                    <span
+                                                        class="status-badge-compact {{ 'status-company' if client.type and client.type.value == 'COMPANY' else 'status-individual' }}">
+                                                        {{ client.type.value if client.type else 'IND' }}
+                                                    </span>
+                                                    {% if client.package_id %}
+                                                    <span class="status-badge-compact status-package">
+                                                        {% set clean_name = client.package.name.replace(' Flat Rate',
+                                                        '').replace(' Commission', '') if client.package else 'PKG' %}
+                                                        {{ clean_name|truncate(5, true, '') }}
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                                {% if client.contact_person %}
+                                                <div class="client-meta">
+                                                    <i class="bi bi-person me-1"></i>{{ client.contact_person }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 0.75rem;">
+                                            {% if client.email %}
+                                            <div class="mb-1">
+                                                <i class="bi bi-envelope me-1" style="color: #4f46e5;"></i>
+                                                <span>{{ client.email|truncate(23) }}</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if client.phone %}
+                                            <div class="mb-1">
+                                                <i class="bi bi-telephone me-1" style="color: #059669;"></i>
+                                                <span>{{ client.phone }}</span>
+                                            </div>
+                                            {% endif %}
+                                            {% if client.website %}
+                                            <div>
+                                                <i class="bi bi-globe me-1" style="color: #0ea5e9;"></i>
+                                                <a href="{{ client.website }}" target="_blank"
+                                                    class="text-decoration-none website-link"
+                                                    style="font-size: 0.7rem;">
+                                                    {{ client.website|replace('https://', '')|replace('http://',
+                                                    '')|replace('www.', '')|truncate(18) }}
+                                                </a>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if client.package_id and client.package %}
+                                        {% set clean_package_name = client.package.name.replace(' Flat Rate',
+                                        '').replace(' Commission', '') %}
+                                        <div class="text-center">
+                                            <div class="fw-bold" style="font-size: 0.8rem;">{{ clean_package_name }}
+                                            </div>
+                                            <span
+                                                class="status-badge-compact {{ 'status-flat' if client.package.client_type and client.package.client_type.value == 'FLAT_RATE' else 'status-commission' }}">
+                                                {{ 'FLAT' if client.package.client_type and
+                                                client.package.client_type.value == 'FLAT_RATE' else 'COMM' }}
+                                            </span>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-center text-muted" style="font-size: 0.75rem;">
+                                            <i class="bi bi-dash-circle"></i>
+                                            <div>{{ _('No Package') }}</div>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="commission-display text-center">
+                                            <div class="mb-1">
+                                                <small class="text-muted">{{ _('DEP:') }}</small>
+                                                <span class="commission-rate-compact success">{{
+                                                    "%.1f"|format(((client.deposit_commission_rate or 0) * 100))
+                                                    }}%</span>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted">{{ _('WD:') }}</small>
+                                                <span class="commission-rate-compact info">{{
+                                                    "%.1f"|format(((client.withdrawal_commission_rate or 0) * 100))
+                                                    }}%</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-center">
+                                            <div class="balance-display-compact text-muted">
+                                                <i class="bi bi-currency-dollar"></i>
+                                                <span>{{ _('Balance') }}</span>
+                                            </div>
+                                            <div class="balance-meta">
+                                                <small class="text-muted">{{ _('Coming Soon') }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-center">
+                                            <span
+                                                class="status-badge-compact {{ 'status-active' if client.is_active else 'status-inactive' }}">
+                                                <i
+                                                    class="bi {{ 'bi-check-circle' if client.is_active else 'bi-x-circle' }}"></i>
+                                                {{ 'Active' if client.is_active else 'Inactive' }}
+                                            </span>
+                                            <div class="mt-1">
+                                                {% if client.is_verified %}
+                                                <span class="status-badge-compact status-verified">
+                                                    <i class="bi bi-patch-check"></i> {{ _('Verified') }}
+                                                </span>
+                                                {% else %}
+                                                <span class="status-badge-compact status-pending">
+                                                    <i class="bi bi-clock"></i> {{ _('Pending') }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="text-center" style="font-size: 0.75rem;">
+                                            {% if client.last_login_at %}
+                                            <div class="fw-bold">{{ client.last_login_at.strftime('%m/%d/%y') }}</div>
+                                            <div class="text-muted">{{ client.last_login_at.strftime('%H:%M') }}</div>
+                                            {% else %}
+                                            <span class="text-muted">{{ _('Never') }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons-compact">
+                                            <button type="button" class="action-btn-compact btn-view"
+                                                onclick="viewClient({{ client.id }})" data-bs-toggle="tooltip"
+                                                title="{{ _('View') }}">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="action-btn-compact btn-edit"
+                                                onclick="editClient({{ client.id }})" data-bs-toggle="tooltip"
+                                                title="{{ _('Edit') }}">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <div class="btn-group">
+                                                <button type="button"
+                                                    class="action-btn-compact btn-edit dropdown-toggle"
+                                                    data-bs-toggle="dropdown" title="{{ _('More') }}">
+                                                    <i class="bi bi-three-dots"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li><a class="dropdown-item" href="#"
+                                                            onclick="showClientCommissions({{ client.id }})">
+                                                            <i class="bi bi-percent me-2"></i>{{ _('Commission') }}
+                                                        </a></li>
+                                                    <li><a class="dropdown-item" href="#"
+                                                            onclick="showClientApiKeys({{ client.id }})">
+                                                            <i class="bi bi-key me-2"></i>{{ _('API Keys') }}
+                                                        </a></li>
+                                                    <li>
+                                                        <hr class="dropdown-divider">
+                                                    </li>
+                                                    <li><button class="dropdown-item text-danger"
+                                                            onclick="deleteClient({{ client.id }})">
+                                                            <i class="bi bi-trash me-2"></i>{{ _('Delete') }}
+                                                        </button></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="9" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="bi bi-people" style="font-size: 3rem; opacity: 0.3;"></i>
+                                            <h5 class="mt-3 mb-2">{{ _('No Clients Found') }}</h5>
+                                            <p class="mb-3">{{ _("You haven't added any clients yet.") }}</p>
+                                            <a href="#" class="btn btn-primary">
+                                                <i class="bi bi-plus-circle me-2"></i>{{ _('Add First Client') }}
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Core dependencies - load first -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- DataTables JavaScript - load after jQuery -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+
+<script>
+    let clientsTable;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize immediately without loading overlay
+        initializePage();
+
+        // Fallback: Always hide loading overlay after 2 seconds
+        setTimeout(function () {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = 'none';
+        }, 2000);
+    });
+
+    function initializePage() {
+        console.log('Initializing clients page...');
+
+        try {
+            // Initialize DataTable
+            if (typeof $ !== 'undefined' && typeof $.fn.DataTable !== 'undefined') {
+                console.log('Initializing DataTable...');
+                clientsTable = $('#clientsTable').DataTable({
+                    pageLength: 25,
+                    order: [[0, "desc"]],
+                    columnDefs: [
+                        { orderable: false, targets: [8] },
+                        { className: "text-center", targets: [0, 3, 4, 5, 6, 7, 8] },
+                        { width: "5%", targets: [0] },
+                        { width: "20%", targets: [1] },
+                        { width: "15%", targets: [2] },
+                        { width: "10%", targets: [3] },
+                        { width: "12%", targets: [4] },
+                        { width: "10%", targets: [5] },
+                        { width: "12%", targets: [6] },
+                        { width: "8%", targets: [7] },
+                        { width: "8%", targets: [8] },
+                        { className: "text-nowrap", targets: [4, 5, 7] }
+                    ],
+                    language: {
+                        search: "Search:",
+                        lengthMenu: "Show _MENU_ per page",
+                        zeroRecords: "No clients found matching your criteria",
+                        info: "Showing _START_ to _END_ of _TOTAL_ clients",
+                        infoEmpty: "No clients available",
+                        infoFiltered: "(filtered from _MAX_ total)",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Prev"
+                        }
+                    },
+                    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                    responsive: true,
+                    autoWidth: false,
+                    searching: true,
+                    lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                    drawCallback: function () {
+                        // Initialize tooltips after table draw
+                        initializeTooltips();
+                        console.log('Table drawn, tooltips initialized');
+                    },
+                    initComplete: function () {
+                        console.log('DataTable initialization complete');
+                        hideLoading();
+                    }
+                });
+
+                console.log('DataTable initialized successfully');
+            } else {
+                console.log('DataTable not available, initializing basic functionality');
+                hideLoading();
+            }
+
+            // Initialize tooltips
+            initializeTooltips();
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Add keyboard shortcuts
+            setupKeyboardShortcuts();
+
+            console.log('Page initialization complete');
+
+        } catch (error) {
+            console.error('Error initializing page:', error);
+            hideLoading();
+        }
+    }
+
+    function setupKeyboardShortcuts() {
+        document.addEventListener('keydown', function (e) {
+            // Ctrl+F to focus search
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                const searchInput = document.querySelector('input[name="search"]');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
+
+            // Ctrl+R to refresh table
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                refreshTable();
+            }
+
+            // Ctrl+E to export
+            if (e.ctrlKey && e.key === 'e') {
+                e.preventDefault();
+                exportClients();
+            }
+
+            // Escape to clear filters
+            if (e.key === 'Escape') {
+                const clearButton = document.querySelector('a[href*="clients"]:not([href*="?"]):not([href*="/"]):not([onclick])');
+                if (clearButton) {
+                    window.location.href = clearButton.href;
+                }
+            }
+        });
+    }
+
+    function initializeTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    function setupEventListeners() {
+        // Refresh table button
+        document.getElementById('refreshTable')?.addEventListener('click', function () {
+            refreshTable();
+        });
+
+        // Refresh commissions button
+        document.getElementById('refreshCommissions')?.addEventListener('click', function () {
+            refreshCommissions();
+        });
+    }
+
+    function showLoading() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            console.log('Loading overlay shown');
+        }
+    }
+
+    function hideLoading() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            console.log('Loading overlay hidden');
+        }
+    }
+
+    function refreshTable() {
+        console.log('Refreshing table...');
+        showLoading();
+
+        try {
+            if (clientsTable) {
+                clientsTable.ajax.reload(null, false);
+                setTimeout(() => {
+                    hideLoading();
+                    showToast('Table refreshed successfully', 'success');
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }
+        } catch (error) {
+            console.error('Error refreshing table:', error);
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+    }
+
+    function filterTable(filter) {
+        if (!clientsTable) return;
+
+        switch (filter) {
+            case 'active':
+                clientsTable.columns(6).search('Active').draw();
+                break;
+            case 'inactive':
+                clientsTable.columns(6).search('Inactive').draw();
+                break;
+            case 'verified':
+                clientsTable.columns(6).search('Verified').draw();
+                break;
+            case 'all':
+            default:
+                clientsTable.search('').columns().search('').draw();
+                break;
+        }
+
+        showToast(`Filtered clients: ${filter}`, 'info');
+    }
+
+    function viewClient(clientId) {
+        console.log('Viewing client:', clientId);
+        showLoading();
+        window.location.href = `/admin/clients/${clientId}/view`;
+    }
+
+    function editClient(clientId) {
+        console.log('Editing client:', clientId);
+        showLoading();
+        window.location.href = `/admin/clients/${clientId}/edit`;
+    }
+
+    function showClientCommissions(clientId) {
+        console.log('Showing commissions for client:', clientId);
+        showToast('Commission management will be available soon', 'info');
+    }
+
+    function showClientApiKeys(clientId) {
+        console.log('Showing API keys for client:', clientId);
+        showToast('API key management will be available soon', 'info');
+    }
+
+    function deleteClient(clientId) {
+        // Create and show custom modal
+        const modal = createConfirmModal(
+            '{{ _("Delete Client") }}',
+            '{{ _("Are you sure you want to delete this client? This action cannot be undone.") }}',
+            'danger',
+            () => {
+                showLoading();
+                fetch(`/admin/clients/${clientId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('{{ _("Client deleted successfully") }}', 'success');
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            showToast('{{ _("Error deleting client: ") }}' + (data.error || '{{ _("Unknown error") }}'), 'error');
+                            hideLoading();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('{{ _("Error deleting client") }}', 'error');
+                        hideLoading();
+                    });
+            }
+        );
+
+        modal.show();
+    }
+
+    function exportClients() {
+        showLoading();
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("admin.export_clients") }}';
+
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrf_token';
+        csrfToken.value = getCSRFToken();
+        form.appendChild(csrfToken);
+
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.forEach((value, key) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+
+        setTimeout(() => {
+            hideLoading();
+            showToast('{{ _("Export completed successfully") }}', 'success');
+        }, 2000);
+    }
+
+    function exportFilteredClients() {
+        showLoading();
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("admin.export_clients") }}';
+
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrf_token';
+        csrfToken.value = getCSRFToken();
+        form.appendChild(csrfToken);
+
+        // Get current filter parameters
+        const filterForm = document.querySelector('.filter-bar form');
+        if (filterForm) {
+            const formData = new FormData(filterForm);
+            for (const [key, value] of formData.entries()) {
+                if (value) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = value;
+                    form.appendChild(input);
+                }
+            }
+        }
+
+        // Add filtered flag
+        const filteredInput = document.createElement('input');
+        filteredInput.type = 'hidden';
+        filteredInput.name = 'filtered';
+        filteredInput.value = 'true';
+        form.appendChild(filteredInput);
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+
+        setTimeout(() => {
+            hideLoading();
+            showToast('{{ _("Filtered export completed successfully") }}', 'success');
+        }, 2000);
+    }
+
+    function refreshCommissions() {
+        const btn = document.getElementById('refreshCommissions');
+        if (!btn) return;
+
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise fa-spin me-1"></i> {{ _("Refreshing...") }}';
+        btn.disabled = true;
+
+        fetch('{{ url_for("admin.refresh_commissions") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('{{ _("Commission data refreshed successfully!") }}', 'success');
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    throw new Error(data.message || '{{ _("Failed to refresh commission data") }}');
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing commissions:', error);
+                showToast('{{ _("Error refreshing commissions: ") }}' + error.message, 'error');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
+
+    function getCSRFToken() {
+        return '{{ csrf_token() }}';
+    }
+
+    function createConfirmModal(title, message, type, onConfirm) {
+        const modalId = 'confirmModal_' + Date.now();
+        const modalHTML = `
+            <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">${title}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>${message}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                            <button type="button" class="btn btn-${type}" id="${modalId}_confirm">
+                                ${type === 'danger' ? '{{ _("Delete") }}' : '{{ _("Confirm") }}'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        const modal = new bootstrap.Modal(document.getElementById(modalId));
+
+        document.getElementById(modalId + '_confirm').addEventListener('click', function () {
+            modal.hide();
+            onConfirm();
+        });
+
+        // Clean up modal after it's hidden
+        document.getElementById(modalId).addEventListener('hidden.bs.modal', function () {
+            document.body.removeChild(document.getElementById(modalId));
+        });
+
+        return modal;
+    }
+
+    function showToast(message, type) {
+        const toastId = 'toast_' + Date.now();
+        const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi ${type === 'success' ? 'bi-check-circle' : type === 'error' ? 'bi-exclamation-triangle' : 'bi-info-circle'} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('toast-container').insertAdjacentHTML('beforeend', toastHTML);
+        const toast = new bootstrap.Toast(document.getElementById(toastId));
+        toast.show();
+
+        // Auto-remove toast after it's hidden
+        document.getElementById(toastId).addEventListener('hidden.bs.toast', function () {
+            this.remove();
+        });
+    }
+
+    function showBulkActions() {
+        const modal = createConfirmModal(
+            '{{ _("Bulk Actions") }}',
+            `
+            <div class="mb-3">
+                <label class="form-label">{{ _('Select Action:') }}</label>
+                <select class="form-select" id="bulkActionSelect">
+                    <option value="">{{ _('Choose an action...') }}</option>
+                    <option value="activate">{{ _('Activate Selected') }}</option>
+                    <option value="deactivate">{{ _('Deactivate Selected') }}</option>
+                    <option value="verify">{{ _('Verify Selected') }}</option>
+                    <option value="export">{{ _('Export Selected') }}</option>
+                    <option value="delete">{{ _('Delete Selected') }}</option>
+                </select>
+            </div>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                {{ _('Select clients using the checkboxes in the table, then choose an action above.') }}
+            </div>
+            `,
+            'primary',
+            () => {
+                const action = document.getElementById('bulkActionSelect').value;
+                if (action) {
+                    showToast(`Bulk action "${action}" will be implemented soon`, 'info');
+                } else {
+                    showToast(please_select_action, 'error');
+                }
+            }
+        );
+
+        modal.show();
+    }
+
+    function showKeyboardShortcuts() {
+        const modal = createConfirmModal(
+            '{{ _("Keyboard Shortcuts") }}',
+            `
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Shortcut') }}</th>
+                            <th>{{ _('Action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><kbd>Ctrl</kbd> + <kbd>F</kbd></td>
+                            <td>{{ _('Focus search field') }}</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>Ctrl</kbd> + <kbd>R</kbd></td>
+                            <td>{{ _('Refresh table') }}</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>Ctrl</kbd> + <kbd>E</kbd></td>
+                            <td>{{ _('Export clients') }}</td>
+                        </tr>
+                        <tr>
+                            <td><kbd>Escape</kbd></td>
+                            <td>{{ _('Clear all filters') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            `,
+            'info',
+            () => {
+                // Just close the modal
+            }
+        );
+
+        modal.show();
+    }
+</script>
+{% endblock %}

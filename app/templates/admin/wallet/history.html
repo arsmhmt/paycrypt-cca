@@ -1,0 +1,116 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Wallet Transaction History - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Wallet Transaction History</h1>
+        <a href="{{ url_for('admin.withdrawals_list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Withdrawals
+        </a>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>ID</th>
+                            <th>Client</th>
+                            <th>Amount</th>
+                            <th>Currency</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr class="bg-light">
+                            <td>
+                                <i class="fas fa-coins text-success"></i>
+                                Payment
+                            </td>
+                            <td>#{{ payment.id }}</td>
+                            <td>
+                                {% if raw_payments %}
+                                    {{ payment.get('client_name', 'N/A') }}
+                                    {% if payment.get('client_email') %}
+                                    <small class="text-muted">({{ payment.client_email }})</small>
+                                    {% endif %}
+                                {% else %}
+                                    {{ payment.client.name }}
+                                    <small class="text-muted">({{ payment.client.email }})</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ payment.amount }}</td>
+                            <td>{{ payment.currency }}</td>
+                            <td>
+                                {% set status = payment.status.value if not raw_payments and payment.status is defined else (payment.status.value if not raw_payments else payment.status) %}
+                                <span class="badge bg-{{ 'success' if status|lower == 'completed' else 'warning' }}">
+                                    {{ status|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if raw_payments %}
+                                    {{ payment.created_at.strftime('%Y-%m-%d %H:%M') if payment.created_at else 'N/A' }}
+                                {% else %}
+                                    {{ payment.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% for withdrawal in withdrawals %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-credit-card text-danger"></i>
+                                Withdrawal
+                            </td>
+                            <td>#{{ withdrawal.id }}</td>
+                            <td>
+                                {{ withdrawal.client.name }}
+                                <small class="text-muted">({{ withdrawal.client.email }})</small>
+                            </td>
+                            <td>{{ withdrawal.amount }}</td>
+                            <td>{{ withdrawal.currency }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if withdrawal.status == 'approved' else 'danger' if withdrawal.status == 'rejected' else 'warning' }}">
+                                    {{ withdrawal.status }}
+                                </span>
+                            </td>
+                            <td>{{ withdrawal.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize DataTable
+    $('#dataTable').DataTable({
+        order: [[6, 'desc']], // Order by date descending
+        pageLength: 25,
+        lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "All"]],
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search transactions..."
+        }
+    });
+});
+</script>
+{% endblock %}

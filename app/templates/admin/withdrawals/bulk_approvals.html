@@ -1,0 +1,171 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Bulk Withdrawal Approvals - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Bulk Withdrawal Approvals</h1>
+        <a href="{{ url_for('withdrawal_admin.user_withdrawal_requests') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Withdrawals
+        </a>
+    </div>
+
+    <!-- Pending Withdrawals -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Pending Withdrawals</h6>
+        </div>
+        <div class="card-body">
+            {% if pending_withdrawals %}
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>ID</th>
+                            <th>Client</th>
+                            <th>Amount</th>
+                            <th>Currency</th>
+                            <th>Requested At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for withdrawal in pending_withdrawals %}
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="{{ withdrawal.id }}" id="withdrawal_{{ withdrawal.id }}">
+                                </div>
+                            </td>
+                            <td>#{{ withdrawal.id }}</td>
+                            <td>
+                                {{ withdrawal.client.name }}
+                                <small class="text-muted">({{ withdrawal.client.email }})</small>
+                            </td>
+                            <td>{{ withdrawal.amount }}</td>
+                            <td>{{ withdrawal.currency }}</td>
+                            <td>{{ withdrawal.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-success" onclick="approveWithdrawal({{ withdrawal.id }})">
+                                        <i class="bi bi-check-lg"></i> Approve
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejectWithdrawal({{ withdrawal.id }})">
+                                        <i class="bi bi-x-lg"></i> Reject
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Bulk Actions -->
+            <div class="mt-4">
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="bulkApprove()">
+                        <i class="bi bi-check-all"></i> Approve Selected
+                    </button>
+                    <button class="btn btn-danger" onclick="bulkReject()">
+                        <i class="bi bi-x-octagon"></i> Reject Selected
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-check2-circle text-success" style="font-size: 4rem;"></i>
+                <h4>No Pending Withdrawals</h4>
+                <p class="text-muted">All withdrawals have been processed.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function approveWithdrawal(id) {
+    if (confirm('Are you sure you want to approve this withdrawal?')) {
+        $.ajax({
+            url: `{{ url_for('withdrawal_admin.approve_withdrawal', withdrawal_id='') }}${id}`,
+            method: 'POST',
+            success: function() {
+                location.reload();
+            },
+            error: function() {
+                alert('Error processing withdrawal');
+            }
+        });
+    }
+}
+
+function rejectWithdrawal(id) {
+    if (confirm('Are you sure you want to reject this withdrawal?')) {
+        $.ajax({
+            url: `{{ url_for('withdrawal_admin.reject_withdrawal', withdrawal_id='') }}${id}`,
+            method: 'POST',
+            success: function() {
+                location.reload();
+            },
+            error: function() {
+                alert('Error processing withdrawal');
+            }
+        });
+    }
+}
+
+function bulkApprove() {
+    const selected = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(cb => cb.value);
+    
+    if (selected.length === 0) {
+        alert('Please select at least one withdrawal');
+        return;
+    }
+
+    if (confirm(`Approve ${selected.length} selected withdrawals?`)) {
+        $.ajax({
+            url: `{{ url_for('withdrawal_admin.approve_bulk_withdrawals') }}`,
+            method: 'POST',
+            data: { withdrawals: selected },
+            success: function() {
+                location.reload();
+            },
+            error: function() {
+                alert('Error processing withdrawals');
+            }
+        });
+    }
+}
+
+function bulkReject() {
+    const selected = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(cb => cb.value);
+    
+    if (selected.length === 0) {
+        alert('Please select at least one withdrawal');
+        return;
+    }
+
+    if (confirm(`Reject ${selected.length} selected withdrawals?`)) {
+        $.ajax({
+            url: `{{ url_for('withdrawal_admin.reject_bulk_withdrawals') }}`,
+            method: 'POST',
+            data: { withdrawals: selected },
+            success: function() {
+                location.reload();
+            },
+            error: function() {
+                alert('Error processing withdrawals');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

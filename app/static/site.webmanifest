@@ -1,0 +1,26 @@
+{
+  "name": "CPGateway",
+  "short_name": "CPGateway",
+  "icons": [
+    {
+      "src": "/static/img/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/img/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/img/favicon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#4e73df",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/"
+}

@@ -1,0 +1,805 @@
+{% extends 'admin/base.html' %}
+{% from 'admin/_form_helpers.html' import render_field, form_actions, delete_modal %}
+
+{% block title %}{{ title }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {# Admin alert for WTForms 'Choices cannot be None.' error #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+        <a href="{{ url_for('withdrawal_admin.withdrawal_reports') }}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back to Clients
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="POST" action="">
+                {{ form.hidden_tag() }}
+
+                <!-- Basic Information -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-building me-2"></i>Basic Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                {{ render_field(form.company_name, autofocus=true) }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ render_field(form.client_type) }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ render_field(form.name) }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ render_field(form.email, type='email') }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ render_field(form.phone) }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ render_field(form.website) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Login Credentials (for new clients only) -->
+                {% if not client %}
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-person-lock me-2"></i>Client Login Credentials
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ render_field(form.username, placeholder="Enter username for client dashboard login")
+                                }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ render_field(form.password, type="password", placeholder="Enter password for client
+                                dashboard login") }}
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            These credentials will allow the client to log into their dashboard. If left empty, they can
+                            be set later.
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Password Reset (for existing clients) -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-key me-2"></i>Password Management
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                {{ render_field(form.new_password, type="password", placeholder="Enter new password") }}
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    {{ form.auto_generate_password(class="form-check-input") }}
+                                    <label class="form-check-label" for="auto_generate_password">
+                                        Auto-generate password
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning mt-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Changing the password will require the client to use the new credentials to log in.
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Address Information -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-geo-alt me-2"></i>Address Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                {{ render_field(form.address) }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ render_field(form.city) }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ render_field(form.country) }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ render_field(form.postal_code) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Information -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-briefcase me-2"></i>Business Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ render_field(form.tax_id) }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ render_field(form.vat_number) }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ render_field(form.registration_number) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Package and Status Management -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-box-seam me-2"></i>Package and Status Management
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.package_id.label(class="form-label") }}
+                                    {{ form.package_id(class="form-select") }}
+                                    <small class="form-text text-muted">Select package plan for this client</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.client_status.label(class="form-label") }}
+                                    {{ form.client_status(class="form-select") }}
+                                    <small class="form-text text-muted">Current client account status</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ form.is_active(class="form-check-input") }}
+                                    {{ form.is_active.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ form.is_verified(class="form-check-input") }}
+                                    {{ form.is_verified.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                        {% if client %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Feature Management:</strong>
+                            <a href="{{ url_for('admin.manage_client_features', client_id=client.id) }}"
+                                class="alert-link">
+                                Manage individual features for this client
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Account Balance Management -->
+                {% if client %}
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-wallet2 me-2"></i>Account Balance Management
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.balance.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.balance(class="form-control", step="0.00000001", min="0") }}
+                                    </div>
+                                    <small class="form-text text-muted">Main account balance</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.commission_balance.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.commission_balance(class="form-control", step="0.00000001", min="0") }}
+                                    </div>
+                                    <small class="form-text text-muted">Commission earnings balance</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> Changing balances will affect the client's account immediately.
+                            Use with caution.
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Additional Contact Information -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-person-plus me-2"></i>Additional Contact Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ render_field(form.contact_person) }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ render_field(form.contact_email, type='email') }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ render_field(form.contact_phone) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technical Settings -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-gear me-2"></i>Technical Settings
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    {{ form.rate_limit.label(class="form-label") }}
+                                    {{ form.rate_limit(class="form-control") }}
+                                    <small class="form-text text-muted">API requests per minute limit</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    {{ form.theme_color.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.theme_color(class="form-control", type="color") }}
+                                        <span class="input-group-text">
+                                            <i class="bi bi-palette"></i>
+                                        </span>
+                                    </div>
+                                    <small class="form-text text-muted">Brand color for client portal</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="form-check">
+                                        {{ form.is_active(class="form-check-input") }}
+                                        {{ form.is_active.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Management -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-key me-2"></i>API Management
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ form.api_key_enabled(class="form-check-input") }}
+                                    {{ form.api_key_enabled.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                            {% if client %}
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    {{ form.auto_generate_api_key(class="form-check-input") }}
+                                    {{ form.auto_generate_api_key.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if client %}
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>API Key Management:</strong>
+                                    <a href="{{ url_for('admin.manage_api_keys', client_id=client.id) }}"
+                                        class="alert-link">
+                                        Manage API keys for this client
+                                    </a>
+                                    {% if client.api_key %}
+                                    <br><small class="text-muted">Current API key: {{ client.api_key[:12] }}...</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group mb-3">
+                                    {{ form.webhook_url.label(class="form-label") }}
+                                    {{ form.webhook_url(class="form-control",
+                                    placeholder="https://your-domain.com/webhook") }}
+                                    <small class="form-text text-muted">URL for payment notifications and
+                                        webhooks</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Commission Settings -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-percent me-2"></i>Commission Settings
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.deposit_commission_rate.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.deposit_commission_rate(class="form-control", step="0.01", min="0",
+                                        max="100") }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <small class="form-text text-muted">Commission charged on deposits</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.withdrawal_commission_rate.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.withdrawal_commission_rate(class="form-control", step="0.01", min="0",
+                                        max="100") }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <small class="form-text text-muted">Commission charged on withdrawals</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-chat-text me-2"></i>Notes
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {{ render_field(form.notes, rows="4") }}
+                    </div>
+                </div>
+
+                <!-- API Key Section (only for existing clients) -->
+                {% if client and client.api_key %}
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-key me-2"></i>API configuration
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-3">
+                            <label class="form-label">API Key</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="{{ client.api_key }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" id="copyApiKey"
+                                    title="Copy to clipboard">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                                <button class="btn btn-outline-warning" type="button" id="regenerateApiKey"
+                                    title="Regenerate key">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Keep this key secure. It provides access to the
+                                API.</small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Form Actions -->
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        {{ form_actions(cancel_url=url_for('admin.list_clients'),
+                        delete_url=url_for('admin.delete_client', client_id=client.id) if client and client.id else
+                        none) }}
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-info-circle me-2"></i>Client Preview
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if client %}
+                    <!-- Existing client stats -->
+                    <div class="mb-3">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Available Balance
+                        </div>
+                        <div class="h6 mb-0 font-weight-bold text-gray-800">
+                            {{ "%.8f"|format(calculator.calculate_client_balance(client.id) if calculator else 0) }} BTC
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Commission Summary
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-muted mb-1">Deposit Commission</div>
+                                <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                    {{ "%.8f"|format(calculator.calculate_commission(client.id)[0] if calculator else 0)
+                                    }} BTC
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted mb-1">Withdrawal Commission</div>
+                                <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                    {{ "%.8f"|format(calculator.calculate_commission(client.id)[1] if calculator else 0)
+                                    }} BTC
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Created
+                        </div>
+                        <div class="h6 mb-0 font-weight-bold text-gray-800">
+                            {{ client.created_at.strftime('%b %d, %Y') }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Last Updated
+                        </div>
+                        <div class="h6 mb-0 font-weight-bold text-gray-800">
+                            {{ client.updated_at.strftime('%b %d, %Y') if client.updated_at else 'Never' }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Status
+                        </div>
+                        <span class="badge {{ 'bg-success' if client.is_active else 'bg-secondary' }}">
+                            {{ 'Active' if client.is_active else 'Inactive' }}
+                        </span>
+                    </div>
+                    {% else %}
+                    <!-- New client preview -->
+                    <div class="mb-3">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Preview
+                        </div>
+                        <div class="client-preview">
+                            <div class="company-preview mb-3">
+                                <div class="h6 mb-1" id="preview-company">Company Name</div>
+                                <div class="text-muted small" id="preview-type">Company</div>
+                            </div>
+                            <div class="contact-preview mb-3">
+                                <div class="small text-muted">Contact</div>
+                                <div id="preview-contact">Contact Person</div>
+                                <div class="small text-muted" id="preview-email">email@example.com</div>
+                            </div>
+                            <div class="commission-preview mb-3">
+                                <div class="small text-muted">Commission Rates</div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="small">Deposit: <span id="preview-deposit-rate">3.5%</span></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small">Withdrawal: <span id="preview-withdrawal-rate">1.5%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-preview mb-3">
+                                <div class="small text-muted">Theme Color</div>
+                                <div class="d-flex align-items-center">
+                                    <div id="preview-color-box" class="color-preview me-2"
+                                        style="background-color: #6c63ff;"></div>
+                                    <span id="preview-color-code">#6c63ff</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Help Section -->
+                    <div class="mt-4">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-2">
+                            Help & Tips
+                        </div>
+                        <div class="small text-muted">
+                            <ul class="ps-3 mb-0">
+                                <li>Company name is required and will be displayed in the client portal</li>
+                                <li>Contact person is optional but recommended for better communication</li>
+                                <li>API rate limit controls how many requests per minute the client can make</li>
+                                <li>Theme color will be used in the client's branded interface</li>
+                                <li>Commission rates are applied to all transactions</li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .color-preview {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        display: inline-block;
+    }
+
+    .client-preview {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .card-header h6 {
+        color: white !important;
+        margin: 0;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: box-shadow 0.15s ease-in-out;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Real-time preview updates
+        const updatePreview = () => {
+            // Company name preview
+            const companyName = document.querySelector('input[name="company_name"]').value || 'Company Name';
+            document.getElementById('preview-company').textContent = companyName;
+
+            // Client type preview
+            const clientType = document.querySelector('select[name="client_type"]').value;
+            document.getElementById('preview-type').textContent = clientType === 'INDIVIDUAL' ? 'Individual' : 'Company';
+
+            // Contact preview
+            const contactName = document.querySelector('input[name="name"]').value || 'Contact Person';
+            document.getElementById('preview-contact').textContent = contactName;
+
+            // Email preview
+            const email = document.querySelector('input[name="email"]').value || 'email@example.com';
+            document.getElementById('preview-email').textContent = email;
+
+            // Commission rates preview
+            const depositRate = document.querySelector('input[name="deposit_commission_rate"]').value || '3.5';
+            const withdrawalRate = document.querySelector('input[name="withdrawal_commission_rate"]').value || '1.5';
+            document.getElementById('preview-deposit-rate').textContent = depositRate + '%';
+            document.getElementById('preview-withdrawal-rate').textContent = withdrawalRate + '%';
+
+            // Theme color preview
+            const themeColor = document.querySelector('input[name="theme_color"]').value || '#6c63ff';
+            document.getElementById('preview-color-box').style.backgroundColor = themeColor;
+            document.getElementById('preview-color-code').textContent = themeColor;
+        };
+
+        // Add event listeners for real-time updates
+        const inputs = ['company_name', 'name', 'email', 'deposit_commission_rate', 'withdrawal_commission_rate', 'theme_color'];
+        inputs.forEach(inputName => {
+            const input = document.querySelector(`input[name="${inputName}"], select[name="${inputName}"]`);
+            if (input) {
+                input.addEventListener('input', updatePreview);
+                input.addEventListener('change', updatePreview);
+            }
+        });
+
+        // Initial preview update
+        updatePreview();
+
+        // Form validation feedback
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function (e) {
+            const requiredFields = form.querySelectorAll('input[required], select[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                showToast('Please fill in all required fields', 'warning');
+            }
+        });
+
+        // Copy API key to clipboard
+        const copyBtn = document.getElementById('copyApiKey');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function () {
+                const apiKey = document.querySelector('input[readonly]').value;
+                navigator.clipboard.writeText(apiKey).then(() => {
+                    const btn = this;
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-check"></i>';
+                    btn.classList.add('btn-success');
+                    btn.classList.remove('btn-outline-secondary');
+                    showToast('API key copied to clipboard', 'success');
+                    setTimeout(() => {
+                        btn.innerHTML = originalHtml;
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-outline-secondary');
+                    }, 2000);
+                });
+            });
+        }
+
+        // Auto-format phone numbers
+        const phoneInputs = document.querySelectorAll('input[name="phone"], input[name="contact_phone"]');
+        phoneInputs.forEach(input => {
+            input.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 6) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+                }
+                e.target.value = value;
+            });
+        });
+
+        // Email validation
+        const emailInputs = document.querySelectorAll('input[type="email"]');
+        emailInputs.forEach(input => {
+            input.addEventListener('blur', function (e) {
+                const email = e.target.value;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (email && !emailRegex.test(email)) {
+                    e.target.classList.add('is-invalid');
+                    showToast('Please enter a valid email address', 'warning');
+                } else {
+                    e.target.classList.remove('is-invalid');
+                }
+            });
+        });
+    });
+
+    // Regenerate API key
+    const regenerateBtn = document.getElementById('regenerateApiKey');
+    if (regenerateBtn) {
+        regenerateBtn.addEventListener('click', async function () {
+            if (confirm('Are you sure you want to regenerate the API key? This will invalidate the current key.')) {
+                try {
+                    const response = await fetch('{{ url_for("admin.clients_api_keys", client_id=client.id) if client else "#" }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ action: 'generate' })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        showToast('API key regenerated successfully', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('Error: ' + (data.message || 'Failed to regenerate API key'), 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showToast('An error occurred while regenerating the API key', 'error');
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

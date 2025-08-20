@@ -1,0 +1,416 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Analytics Dashboard</h1>
+            <p class="text-muted small mb-0">
+                Showing data for 
+                {% if time_period_days == 1 %}
+                    last 24 hours
+                {% elif time_period_days > 1 %}
+                    last {{ time_period_days }} days
+                {% else %}
+                    all time
+                {% endif %}
+            </p>
+        </div>
+        
+        <!-- Time Period Filters -->
+        <div class="d-flex gap-2">
+            <div class="btn-group" role="group">
+                <a href="?days=1" 
+                   class="btn btn-sm {% if time_period_days == 1 %}btn-primary{% else %}btn-outline-secondary{% endif %}">24h</a>
+                <a href="?days=7" 
+                   class="btn btn-sm {% if time_period_days == 7 %}btn-primary{% else %}btn-outline-secondary{% endif %}">7d</a>
+                <a href="?days=30" 
+                   class="btn btn-sm {% if time_period_days == 30 %}btn-primary{% else %}btn-outline-secondary{% endif %}">30d</a>
+                <a href="?days=90" 
+                   class="btn btn-sm {% if time_period_days == 90 %}btn-primary{% else %}btn-outline-secondary{% endif %}">90d</a>
+                <a href="?days=0" 
+                   class="btn btn-sm {% if time_period_days == 0 %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards Row -->
+    <div class="row mb-4">
+        <!-- Total Transactions Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Transactions
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ "{:,}".format(total_transactions) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-credit-card text-primary fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Volume Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Volume (BTC)
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ "{:,.6f}".format(total_volume) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-currency-bitcoin text-success fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Period Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Time Period
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if time_period_days == 0 %}
+                                    All Time
+                                {% elif time_period_days == 1 %}
+                                    24 Hours
+                                {% else %}
+                                    {{ time_period_days }} Days
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar text-info fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Range Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Date Range
+                            </div>
+                            <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                {% if start_date %}
+                                    {{ start_date.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                    Beginning
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">to {{ end_date.strftime('%Y-%m-%d') }}</small>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-range text-warning fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Transaction Volume Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Transaction Overview</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="javascript:void(0)" role="button" id="dropdownMenuLink"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="transactionChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Distribution Chart -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Transaction Status</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="statusChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-success"></i> Completed
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-warning"></i> Pending
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-danger"></i> Failed
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
+                    <a href="{{ url_for('admin.payments_list') }}" class="btn btn-sm btn-primary">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if total_transactions > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Amount</th>
+                                    <th>Currency</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Recent transactions would be populated here by the backend -->
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        Recent transactions will be displayed here
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <h5 class="mt-3 text-muted">No Transactions Found</h5>
+                        <p class="text-muted">No transactions found for the selected time period.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure Bootstrap dropdowns work on analytics page
+    console.log('Analytics page: Initializing Bootstrap dropdowns...');
+    
+    // Ensure sidebar toggle works
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.body.classList.toggle('sb-sidenav-toggled');
+            localStorage.setItem('sb|sidebar-toggle', document.body.classList.contains('sb-sidenav-toggled'));
+        });
+    }
+    
+    // Force initialization of all collapse elements
+    const collapseElements = document.querySelectorAll('.collapse');
+    collapseElements.forEach(element => {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+            // Initialize collapse if not already initialized
+            let instance = bootstrap.Collapse.getInstance(element);
+            if (!instance) {
+                instance = new bootstrap.Collapse(element, {
+                    toggle: false
+                });
+                console.log('Initialized collapse for:', element.id);
+            }
+        }
+    });
+    
+    // Ensure click handlers work
+    const dropdownToggles = document.querySelectorAll('[data-bs-toggle="collapse"]');
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            console.log('Dropdown clicked:', this.getAttribute('data-bs-target'));
+            // Let Bootstrap handle it - don't prevent default
+        });
+    });
+    
+    // Function to initialize charts
+    function initializeCharts() {
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded. Charts will not be displayed.');
+            return;
+        }
+        
+        console.log('Initializing charts...');
+        
+        // Transaction Volume Chart
+        const transactionCtx = document.getElementById('transactionChart');
+        if (transactionCtx) {
+            const transactionChart = new Chart(transactionCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: {{ chart_labels|tojson|safe }},
+                    datasets: [{
+                        label: 'Transaction Count',
+                        data: {{ chart_data.count|tojson|safe }},
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Volume (BTC)',
+                        data: {{ chart_data.volume|tojson|safe }},
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Transaction Count'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Volume (BTC)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Transaction Overview'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+
+        // Status Distribution Chart
+        const statusCtx = document.getElementById('statusChart');
+        if (statusCtx) {
+            const statusChart = new Chart(statusCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Pending', 'Failed'],
+                    datasets: [{
+                        data: [
+                            {{ total_transactions }}, // For now, show all as completed
+                            0,
+                            0
+                        ],
+                        backgroundColor: [
+                            'rgba(28, 200, 138, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(231, 74, 59, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(28, 200, 138, 1)',
+                            'rgba(255, 193, 7, 1)',
+                            'rgba(231, 74, 59, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Transaction Status Distribution'
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Initialize charts with retry mechanism
+    let chartInitAttempts = 0;
+    const maxAttempts = 10;
+    
+    function tryInitCharts() {
+        if (typeof Chart !== 'undefined') {
+            initializeCharts();
+        } else if (chartInitAttempts < maxAttempts) {
+            chartInitAttempts++;
+            console.log(`Waiting for Chart.js to load... Attempt ${chartInitAttempts}`);
+            setTimeout(tryInitCharts, 200);
+        } else {
+            console.error('Chart.js failed to load after multiple attempts');
+        }
+    }
+    
+    // Start trying to initialize charts
+    setTimeout(tryInitCharts, 100);
+});
+</script>
+{% endblock %}

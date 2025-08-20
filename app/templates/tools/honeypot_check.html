@@ -1,0 +1,490 @@
+{% extends 'base.html' %}
+
+{% block title %}🍯 Honeypot Detector - Advanced Crypto Scam Detection | PayCrypt DeFi Tools{% endblock %}
+
+{% block head %}
+<!-- SEO Meta Tags for Honeypot Detector -->
+<meta name="description" content="🍯 Advanced honeypot detector with buy/sell simulation. Protect your investments from crypto scams and honeypot tokens. Free professional tool for DeFi safety and security analysis.">
+<meta name="keywords" content="honeypot detector, crypto scam detector, DeFi security, honeypot token checker, buy sell simulation, crypto safety tools, smart contract honeypot, token scam protection, DeFi safety analyzer, blockchain security tools">
+<meta name="author" content="PayCrypt - DeFi Security Platform">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://paycrypt.online/tools/honeypot-check">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paycrypt.online/tools/honeypot-check">
+<meta property="og:title" content="🍯 Honeypot Detector - Advanced Crypto Scam Detection | PayCrypt">
+<meta property="og:description" content="🍯 Protect your investments with advanced honeypot detection and buy/sell simulation. Free professional DeFi security tool.">
+<meta property="og:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta property="og:site_name" content="PayCrypt DeFi Tools">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://paycrypt.online/tools/honeypot-check">
+<meta name="twitter:title" content="🍯 Honeypot Detector - Advanced Crypto Scam Detection">
+<meta name="twitter:description" content="🍯 Avoid crypto scams with advanced honeypot detection and buy/sell simulation. Free professional security tool.">
+<meta name="twitter:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta name="twitter:creator" content="@paycryptonline">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Honeypot Detector",
+  "alternateName": "Crypto Scam Detector",
+  "url": "https://paycrypt.online/tools/honeypot-check",
+  "description": "Advanced honeypot detector with buy/sell simulation to protect investors from crypto scams and malicious tokens.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "provider": {
+    "@type": "Organization",
+    "name": "PayCrypt",
+    "url": "https://paycrypt.online"
+  },
+  "featureList": [
+    "Honeypot detection",
+    "Buy/sell simulation",
+    "Scam protection",
+    "Smart contract analysis",
+    "Risk assessment",
+    "Token safety check",
+    "Multi-chain support"
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card bg-gradient-danger text-white mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-bug me-2"></i>
+                                Advanced Honeypot Detector
+                            </h2>
+                            <p class="mb-0 opacity-90">
+                                Detect honeypots with buy/sell simulation before you invest
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="badge bg-light text-danger fs-6 px-3 py-2">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Scam Protection
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2 text-primary"></i>
+                        Token Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="chain" class="form-label">
+                                <i class="fas fa-link me-1"></i>
+                                Blockchain
+                            </label>
+                            <select name="chain" id="chain" class="form-select" required>
+                                <option value="">Select blockchain...</option>
+                                {% for chain_id, chain_name in chains.items() %}
+                                <option value="{{ chain_id }}" {% if request.form.get('chain') == chain_id %}selected{% endif %}>
+                                    {{ chain_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">
+                                <i class="fas fa-file-contract me-1"></i>
+                                Token Contract Address
+                            </label>
+                            <input type="text" 
+                                   name="address" 
+                                   id="address" 
+                                   class="form-control" 
+                                   placeholder="0x..." 
+                                   required
+                                   value="{{ request.form.get('address', '') }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="fas fa-bug me-1"></i>
+                                Detect Honeypot
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if result and result.success %}
+            <!-- Overall Verdict -->
+            <div class="card border-{{ result.overall_verdict.color }} mb-4">
+                <div class="card-header bg-{{ result.overall_verdict.color }} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-gavel me-2"></i>
+                            Honeypot Verdict
+                        </h5>
+                        <div class="badge bg-light text-{{ result.overall_verdict.color }} fs-6">
+                            {{ result.overall_verdict.confidence }} CONFIDENCE
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="text-{{ result.overall_verdict.color }} mb-2">
+                                {{ result.overall_verdict.verdict }}
+                            </h4>
+                            <p class="mb-0">{{ result.overall_verdict.message }}</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="display-4">
+                                {% if result.overall_verdict.verdict == 'HONEYPOT' %}
+                                    <i class="fas fa-skull-crossbones text-danger"></i>
+                                {% elif result.overall_verdict.verdict == 'LIKELY HONEYPOT' %}
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                {% elif result.overall_verdict.verdict == 'SUSPICIOUS' %}
+                                    <i class="fas fa-exclamation-circle text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-shield-check text-success"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Information -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Token Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="border-start border-primary border-3 ps-3">
+                                        <small class="text-muted">Name</small>
+                                        <div class="fw-bold">{{ result.token_info.name }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="border-start border-success border-3 ps-3">
+                                        <small class="text-muted">Symbol</small>
+                                        <div class="fw-bold">{{ result.token_info.symbol }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="border-start border-info border-3 ps-3">
+                                        <small class="text-muted">Chain</small>
+                                        <div class="fw-bold">{{ result.token_info.chain }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-percentage me-2"></i>
+                                Tax Analysis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <div class="h4 text-info mb-1">{{ "{:.1f}".format(result.tax_analysis.buy_tax_percentage) }}%</div>
+                                        <small class="text-muted">Buy Tax</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <div class="h4 text-warning mb-1">{{ "{:.1f}".format(result.tax_analysis.sell_tax_percentage) }}%</div>
+                                        <small class="text-muted">Sell Tax</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center">
+                                        <div class="h4 text-{% if result.tax_analysis.tax_level == 'HIGH' %}danger{% elif result.tax_analysis.tax_level == 'MEDIUM' %}warning{% else %}success{% endif %} mb-1">
+                                            {{ "{:.1f}".format(result.tax_analysis.total_tax) }}%
+                                        </div>
+                                        <small class="text-muted">Total Tax</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="badge bg-{% if result.tax_analysis.tax_level == 'HIGH' %}danger{% elif result.tax_analysis.tax_level == 'MEDIUM' %}warning{% else %}success{% endif %} w-100 py-2">
+                                    {{ result.tax_analysis.tax_level }} TAX LEVEL
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Simulation -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-arrow-down me-2"></i>
+                                Buy Simulation
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Can Buy:</span>
+                                <span class="badge bg-{% if result.simulation_results.buy_simulation.can_buy %}success{% else %}danger{% endif %} fs-6">
+                                    {% if result.simulation_results.buy_simulation.can_buy %}✅ YES{% else %}❌ NO{% endif %}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Estimated Tax:</span>
+                                <span class="fw-bold">{{ result.simulation_results.buy_simulation.estimated_tax }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Gas Estimate:</span>
+                                <span class="text-muted">{{ result.simulation_results.buy_simulation.gas_estimate }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">
+                                <i class="fas fa-arrow-up me-2"></i>
+                                Sell Simulation
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Can Sell:</span>
+                                <span class="badge bg-{% if result.simulation_results.sell_simulation.can_sell %}success{% else %}danger{% endif %} fs-6">
+                                    {% if result.simulation_results.sell_simulation.can_sell %}✅ YES{% else %}❌ NO{% endif %}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Estimated Tax:</span>
+                                <span class="fw-bold">{{ result.simulation_results.sell_simulation.estimated_tax }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Max Sell:</span>
+                                <span class="text-muted">{{ result.simulation_results.sell_simulation.max_sell_percentage }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Analysis -->
+            {% if result.honeypot_analysis %}
+            <div class="card border-warning mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Detected Risks
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if result.honeypot_analysis %}
+                        {% for risk in result.honeypot_analysis %}
+                        <div class="alert alert-{% if risk.type == 'CRITICAL' %}danger{% elif risk.type == 'HIGH' %}warning{% else %}info{% endif %} mb-2">
+                            <strong>{{ risk.type }}:</strong> {{ risk.message }}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            No critical honeypot risks detected.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Liquidity Traps -->
+            {% if result.liquidity_analysis %}
+            <div class="card border-info mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-water me-2"></i>
+                        Liquidity Analysis
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if result.liquidity_analysis %}
+                        {% for trap in result.liquidity_analysis %}
+                        <div class="alert alert-{% if trap.type == 'WARNING' %}warning{% else %}info{% endif %} mb-2">
+                            <strong>{{ trap.type }}:</strong> {{ trap.message }}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-success mb-0">
+                            <i class="fas fa-check-circle me-2"></i>
+                            No liquidity traps detected.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <!-- How It Works -->
+            <div class="card border-0 shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>
+                        How Honeypot Detection Works
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">What is a Honeypot?</h6>
+                            <p class="text-muted mb-3">
+                                A honeypot token allows users to buy but prevents them from selling, effectively trapping their funds.
+                            </p>
+                            
+                            <h6 class="text-primary">Detection Methods:</h6>
+                            <ul class="text-muted">
+                                <li>Smart contract analysis</li>
+                                <li>Buy/sell simulation</li>
+                                <li>Tax structure examination</li>
+                                <li>Trading restriction checks</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Red Flags:</h6>
+                            <ul class="text-muted">
+                                <li>Extremely high sell taxes (>25%)</li>
+                                <li>Cannot sell all tokens</li>
+                                <li>Trading cooldowns</li>
+                                <li>Hidden owner functions</li>
+                                <li>Blacklist mechanisms</li>
+                            </ul>
+                            
+                            <div class="alert alert-warning mt-3">
+                                <small><strong>Warning:</strong> This tool provides analysis but cannot guarantee 100% accuracy. Always do additional research before investing.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Form styling */
+#address {
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* Alert custom styling */
+.alert {
+    border-left: 4px solid;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-info {
+    border-left-color: #17a2b8;
+}
+
+.alert-success {
+    border-left-color: #28a745;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+}
+</style>
+
+<script>
+// Address validation
+document.getElementById('address').addEventListener('input', function(e) {
+    const value = e.target.value;
+    if (value && !value.startsWith('0x')) {
+        e.target.setCustomValidity('Address must start with 0x');
+    } else if (value && value.length !== 42) {
+        e.target.setCustomValidity('Address must be 42 characters long');
+    } else {
+        e.target.setCustomValidity('');
+    }
+});
+
+// Chain-specific address validation
+document.getElementById('chain').addEventListener('change', function(e) {
+    const addressField = document.getElementById('address');
+    const selectedChain = e.target.selectedOptions[0].text;
+    
+    if (selectedChain) {
+        addressField.placeholder = `Enter ${selectedChain} token address (0x...)`;
+    }
+});
+
+// Auto-focus address field when chain is selected
+document.getElementById('chain').addEventListener('change', function() {
+    if (this.value) {
+        document.getElementById('address').focus();
+    }
+});
+</script>
+{% endblock %}

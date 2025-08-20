@@ -1,0 +1,51 @@
+{% macro quick_actions_modal(payment_id) %}
+<div class="modal fade" id="quickActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    {% if payment_id %}
+                        <a href="{{ url_for('admin.mark_payment_status', payment_id=payment_id, status='completed') }}" 
+                           class="list-group-item list-group-item-action" onclick="return confirm('Mark this payment as completed?')">
+                            <i class="bi bi-check-circle me-2"></i> Mark as Paid
+                        </a>
+                        <a href="{{ url_for('admin.mark_payment_status', payment_id=payment_id, status='failed') }}" 
+                           class="list-group-item list-group-item-action" onclick="return confirm('Mark this payment as failed?')">
+                            <i class="bi bi-x-circle me-2"></i> Mark as Failed
+                        </a>
+                        <a href="{{ url_for('admin.mark_payment_status', payment_id=payment_id, status='refunded') }}" 
+                           class="list-group-item list-group-item-action" onclick="return confirm('Mark this payment as refunded?')">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i> Mark as Refunded
+                        </a>
+                        <a href="{{ url_for('admin.mark_payment_status', payment_id=payment_id, status='cancelled') }}" 
+                           class="list-group-item list-group-item-action" onclick="return confirm('Cancel this payment?')">
+                            <i class="bi bi-x-octagon me-2"></i> Cancel Payment
+                        </a>
+                        <hr>
+                        <a href="{{ url_for('admin.generate_invoice', payment_id=payment_id) }}" 
+                           class="list-group-item list-group-item-action">
+                            <i class="bi bi-receipt me-2"></i> Generate Invoice
+                        </a>
+                        <a href="{{ url_for('admin.send_payment_receipt', payment_id=payment_id) }}" 
+                           class="list-group-item list-group-item-action">
+                            <i class="bi bi-envelope me-2"></i> Send Receipt
+                        </a>
+                        <a href="{{ url_for('admin.process_refund', payment_id=payment_id) }}" 
+                           class="list-group-item list-group-item-action">
+                            <i class="bi bi-cash-coin me-2"></i> Process Refund
+                        </a>
+                    {% else %}
+                        <div class="list-group-item">
+                            <p class="mb-0 text-muted">Quick actions are available after saving the payment.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

@@ -1,0 +1,52 @@
+{% extends 'client/base.html' %}
+{% block title %}{{ _('Payments') }} - PayCrypt{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">{{ _('Payments') }}</h1>
+    {% if payments.items|length == 0 %}
+    <div class="alert alert-info">{{ _('No payments found.') }}</div>
+    {% else %}
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>{{ _('Date') }}</th>
+                <th>{{ _('Amount') }}</th>
+                <th>{{ _('Status') }}</th>
+                <th>{{ _('Details') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments.items %}
+            <tr>
+                <td>{{ payment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ payment.amount }}</td>
+                <td>
+                    {% set status_value = payment.status.value if payment.status and hasattr(payment.status, 'value') else (payment.status|string|lower if payment.status else 'unknown') %}
+                    <span class="badge bg-{{ {'completed':'success','pending':'warning','failed':'danger', 'approved': 'success', 'rejected': 'danger', 'cancelled': 'secondary'}.get(status_value, 'secondary') }}">
+                        {{ status_value|title }}
+                    </span>
+                </td>
+                <td><a href="{{ url_for('client.view_payment', payment_id=payment.id) }}"
+                        class="btn btn-sm btn-outline-primary">{{ _('View') }}</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if payments.pages > 1 %}
+    <nav>
+        <ul class="pagination">
+            {% for page_num in payments.iter_pages() %}
+            {% if page_num %}
+            <li class="page-item {% if page_num == payments.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('client.payments', page=page_num) }}">{{ page_num }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,450 @@
+{% extends "client/base.html" %}
+
+{% block title %}Withdrawal Request Details - PayCrypt{% endblock %}
+
+{% block styles %}
+<style>
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .status-badge i {
+        margin-right: 0.5rem;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-approved {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .detail-card {
+        border-left: 4px solid var(--orange);
+    }
+
+    .address-display {
+        font-family: 'Courier New', monospace;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 1rem;
+        font-size: 0.875rem;
+        word-break: break-all;
+        position: relative;
+    }
+
+    .copy-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -1.25rem;
+        top: 0.25rem;
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 50%;
+        background: #6c757d;
+    }
+
+    .timeline-item.completed::before {
+        background: #28a745;
+    }
+
+    .timeline-item.active::before {
+        background: var(--orange);
+    }
+
+    .timeline-item.rejected::before {
+        background: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="bi bi-eye me-2 text-primary"></i>Withdrawal Request Details
+    </h1>
+    <div>
+        <a href="{{ url_for('client.withdrawal_requests') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Requests
+        </a>
+    </div>
+</div>
+
+<!-- Request Overview -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card detail-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Request Overview
+                </h5>
+                <span class="status-badge status-{{ withdrawal_request.status.value }}">
+                    {% if withdrawal_request.status.value == 'pending' %}
+                    <i class="bi bi-clock"></i>
+                    {% elif withdrawal_request.status.value == 'approved' %}
+                    <i class="bi bi-check-circle"></i>
+                    {% elif withdrawal_request.status.value == 'completed' %}
+                    <i class="bi bi-check-circle-fill"></i>
+                    {% elif withdrawal_request.status.value == 'rejected' %}
+                    <i class="bi bi-x-circle"></i>
+                    {% endif %}
+                    {{ withdrawal_request.status.value|title }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Withdrawal Details</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted">Amount:</td>
+                                <td class="fw-bold">{{ "%.8f"|format(withdrawal_request.amount) }} {{
+                                    withdrawal_request.currency }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Currency:</td>
+                                <td>{{ withdrawal_request.currency }}</td>
+                            </tr>
+                            {% if withdrawal_request.fee and withdrawal_request.fee > 0 %}
+                            <tr>
+                                <td class="text-muted">Fee:</td>
+                                <td>{{ "%.8f"|format(withdrawal_request.fee) }} {{ withdrawal_request.currency }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if withdrawal_request.net_amount and withdrawal_request.net_amount !=
+                            withdrawal_request.amount %}
+                            <tr>
+                                <td class="text-muted">Net Amount:</td>
+                                <td class="fw-bold text-success">{{ "%.8f"|format(withdrawal_request.net_amount) }} {{
+                                    withdrawal_request.currency }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Request Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted">Request ID:</td>
+                                <td><code>#{{ withdrawal_request.id }}</code></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Created:</td>
+                                <td>{{ withdrawal_request.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                            </tr>
+                            {% if withdrawal_request.updated_at != withdrawal_request.created_at %}
+                            <tr>
+                                <td class="text-muted">Last Updated:</td>
+                                <td>{{ withdrawal_request.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if withdrawal_request.user_id %}
+                            <tr>
+                                <td class="text-muted">User ID:</td>
+                                <td>{{ withdrawal_request.user_id }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightning me-2"></i>Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if withdrawal_request.status.value == 'pending' %}
+                <div class="alert alert-info py-2 mb-3">
+                    <small><i class="bi bi-clock me-1"></i>This request is pending admin review.</small>
+                </div>
+                {% elif withdrawal_request.status.value == 'approved' %}
+                <div class="alert alert-success py-2 mb-3">
+                    <small><i class="bi bi-check-circle me-1"></i>This request has been approved and is being
+                        processed.</small>
+                </div>
+                {% elif withdrawal_request.status.value == 'completed' %}
+                <div class="alert alert-success py-2 mb-3">
+                    <small><i class="bi bi-check-circle-fill me-1"></i>This withdrawal has been completed
+                        successfully.</small>
+                </div>
+                {% elif withdrawal_request.status.value == 'rejected' %}
+                <div class="alert alert-danger py-2 mb-3">
+                    <small><i class="bi bi-x-circle me-1"></i>This request was rejected. See details below.</small>
+                </div>
+                {% endif %}
+
+                <!-- Edit Amount (only for pending requests) -->
+                {% if withdrawal_request.status.value == 'pending' %}
+                <div class="card mb-3">
+                    <div class="card-header py-2">
+                        <h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Amount</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <form method="POST"
+                            action="{{ url_for('client.edit_withdrawal_amount', request_id=withdrawal_request.id) }}">
+                            <div class="mb-2">
+                                <label for="new_amount" class="form-label small">New Amount</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="new_amount" name="new_amount"
+                                        step="0.01" min="0" value="{{ withdrawal_request.amount }}" required>
+                                </div>
+                                <small class="text-muted">Available balance: ${{ "%.2f"|format(client.balance)
+                                    }}</small>
+                            </div>
+                            <div class="mb-2">
+                                <label for="edit_reason" class="form-label small">Reason (optional)</label>
+                                <input type="text" class="form-control form-control-sm" id="edit_reason"
+                                    name="edit_reason" placeholder="Reason for change...">
+                            </div>
+                            <button type="submit" class="btn btn-warning btn-sm w-100">
+                                <i class="bi bi-check2 me-1"></i>Update Amount
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('client.create_withdrawal_request') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-plus-circle me-2"></i>Create New Request
+                    </a>
+                    <a href="{{ url_for('client.support') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-headset me-2"></i>Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Destination Wallet -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-wallet2 me-2"></i>Destination Wallet
+        </h5>
+    </div>
+    <div class="card-body">
+        <h6>User Wallet Address</h6>
+        <div class="address-display">
+            {{ withdrawal_request.user_wallet_address }}
+            <button class="btn btn-outline-secondary copy-btn"
+                onclick="copyToClipboard('{{ withdrawal_request.user_wallet_address }}')">
+                <i class="bi bi-clipboard"></i>
+            </button>
+        </div>
+        <div class="form-text mt-2">
+            <i class="bi bi-info-circle me-1"></i>
+            Ensure this address is correct and supports {{ withdrawal_request.currency }} transactions.
+        </div>
+    </div>
+</div>
+
+<!-- Status Timeline -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-clock-history me-2"></i>Processing Timeline
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="timeline">
+            <!-- Created -->
+            <div class="timeline-item completed">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">Request Created</h6>
+                        <p class="mb-1 text-muted">Withdrawal request submitted for review</p>
+                        <small class="text-muted">{{ withdrawal_request.created_at.strftime('%Y-%m-%d %H:%M UTC')
+                            }}</small>
+                    </div>
+                    <span class="badge bg-success">Completed</span>
+                </div>
+            </div>
+
+            <!-- Under Review -->
+            <div
+                class="timeline-item {% if withdrawal_request.status.value in ['approved', 'completed', 'rejected'] %}completed{% else %}active{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">Under Review</h6>
+                        <p class="mb-1 text-muted">Admin team reviewing the withdrawal request</p>
+                        {% if withdrawal_request.status.value == 'pending' %}
+                        <small class="text-muted">In progress...</small>
+                        {% elif withdrawal_request.status.value in ['approved', 'completed'] and
+                        withdrawal_request.approved_at %}
+                        <small class="text-muted">{{ withdrawal_request.approved_at.strftime('%Y-%m-%d %H:%M UTC')
+                            }}</small>
+                        {% elif withdrawal_request.status.value == 'rejected' and withdrawal_request.rejected_at %}
+                        <small class="text-muted">{{ withdrawal_request.rejected_at.strftime('%Y-%m-%d %H:%M UTC')
+                            }}</small>
+                        {% endif %}
+                    </div>
+                    <span
+                        class="badge {% if withdrawal_request.status.value in ['approved', 'completed', 'rejected'] %}bg-success{% else %}bg-warning{% endif %}">
+                        {% if withdrawal_request.status.value in ['approved', 'completed', 'rejected'] %}Completed{%
+                        else %}In Progress{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            {% if withdrawal_request.status.value == 'rejected' %}
+            <!-- Rejected -->
+            <div class="timeline-item rejected">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1 text-danger">Request Rejected</h6>
+                        <p class="mb-1 text-muted">{{ withdrawal_request.rejection_reason or 'No reason provided' }}</p>
+                        {% if withdrawal_request.rejected_at %}
+                        <small class="text-muted">{{ withdrawal_request.rejected_at.strftime('%Y-%m-%d %H:%M UTC')
+                            }}</small>
+                        {% endif %}
+                    </div>
+                    <span class="badge bg-danger">Rejected</span>
+                </div>
+            </div>
+            {% else %}
+            <!-- Approved/Processing -->
+            <div
+                class="timeline-item {% if withdrawal_request.status.value in ['approved', 'completed'] %}{% if withdrawal_request.status.value == 'completed' %}completed{% else %}active{% endif %}{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">Approved & Processing</h6>
+                        <p class="mb-1 text-muted">Withdrawal approved and being processed</p>
+                        {% if withdrawal_request.status.value in ['approved', 'completed'] and
+                        withdrawal_request.approved_at %}
+                        <small class="text-muted">{{ withdrawal_request.approved_at.strftime('%Y-%m-%d %H:%M UTC')
+                            }}</small>
+                        {% else %}
+                        <small class="text-muted">Pending approval...</small>
+                        {% endif %}
+                    </div>
+                    <span
+                        class="badge {% if withdrawal_request.status.value in ['approved', 'completed'] %}{% if withdrawal_request.status.value == 'completed' %}bg-success{% else %}bg-info{% endif %}{% else %}bg-secondary{% endif %}">
+                        {% if withdrawal_request.status.value == 'completed' %}Completed{% elif
+                        withdrawal_request.status.value == 'approved' %}In Progress{% else %}Pending{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Completed -->
+            <div class="timeline-item {% if withdrawal_request.status.value == 'completed' %}completed{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">Withdrawal Completed</h6>
+                        <p class="mb-1 text-muted">Funds successfully sent to destination wallet</p>
+                        {% if withdrawal_request.status.value == 'completed' %}
+                        <small class="text-muted">Completed</small>
+                        {% else %}
+                        <small class="text-muted">Pending...</small>
+                        {% endif %}
+                    </div>
+                    <span
+                        class="badge {% if withdrawal_request.status.value == 'completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if withdrawal_request.status.value == 'completed' %}Completed{% else %}Pending{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Additional Information -->
+{% if withdrawal_request.notes or withdrawal_request.rejection_reason %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="bi bi-chat-text me-2"></i>Additional Information
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if withdrawal_request.rejection_reason %}
+        <div class="alert alert-danger">
+            <h6 class="alert-heading">Rejection Reason</h6>
+            <p class="mb-0">{{ withdrawal_request.rejection_reason }}</p>
+        </div>
+        {% endif %}
+
+        {% if withdrawal_request.notes %}
+        <h6>Request Notes</h6>
+        <p class="text-muted">{{ withdrawal_request.notes }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(function () {
+            showToast('Address copied to clipboard!', 'success');
+        }).catch(function (err) {
+            showToast('Failed to copy address', 'error');
+            console.error('Could not copy text: ', err);
+        });
+    }
+</script>
+{% endblock %}

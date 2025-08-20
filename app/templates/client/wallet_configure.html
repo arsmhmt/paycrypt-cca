@@ -1,0 +1,583 @@
+{% extends "client/base.html" %}
+
+{% block title %}Wallet Management - PayCrypt{% endblock %}
+
+{% block styles %}
+<style>
+    .wallet-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--orange);
+    }
+
+    .wallet-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .wallet-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-error {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .wallet-type-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    .type-custom-api {
+        background: rgba(0, 123, 255, 0.1);
+        color: #0056b3;
+        border: 1px solid rgba(0, 123, 255, 0.2);
+    }
+
+    .type-custom-manual {
+        background: rgba(108, 117, 125, 0.1);
+        color: #495057;
+        border: 1px solid rgba(108, 117, 125, 0.2);
+    }
+
+    .crypto-support {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .crypto-badge {
+        background: var(--orange);
+        color: white;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+
+    .alert-flat-rate {
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 107, 53, 0.05) 100%);
+        border: 1px solid rgba(255, 107, 53, 0.2);
+        color: #8B4513;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="bi bi-wallet2 me-2 text-primary"></i>Wallet Management
+    </h1>
+    <div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWalletModal">
+            <i class="bi bi-plus-circle me-2"></i>Add New Wallet
+        </button>
+    </div>
+</div>
+
+<!-- Critical Notice for Flat-Rate Clients -->
+{% if current_user.is_flat_rate() %}
+<div class="alert alert-flat-rate mb-4">
+    <h5 class="alert-heading">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>Wallet configuration Required
+    </h5>
+    <p class="mb-2">
+        <strong>As a flat-rate client, you must configure and integrate your own wallet for all financial
+            transactions.</strong>
+    </p>
+    <p class="mb-0">
+        <small>
+            You have full control over your funds and transactions. configure your wallet API or manual wallet addresses
+            below.
+        </small>
+    </p>
+</div>
+{% endif %}
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Wallets
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ wallets|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-wallet2 fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Active Wallets
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ wallets|selectattr("status.value", "equalto", "active")|list|length }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            API Wallets
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ wallets|selectattr("wallet_type.value", "equalto", "custom_api")|list|length }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cloud fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Manual Wallets
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ wallets|selectattr("wallet_type.value", "equalto", "custom_manual")|list|length }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-gear fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wallets List -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Your Wallets</h6>
+        <div class="dropdown no-arrow">
+            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                <div class="dropdown-header">Wallet Actions:</div>
+                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addWalletModal">
+                    <i class="bi bi-plus-circle me-2"></i>Add New Wallet
+                </a>
+                <a class="dropdown-item" href="#" onclick="refreshWalletBalances()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh Balances
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if wallets %}
+        <div class="row">
+            {% for wallet in wallets %}
+            <div class="col-xl-6 col-lg-6 mb-4">
+                <div class="card wallet-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-wallet2 me-2"></i>{{ wallet.wallet_name }}
+                        </h6>
+                        <div>
+                            <span class="wallet-status status-{{ wallet.status.value }}">
+                                {{ wallet.status.value|title }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <span class="wallet-type-badge type-{{ wallet.wallet_type.value.replace('_', '-') }}">
+                                {{ wallet.wallet_type.value.replace('_', ' ')|title }}
+                            </span>
+                        </div>
+
+                        {% if wallet.supported_currencies %}
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Supported Currencies:</small>
+                            <div class="crypto-support">
+                                {% for currency in wallet.supported_currencies %}
+                                <span class="crypto-badge">{{ currency }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if wallet.last_sync_at %}
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                Last sync: {{ wallet.last_sync_at.strftime('%Y-%m-%d %H:%M') }}
+                            </small>
+                        </div>
+                        {% endif %}
+
+                        {% if wallet.error_message %}
+                        <div class="alert alert-danger py-2 mb-2">
+                            <small><i class="bi bi-exclamation-triangle me-1"></i>{{ wallet.error_message }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                onclick="editWallet({{ wallet.id }})">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </button>
+                            <button type="button" class="btn btn-outline-info btn-sm"
+                                onclick="testWallet({{ wallet.id }})">
+                                <i class="bi bi-check-circle me-1"></i>Test
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                onclick="deleteWallet({{ wallet.id }})">
+                                <i class="bi bi-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-wallet2 display-1 text-muted mb-3"></i>
+            <h4 class="text-muted">No Wallets configured</h4>
+            <p class="text-muted mb-4">
+                {% if current_user.is_flat_rate() %}
+                <strong>You must configure at least one wallet to process transactions.</strong><br>
+                {% endif %}
+                Add your first wallet to start managing your cryptocurrency transactions.
+            </p>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWalletModal">
+                <i class="bi bi-plus-circle me-2"></i>Add Your First Wallet
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Wallet Modal -->
+<div class="modal fade" id="addWalletModal" tabindex="-1" aria-labelledby="addWalletModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addWalletModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Add New Wallet
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addWalletForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="walletName" class="form-label">Wallet Name</label>
+                                <input type="text" class="form-control" id="walletName" name="wallet_name"
+                                    placeholder="e.g., Main Trading Wallet" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="walletType" class="form-label">Wallet Type</label>
+                                <select class="form-select" id="walletType" name="wallet_type" required>
+                                    <option value="">Select wallet type...</option>
+                                    <option value="custom_api">Custom API Integration</option>
+                                    <option value="custom_manual">Manual Wallet Management</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API configuration (shown when custom_api is selected) -->
+                    <div id="apiconfig" style="display: none;">
+                        <h6 class="mb-3"><i class="bi bi-cloud me-2"></i>API configuration</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="apiKey" class="form-label">API Key</label>
+                                    <input type="password" class="form-control" id="apiKey" name="api_key">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="apiSecret" class="form-label">API Secret</label>
+                                    <input type="password" class="form-control" id="apiSecret" name="api_secret">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="apiEndpoint" class="form-label">API Endpoint</label>
+                            <input type="url" class="form-control" id="apiEndpoint" name="api_endpoint"
+                                placeholder="https://api.yourwallet.com/v1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="webhookUrl" class="form-label">Webhook URL (Optional)</label>
+                            <input type="url" class="form-control" id="webhookUrl" name="webhook_url"
+                                placeholder="https://yourdomain.com/webhook">
+                        </div>
+                    </div>
+
+                    <!-- Manual configuration (shown when custom_manual is selected) -->
+                    <div id="manualconfig" style="display: none;">
+                        <h6 class="mb-3"><i class="bi bi-person-gear me-2"></i>Manual Wallet Addresses</h6>
+                        <div id="addressFields">
+                            <!-- Dynamic address fields will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addAddressField()">
+                            <i class="bi bi-plus me-1"></i>Add Currency
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="supportedCurrencies" class="form-label">Supported Currencies</label>
+                        <select class="form-select" id="supportedCurrencies" name="supported_currencies" multiple>
+                            <option value="BTC">Bitcoin (BTC)</option>
+                            <option value="ETH">Ethereum (ETH)</option>
+                            <option value="USDT">Tether (USDT)</option>
+                            <option value="USDC">USD Coin (USDC)</option>
+                            <option value="BNB">Binance Coin (BNB)</option>
+                            <option value="ADA">Cardano (ADA)</option>
+                            <option value="DOT">Polkadot (DOT)</option>
+                            <option value="MATIC">Polygon (MATIC)</option>
+                        </select>
+                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple currencies</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveWallet()">
+                    <i class="bi bi-check me-2"></i>Save Wallet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.getElementById('walletType').addEventListener('change', function () {
+        const apiconfig = document.getElementById('apiconfig');
+        const manualconfig = document.getElementById('manualconfig');
+
+        if (this.value === 'custom_api') {
+            apiconfig.style.display = 'block';
+            manualconfig.style.display = 'none';
+        } else if (this.value === 'custom_manual') {
+            apiconfig.style.display = 'none';
+            manualconfig.style.display = 'block';
+            addAddressField(); // Add first address field
+        } else {
+            apiconfig.style.display = 'none';
+            manualconfig.style.display = 'none';
+        }
+    });
+
+    function addAddressField() {
+        const container = document.getElementById('addressFields');
+        const fieldCount = container.children.length;
+
+        const fieldHtml = `
+            <div class="row mb-2 address-field">
+                <div class="col-md-4">
+                    <select class="form-select form-select-sm" name="currency_${fieldCount}">
+                        <option value="">Select currency...</option>
+                        <option value="BTC">Bitcoin (BTC)</option>
+                        <option value="ETH">Ethereum (ETH)</option>
+                        <option value="USDT">Tether (USDT)</option>
+                        <option value="USDC">USD Coin (USDC)</option>
+                        <option value="BNB">Binance Coin (BNB)</option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <input type="text" class="form-control form-control-sm" name="address_${fieldCount}" 
+                        placeholder="Wallet address">
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeAddressField(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', fieldHtml);
+    }
+
+    function removeAddressField(button) {
+        button.closest('.address-field').remove();
+    }
+
+    function saveWallet() {
+        const form = document.getElementById('addWalletForm');
+        const formData = new FormData(form);
+
+        // Add manual addresses if manual wallet type
+        const walletType = formData.get('wallet_type');
+        if (walletType === 'custom_manual') {
+            const addresses = {};
+            const addressFields = document.querySelectorAll('.address-field');
+
+            addressFields.forEach((field, index) => {
+                const currency = field.querySelector(`[name="currency_${index}"]`).value;
+                const address = field.querySelector(`[name="address_${index}"]`).value;
+
+                if (currency && address) {
+                    addresses[currency] = address;
+                }
+            });
+
+            formData.append('wallet_addresses', JSON.stringify(addresses));
+        }
+
+        // Send to server
+        fetch('{{ url_for("client.wallet_configure") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Wallet added successfully!', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showToast(data.message || 'Error adding wallet', 'error');
+                }
+            })
+            .catch(error => {
+                showToast('Network error. Please try again.', 'error');
+                console.error('Error:', error);
+            });
+    }
+
+    function editWallet(walletId) {
+        // Implement edit functionality
+        showToast('Edit functionality coming soon!', 'info');
+    }
+
+    function testWallet(walletId) {
+        showToast('Testing wallet connection...', 'info');
+
+        fetch(`{{ url_for("client.wallet_configure") }}/${walletId}/test`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Wallet connection successful!', 'success');
+                } else {
+                    showToast(data.message || 'Wallet connection failed', 'error');
+                }
+            })
+            .catch(error => {
+                showToast('Network error during wallet test', 'error');
+                console.error('Error:', error);
+            });
+    }
+
+    function deleteWallet(walletId) {
+        if (confirm('Are you sure you want to delete this wallet? This action cannot be undone.')) {
+            fetch(`{{ url_for("client.wallet_configure") }}/${walletId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Wallet deleted successfully', 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showToast(data.message || 'Error deleting wallet', 'error');
+                    }
+                })
+                .catch(error => {
+                    showToast('Network error during deletion', 'error');
+                    console.error('Error:', error);
+                });
+        }
+    }
+
+    function refreshWalletBalances() {
+        showToast('Refreshing wallet balances...', 'info');
+
+        fetch('{{ url_for("client.wallet_configure") }}/refresh', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Wallet balances refreshed!', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showToast(data.message || 'Error refreshing balances', 'error');
+                }
+            })
+            .catch(error => {
+                showToast('Network error during refresh', 'error');
+                console.error('Error:', error);
+            });
+    }
+</script>
+{% endblock %}

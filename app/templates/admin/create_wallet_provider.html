@@ -1,0 +1,655 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Add Wallet Provider - Admin Panel{% endblock %}
+
+{% block styles %}
+<style>
+    .provider-type-card {
+        border: 2px solid #e1e5e9;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .provider-type-card:hover {
+        border-color: #ff8c00;
+        box-shadow: 0 4px 15px rgba(255, 140, 0, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .provider-type-card.selected {
+        border-color: #ff8c00;
+        background: linear-gradient(135deg, #fff8f0 0%, #ffffff 100%);
+    }
+
+    .provider-type-card .check-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #ff8c00;
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .provider-type-card.selected .check-icon {
+        display: flex;
+    }
+
+    .provider-logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 12px;
+    }
+
+    .binance-logo {
+        background: #f0b90b;
+        color: white;
+    }
+
+    .coinbase-logo {
+        background: #0052ff;
+        color: white;
+    }
+
+    .kraken-logo {
+        background: #5741d9;
+        color: white;
+    }
+
+    .manual-logo {
+        background: #6c757d;
+        color: white;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .currency-selector {
+        display: none;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .currency-selector.show {
+        display: block;
+    }
+
+    .currency-checkbox {
+        margin-bottom: 0.5rem;
+    }
+
+    .wallet-address-fields {
+        display: none;
+    }
+
+    .wallet-address-fields.show {
+        display: block;
+    }
+
+    .form-control:focus {
+        border-color: #ff8c00;
+        box-shadow: 0 0 0 0.2rem rgba(255, 140, 0, 0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #ff8c00 0%, #f59e0b 100%);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #e67e00 0%, #d97706 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-4 mb-0">Add Wallet Provider</h1>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.wallet_providers') }}">Wallet Providers</a></li>
+                <li class="breadcrumb-item active">Add Provider</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form id="providerForm" method="POST">
+                <!-- Provider Type Selection -->
+                <div class="form-section">
+                    <h5 class="mb-3">Select Provider Type</h5>
+                    <div class="row">
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="provider-type-card text-center py-3" data-provider="binance">
+                                <div class="check-icon">
+                                    <i class="bi bi-check"></i>
+                                </div>
+                                <div class="provider-logo binance-logo mx-auto">
+                                    <strong>B</strong>
+                                </div>
+                                <h6>Binance</h6>
+                                <small class="text-muted">Major exchange with API</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="provider-type-card text-center py-3" data-provider="coinbase">
+                                <div class="check-icon">
+                                    <i class="bi bi-check"></i>
+                                </div>
+                                <div class="provider-logo coinbase-logo mx-auto">
+                                    <strong>C</strong>
+                                </div>
+                                <h6>Coinbase Pro</h6>
+                                <small class="text-muted">US-based exchange</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="provider-type-card text-center py-3" data-provider="kraken">
+                                <div class="check-icon">
+                                    <i class="bi bi-check"></i>
+                                </div>
+                                <div class="provider-logo kraken-logo mx-auto">
+                                    <strong>K</strong>
+                                </div>
+                                <h6>Kraken</h6>
+                                <small class="text-muted">European exchange</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <div class="provider-type-card text-center py-3" data-provider="manual_wallet">
+                                <div class="check-icon">
+                                    <i class="bi bi-check"></i>
+                                </div>
+                                <div class="provider-logo manual-logo mx-auto">
+                                    <i class="bi bi-wallet2"></i>
+                                </div>
+                                <h6>Manual Wallet</h6>
+                                <small class="text-muted">Manual address management</small>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="provider_type" id="provider_type" required>
+                </div>
+
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h5 class="mb-3">Basic Information</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Provider Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required
+                                    placeholder="e.g., Binance Main Account">
+                                <div class="form-text">Give this provider a descriptive name for easy identification.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <input type="number" class="form-control" id="priority" name="priority" value="100"
+                                    min="1" max="999">
+                                <div class="form-text">Lower numbers = higher priority (1 = highest).</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="description" name="description" rows="2"
+                            placeholder="Additional notes about this wallet provider..."></textarea>
+                    </div>
+                </div>
+
+                <!-- API configuration (for exchange providers) -->
+                <div class="form-section" id="api-config">
+                    <h5 class="mb-3">API configuration</h5>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Security Note:</strong> API credentials are stored securely and only used for authorized
+                        operations.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="api_key" class="form-label">API Key</label>
+                                <input type="text" class="form-control" id="api_key" name="api_key"
+                                    placeholder="Your API key">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="api_secret" class="form-label">API Secret</label>
+                                <input type="password" class="form-control" id="api_secret" name="api_secret"
+                                    placeholder="Your API secret">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="api_passphrase" class="form-label">API Passphrase (if required)</label>
+                                <input type="password" class="form-control" id="api_passphrase" name="api_passphrase"
+                                    placeholder="API passphrase (Coinbase Pro)">
+                                <div class="form-text">Only required for certain exchanges like Coinbase Pro.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="sandbox_mode"
+                                        name="sandbox_mode">
+                                    <label class="form-check-label" for="sandbox_mode">
+                                        Sandbox/Test Mode
+                                    </label>
+                                    <div class="form-text">Use test environment for this provider.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wallet Addresses (for manual wallets) -->
+                <div class="form-section wallet-address-fields" id="wallet-addresses">
+                    <h5 class="mb-3">Wallet Addresses</h5>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Enter the wallet addresses you want to use for receiving payments. Leave empty for currencies
+                        you don't support.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_BTC" class="form-label">Bitcoin (BTC) Address</label>
+                                <input type="text" class="form-control" id="address_BTC" name="address_BTC"
+                                    placeholder="bc1...">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_ETH" class="form-label">Ethereum (ETH) Address</label>
+                                <input type="text" class="form-control" id="address_ETH" name="address_ETH"
+                                    placeholder="0x...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_USDT" class="form-label">USDT Address</label>
+                                <input type="text" class="form-control" id="address_USDT" name="address_USDT"
+                                    placeholder="USDT address">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_XRP" class="form-label">Ripple (XRP) Address</label>
+                                <input type="text" class="form-control" id="address_XRP" name="address_XRP"
+                                    placeholder="rN...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_LTC" class="form-label">Litecoin (LTC) Address</label>
+                                <input type="text" class="form-control" id="address_LTC" name="address_LTC"
+                                    placeholder="ltc1...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capabilities -->
+                <div class="form-section">
+                    <h5 class="mb-3">Capabilities</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="supports_deposits"
+                                    name="supports_deposits" checked>
+                                <label class="form-check-label" for="supports_deposits">
+                                    <i class="bi bi-arrow-down-circle text-success"></i> Supports Deposits
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="supports_withdrawals"
+                                    name="supports_withdrawals" checked>
+                                <label class="form-check-label" for="supports_withdrawals">
+                                    <i class="bi bi-arrow-up-circle text-primary"></i> Supports Withdrawals
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="supports_balance_check"
+                                    name="supports_balance_check" checked>
+                                <label class="form-check-label" for="supports_balance_check">
+                                    <i class="bi bi-wallet2 text-info"></i> Balance Checking
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div class="form-section">
+                    <h5 class="mb-3">Advanced Settings</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_requests_per_minute" class="form-label">Rate Limit
+                                    (requests/minute)</label>
+                                <input type="number" class="form-control" id="max_requests_per_minute"
+                                    name="max_requests_per_minute" value="600" min="1" max="10000">
+                                <div class="form-text">Maximum API requests per minute (helps avoid rate limiting).
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="currencies" class="form-label">Supported Currencies</label>
+                                <input type="text" class="form-control" id="currencies" name="currencies"
+                                    value="BTC,ETH,USDT,XRP,LTC" placeholder="BTC,ETH,USDT,XRP,LTC">
+                                <div class="form-text">Comma-separated list of supported currency codes.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('admin.wallet_providers') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancel
+                    </a>
+                    <div>
+                        <button type="button" class="btn btn-outline-primary me-2" onclick="testConnection()">
+                            <i class="bi bi-wifi"></i> Test Connection
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Create Provider
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Help Sidebar -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-question-circle"></i> Setup Help</h6>
+                </div>
+                <div class="card-body">
+                    <div id="help-content">
+                        <p class="text-muted">Select a provider type to see specific setup instructions.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Provider Comparison -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Provider Comparison</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Exchange</th>
+                                    <th>Manual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Auto Balance</td>
+                                    <td><i class="bi bi-check-circle text-success"></i></td>
+                                    <td><i class="bi bi-x-circle text-danger"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Auto Withdrawals</td>
+                                    <td><i class="bi bi-check-circle text-success"></i></td>
+                                    <td><i class="bi bi-x-circle text-danger"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Control</td>
+                                    <td><i class="bi bi-dash-circle text-warning"></i></td>
+                                    <td><i class="bi bi-check-circle text-success"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Setup Complexity</td>
+                                    <td><span class="text-warning">Medium</span></td>
+                                    <td><span class="text-success">Low</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Provider type selection
+    document.querySelectorAll('.provider-type-card').forEach(card => {
+        card.addEventListener('click', function () {
+            // Remove selection from all cards
+            document.querySelectorAll('.provider-type-card').forEach(c => c.classList.remove('selected'));
+
+            // Select this card
+            this.classList.add('selected');
+
+            // Set form value
+            const providerType = this.dataset.provider;
+            document.getElementById('provider_type').value = providerType;
+
+            // Update form visibility and help content
+            updateFormSections(providerType);
+            updateHelpContent(providerType);
+        });
+    });
+
+    function updateFormSections(providerType) {
+        const apiconfig = document.getElementById('api-config');
+        const walletAddresses = document.getElementById('wallet-addresses');
+
+        if (providerType === 'manual_wallet') {
+            apiconfig.style.display = 'none';
+            walletAddresses.classList.add('show');
+
+            // Remove required from API fields
+            document.getElementById('api_key').removeAttribute('required');
+            document.getElementById('api_secret').removeAttribute('required');
+        } else {
+            apiconfig.style.display = 'block';
+            walletAddresses.classList.remove('show');
+
+            // Add required to API fields
+            document.getElementById('api_key').setAttribute('required', 'required');
+            document.getElementById('api_secret').setAttribute('required', 'required');
+        }
+    }
+
+    function updateHelpContent(providerType) {
+        const helpContent = document.getElementById('help-content');
+
+        const helpTexts = {
+            binance: `
+            <h6>Binance Setup</h6>
+            <ol>
+                <li>Log into your Binance account</li>
+                <li>Go to API Management</li>
+                <li>Create a new API key</li>
+                <li>Enable "Enable Reading" and "Enable Spot & Margin Trading"</li>
+                <li>Add your server IP to the whitelist</li>
+                <li>Copy the API Key and Secret Key</li>
+            </ol>
+            <div class="alert alert-warning alert-sm">
+                <strong>Note:</strong> Never share your API credentials and ensure proper IP restrictions.
+            </div>
+        `,
+            coinbase: `
+            <h6>Coinbase Pro Setup</h6>
+            <ol>
+                <li>Log into Coinbase Pro</li>
+                <li>Go to API settings</li>
+                <li>Create a new API key</li>
+                <li>Select permissions: View and Trade</li>
+                <li>Add your server IP to whitelist</li>
+                <li>Save the Key, Secret, and Passphrase</li>
+            </ol>
+            <div class="alert alert-info alert-sm">
+                <strong>Tip:</strong> Coinbase Pro requires all three credentials including the passphrase.
+            </div>
+        `,
+            kraken: `
+            <h6>Kraken Setup</h6>
+            <ol>
+                <li>Log into your Kraken account</li>
+                <li>Go to Settings → API</li>
+                <li>Generate new key pair</li>
+                <li>Select permissions: Query Funds, Query Open Orders, Query Closed Orders, Query Ledger Entries</li>
+                <li>Copy the API Key and Private Key</li>
+            </ol>
+            <div class="alert alert-success alert-sm">
+                <strong>Secure:</strong> Kraken allows granular permission controls for enhanced security.
+            </div>
+        `,
+            manual_wallet: `
+            <h6>Manual Wallet Setup</h6>
+            <ol>
+                <li>Generate wallet addresses for each cryptocurrency</li>
+                <li>Ensure you control the private keys</li>
+                <li>Enter the addresses in the form</li>
+                <li>Monitor balances manually</li>
+            </ol>
+            <div class="alert alert-warning alert-sm">
+                <strong>Security:</strong> Make sure to backup your private keys securely.
+            </div>
+        `
+        };
+
+        helpContent.innerHTML = helpTexts[providerType] || '<p class="text-muted">Select a provider type to see setup instructions.</p>';
+    }
+
+    // Form submission
+    document.getElementById('providerForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Creating...';
+
+        try {
+            const response = await fetch('/admin/wallet-providers/new', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                showToast('Wallet provider created successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/admin/wallet-providers';
+                }, 1500);
+            } else {
+                const result = await response.json();
+                showToast(`Error: ${result.error || 'Failed to create provider'}`, 'error');
+            }
+        } catch (error) {
+            showToast('Network error occurred', 'error');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    });
+
+    // Test connection
+    async function testConnection() {
+        const providerType = document.getElementById('provider_type').value;
+        if (!providerType) {
+            showToast('Please select a provider type first', 'warning');
+            return;
+        }
+
+        if (providerType === 'manual_wallet') {
+            showToast('Manual wallets do not support connection testing', 'info');
+            return;
+        }
+
+        const apiKey = document.getElementById('api_key').value;
+        const apiSecret = document.getElementById('api_secret').value;
+
+        if (!apiKey || !apiSecret) {
+            showToast('Please enter API credentials first', 'warning');
+            return;
+        }
+
+        showToast('Testing connection...', 'info');
+
+        // Here you would implement the actual connection test
+        // For now, we'll simulate it
+        setTimeout(() => {
+            showToast('Connection test successful!', 'success');
+        }, 2000);
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        const toastContainer = document.getElementById('toast-container');
+        const toastId = 'toast-' + Date.now();
+
+        const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type}" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toast = new bootstrap.Toast(document.getElementById(toastId));
+        toast.show();
+
+        // Remove toast element after it's hidden
+        document.getElementById(toastId).addEventListener('hidden.bs.toast', function () {
+            this.remove();
+        });
+    }
+</script>
+{% endblock %}

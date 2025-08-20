@@ -1,0 +1,124 @@
+{% extends "client/base.html" %}
+
+{% block client_content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">Notification Preferences</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <!-- Payment Updates -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Payment Updates</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        {{ form.payment_updates(class="form-check-input") }}
+                                        {{ form.payment_updates.label(class="form-check-label") }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.email_notifications(class="form-check-input") }}
+                                        {{ form.email_notifications.label(class="form-check-label") }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.sms_notifications(class="form-check-input") }}
+                                        {{ form.sms_notifications.label(class="form-check-label") }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.push_notifications(class="form-check-input") }}
+                                        {{ form.push_notifications.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invoice Reminders -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Invoice Reminders</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        {{ form.invoice_reminders(class="form-check-input") }}
+                                        {{ form.invoice_reminders.label(class="form-check-label") }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.email_notifications(class="form-check-input") }}
+                                        {{ form.email_notifications.label(class="form-check-label") }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.sms_notifications(class="form-check-input") }}
+                                        {{ form.sms_notifications.label(class="form-check-label") }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.push_notifications(class="form-check-input") }}
+                                        {{ form.push_notifications.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Alerts -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">System Alerts</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        {{ form.system_alerts(class="form-check-input") }}
+                                        {{ form.system_alerts.label(class="form-check-label") }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.email_notifications(class="form-check-input") }}
+                                        {{ form.email_notifications.label(class="form-check-label") }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.sms_notifications(class="form-check-input") }}
+                                        {{ form.sms_notifications.label(class="form-check-label") }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form.push_notifications(class="form-check-input") }}
+                                        {{ form.push_notifications.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Save Preferences
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle notification channels when type is changed
+    $(document).ready(function() {
+        $('.form-check-input').change(function() {
+            const type = $(this).data('type');
+            const channel = $(this).data('channel');
+            
+            // Toggle all channels for this type
+            $(`.form-check-input[data-type="${type}"]`).each(function() {
+                $(this).prop('checked', $(this).data('channel') === channel);
+            });
+        });
+    });
+</script>
+{% endblock %}

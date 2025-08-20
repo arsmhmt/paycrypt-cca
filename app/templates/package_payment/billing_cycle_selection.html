@@ -1,0 +1,221 @@
+{% extends "public_base.html" %}
+
+{% block title %}Select Billing Cycle - Paycrypt{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Choose Your Billing Cycle
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4>{{ package.name }}</h4>
+                        <p class="text-muted">{{ package.description }}</p>
+                    </div>
+
+                    <div class="row">
+                        <!-- Monthly Billing -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card billing-option h-100" 
+                                 onclick="selectBilling('monthly')" 
+                                 style="cursor: pointer; transition: all 0.3s ease;">
+                                <div class="card-body text-center">
+                                    <div class="billing-icon mb-3">
+                                        <i class="fas fa-calendar" style="font-size: 3rem; color: #28a745;"></i>
+                                    </div>
+                                    
+                                    <h5 class="card-title">Monthly Billing</h5>
+                                    <p class="card-text text-muted">Pay monthly, cancel anytime</p>
+                                    
+                                    <div class="price-display">
+                                        <span class="price-amount">${{ "%.2f"|format(package.monthly_price) }}</span>
+                                        <small class="text-muted d-block">per month</small>
+                                    </div>
+                                    
+                                    <ul class="list-unstyled text-start mt-3">
+                                        <li><i class="fas fa-check text-success me-2"></i>Monthly billing</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Cancel anytime</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Full feature access</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Customer support</li>
+                                    </ul>
+                                    
+                                    <button class="btn btn-outline-success btn-lg mt-3">
+                                        <i class="fas fa-arrow-right me-2"></i>
+                                        Choose Monthly
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Annual Billing -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card billing-option h-100 border-warning" 
+                                 onclick="selectBilling('annual')" 
+                                 style="cursor: pointer; transition: all 0.3s ease; position: relative;">
+                                
+                                <!-- Savings Badge -->
+                                <div class="position-absolute top-0 start-50 translate-middle">
+                                    <span class="badge bg-warning text-dark px-3 py-2">
+                                        <i class="fas fa-star me-1"></i>
+                                        Save {{ package.annual_discount_percent|int }}%
+                                    </span>
+                                </div>
+                                
+                                <div class="card-body text-center pt-4">
+                                    <div class="billing-icon mb-3">
+                                        <i class="fas fa-calendar-year" style="font-size: 3rem; color: #ffc107;"></i>
+                                    </div>
+                                    
+                                    <h5 class="card-title">Annual Billing</h5>
+                                    <p class="card-text text-muted">Pay yearly and save money</p>
+                                    
+                                    <div class="price-display">
+                                        <span class="price-amount">${{ "%.2f"|format(package.annual_price_calculated) }}</span>
+                                        <small class="text-muted d-block">per year</small>
+                                        {% if package.annual_savings > 0 %}
+                                        <small class="text-success d-block">
+                                            <strong>Save ${{ "%.2f"|format(package.annual_savings) }} annually!</strong>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <ul class="list-unstyled text-start mt-3">
+                                        <li><i class="fas fa-check text-success me-2"></i>Annual billing</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>{{ package.annual_discount_percent|int }}% discount</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Full feature access</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Priority support</li>
+                                    </ul>
+                                    
+                                    <button class="btn btn-warning btn-lg mt-3">
+                                        <i class="fas fa-star me-2"></i>
+                                        Choose Annual
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Info -->
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="fas fa-info-circle me-2"></i>Payment Information</h6>
+                        <ul class="mb-0">
+                            <li>Payments are processed using cryptocurrency (Bitcoin, Ethereum, etc.)</li>
+                            <li>Service activates immediately after payment confirmation</li>
+                            <li>Monthly plans renew automatically every 30 days</li>
+                            <li>Annual plans renew automatically every 365 days</li>
+                            <li>You can cancel your subscription at any time</li>
+                        </ul>
+                    </div>
+
+                    <!-- Service Suspension Notice -->
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Service Continuity</h6>
+                        <p class="mb-0">
+                            <strong>Important:</strong> If your subscription expires and payment is not received, 
+                            your service will be automatically suspended until payment is made.
+                        </p>
+                    </div>
+
+                    <!-- Back Button -->
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('main.pricing') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Back to Packages
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.billing-option:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.billing-icon {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.price-amount {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.price-display {
+    padding: 20px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin: 15px 0;
+}
+
+.billing-option:hover .btn-outline-success {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.billing-option:hover .btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.card.billing-option {
+    border: 2px solid #e9ecef;
+}
+
+.card.billing-option.border-warning {
+    border-color: #ffc107 !important;
+}
+</style>
+
+<script>
+function selectBilling(billingCycle) {
+    // Add loading state
+    const cards = document.querySelectorAll('.billing-option');
+    cards.forEach(card => {
+        card.style.pointerEvents = 'none';
+        card.style.opacity = '0.7';
+    });
+    
+    // Show loading message
+    const selectedCard = event.currentTarget;
+    const btn = selectedCard.querySelector('.btn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+    
+    // Redirect to crypto selection for flat-rate billing
+    window.location.href = `{{ url_for('package_payment.create_flat_rate_payment', package_id=package.id, billing_cycle='CYCLE') }}`.replace('CYCLE', billingCycle);
+}
+
+// Add hover effects
+document.addEventListener('DOMContentLoaded', function() {
+    const billingCards = document.querySelectorAll('.billing-option');
+    
+    billingCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('border-warning')) {
+                this.style.borderColor = '#28a745';
+            }
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('border-warning')) {
+                this.style.borderColor = '#e9ecef';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

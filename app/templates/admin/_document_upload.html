@@ -1,0 +1,138 @@
+{% macro document_upload_section(payment_id, form) %}
+<div class="card bg-light mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-file-earmark-text me-2"></i>Payment Documents
+        </h6>
+    </div>
+    <div class="card-body">
+        <!-- Invoice Upload -->
+        <div class="mb-3">
+            <label class="form-label">Invoice</label>
+            <div class="input-group">
+                <input type="file" class="form-control" name="invoice_file" accept=".pdf,.doc,.docx">
+                <button class="btn btn-outline-secondary" type="button" onclick="previewFile('invoice')">
+                    <i class="bi bi-eye"></i> Preview
+                </button>
+            </div>
+            <div class="form-text">Supported formats: PDF, DOC, DOCX</div>
+        </div>
+
+        <!-- Receipt Upload -->
+        <div class="mb-3">
+            <label class="form-label">Receipt</label>
+            <div class="input-group">
+                <input type="file" class="form-control" name="receipt_file" accept=".pdf,.jpg,.png">
+                <button class="btn btn-outline-secondary" type="button" onclick="previewFile('receipt')">
+                    <i class="bi bi-eye"></i> Preview
+                </button>
+            </div>
+            <div class="form-text">Supported formats: PDF, JPG, PNG</div>
+        </div>
+
+        <!-- Payment Proof Upload -->
+        <div class="mb-3">
+            <label class="form-label">Payment Proof</label>
+            <div class="input-group">
+                <input type="file" class="form-control" name="payment_proof" accept=".pdf,.jpg,.png">
+                <button class="btn btn-outline-secondary" type="button" onclick="previewFile('payment_proof')">
+                    <i class="bi bi-eye"></i> Preview
+                </button>
+            </div>
+            <div class="form-text">Upload proof of payment (bank statement, screenshot, etc.)</div>
+        </div>
+
+        <!-- Other Documents Upload -->
+        <div class="mb-3">
+            <label class="form-label">Other Documents</label>
+            <div class="input-group">
+                <input type="file" class="form-control" name="other_documents" multiple>
+                <button class="btn btn-outline-secondary" type="button" onclick="previewFile('other')">
+                    <i class="bi bi-eye"></i> Preview
+                </button>
+            </div>
+            <div class="form-text">Upload any additional supporting documents</div>
+        </div>
+
+        <!-- Document Preview Modal -->
+        <div class="modal fade" id="documentPreviewModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Document Preview</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="documentPreview" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Existing Documents -->
+        {% if payment_id %}
+        <div class="card bg-light mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-file-earmark-arrow-up me-2"></i>Uploaded Documents
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% if payment.documents %}
+                        {% for doc in payment.documents %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ doc.name }}</h6>
+                                    <small class="text-muted">Uploaded {{ doc.uploaded_at|datetimeformat }}</small>
+                                </div>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('admin.download_document', document_id=doc.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="confirmDeleteDocument('{{ doc.id }}', '{{ doc.name }}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item text-muted">
+                            No documents uploaded yet
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro document_preview_modal() %}
+<div class="modal fade" id="documentPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Document Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="documentPreview" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

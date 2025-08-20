@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title|default(_('Bad Request')) }} - {{ _('Crypto Payment Gateway') }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow border-0" style="border-radius: 16px;">
+                <div class="card-header text-center bg-danger text-white py-4" style="border-radius: 16px 16px 0 0;">
+                    <h2 class="mb-0">{{ title|default(_('Bad Request')) }}</h2>
+                </div>
+                
+                <div class="card-body p-4 text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    
+                    <p class="lead">{{ error|default(_('Your request could not be processed.')) }}</p>
+                    
+                    <div class="mt-4">
+                        <p>{{ _('Please try the following:') }}</p>
+                        <ul class="text-start">
+                            <li>{{ _('Refresh the page and try again') }}</li>
+                            <li>{{ _('Make sure cookies are enabled in your browser') }}</li>
+                            <li>{{ _('If you\'re using a VPN or proxy, try disabling it') }}</li>
+                            <li>{{ _('Clear your browser cache and cookies') }}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">
+                            <i class="bi bi-arrow-left"></i> {{ _('Go Back') }}
+                        </a>
+                        <a href="{{ url_for('main.landing') }}" class="btn btn-primary">
+                            <i class="bi bi-house"></i> {{ _('Home Page') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3 text-muted">
+                <small>&copy; {{ now.year }} {{ _('PayCrypt Gateway. All rights reserved.') }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

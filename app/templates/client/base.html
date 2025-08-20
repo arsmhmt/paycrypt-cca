@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}{{ _('Client Dashboard') }} - PayCrypt{% endblock %}</title>
+
+        <!-- Favicon -->
+        <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+        <!-- Bootstrap Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+        <!-- Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet">
+
+        <!-- Custom styles -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/client-dashboard.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-layout.css') }}">
+        <style>
+            /* Steel Black, White, Orange Color Palette */
+            :root {
+                /* Brand Colors - Steel black, white, orange palette */
+                --steel-black: #212529;
+                --white: #ffffff;
+                --orange: #FF6B35;
+                --orange-hover: #e05d2e;
+                --orange-dark: #d64f28;
+
+                /* Client specific variants */
+                --client-primary: var(--steel-black);
+                --client-secondary: var(--orange);
+                --client-surface: #f8f9fc;
+                --client-surface-dark: var(--steel-black);
+
+                /* Layout variables */
+                --topbar-height: 70px;
+                --sidebar-bg: var(--steel-black);
+                --sidebar-color: var(--white);
+                --sidebar-hover: rgba(255, 255, 255, 0.1);
+                --sidebar-active: var(--orange);
+                --topbar-bg: var(--steel-black);
+                --topbar-color: var(--white);
+            }
+
+            /* Dark theme variables */
+            body[data-theme="dark"] {
+                --client-surface: #1a1d20;
+                --topbar-bg: #161719;
+                --sidebar-bg: #161719;
+            }
+
+            body[data-theme="dark"] .card {
+                background: #1e2125 !important;
+                color: var(--white) !important;
+            }
+
+            body[data-theme="dark"] footer {
+                background: #161719 !important;
+                color: var(--white) !important;
+            }
+
+            /* Global font */
+            body {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+
+            /* Sidebar logo styling */
+            .sidebar-logo {
+                max-height: 80px !important;
+                transition: all 0.3s ease;
+                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+            }
+
+            .sidebar-logo:hover {
+                transform: scale(1.05);
+                filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+            }
+
+            /* Responsive logo sizing */
+            @media (max-width: 768px) {
+                .sidebar-logo {
+                    max-height: 50px !important;
+                }
+            }
+
+            /* Sidebar collapsed state - keep logo visible but smaller */
+            body.sb-sidenav-toggled .sidebar-logo {
+                max-height: 65px !important;
+            }
+
+            /* Sidebar toggle button - Enhanced Orange color */
+            #sidebarToggle {
+                color: var(--orange) !important;
+                background: transparent !important;
+                border: none !important;
+                font-size: 1.2rem;
+                transition: all 0.3s ease;
+                padding: 0.5rem;
+                border-radius: 6px;
+            }
+
+            #sidebarToggle:hover {
+                color: var(--orange-hover) !important;
+                background: rgba(255, 107, 53, 0.1) !important;
+                transform: scale(1.1);
+            }
+
+            #sidebarToggle:focus {
+                box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.3) !important;
+                color: var(--orange) !important;
+                background: rgba(255, 107, 53, 0.05) !important;
+                outline: none !important;
+            }
+
+            #sidebarToggle:active {
+                color: var(--orange-dark) !important;
+                background: rgba(255, 107, 53, 0.15) !important;
+                transform: scale(1.05);
+            }
+
+            /* Ensure toggle button icon is orange */
+            #sidebarToggle i,
+            #sidebarToggle .fas {
+                color: var(--orange) !important;
+            }
+
+            #sidebarToggle:hover i,
+            #sidebarToggle:hover .fas {
+                color: var(--orange-hover) !important;
+            }
+
+            /* Sidebar Enhancements - Steel black theme */
+            .sb-sidenav {
+                background: var(--sidebar-bg);
+                color: var(--sidebar-color);
+                width: 280px;
+                transition: all 0.3s ease;
+            }
+
+            /* Sidebar nav items and titles smaller font */
+            .nav-link,
+            .nav-group-header,
+            .nav-text {
+                font-size: 0.8rem !important;
+            }
+
+            .sb-sidenav .nav-group-header {
+                font-size: 0.7rem !important;
+            }
+
+            .sb-sidenav .nav-link {
+                font-size: 0.8rem !important;
+                padding: 0.7rem 1rem;
+            }
+
+            .sb-sidenav .nav-text {
+                font-size: 0.8rem !important;
+            }
+
+            /* Enhanced Navigation Groups */
+            .nav-group {
+                margin-bottom: 1.5rem;
+            }
+
+            .nav-group-header {
+                display: flex;
+                align-items: center;
+                padding: 0.75rem 1rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: rgba(255, 255, 255, 0.6);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                margin-bottom: 0.5rem;
+            }
+
+            .nav-group-header i {
+                margin-right: 0.5rem;
+                font-size: 0.875rem;
+                color: var(--orange);
+            }
+
+            /* Enhanced Navigation Links */
+            .nav-link {
+                display: flex;
+                align-items: center;
+                padding: 0.875rem 1rem;
+                color: rgba(255, 255, 255, 0.8);
+                text-decoration: none;
+                transition: all 0.3s ease;
+                border-radius: 8px;
+                margin: 0 0.75rem 0.25rem;
+                font-weight: 500;
+                position: relative;
+            }
+
+            .nav-link:hover {
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--white);
+                transform: translateX(4px);
+            }
+
+            .nav-link.active {
+                background: var(--orange);
+                color: var(--white);
+                box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+            }
+
+            .nav-link.active:hover {
+                background: var(--orange-hover);
+                transform: translateX(0);
+            }
+
+            .sb-nav-link-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                margin-right: 0.75rem;
+                font-size: 1rem;
+            }
+
+            .nav-text {
+                flex: 1;
+                font-size: 0.875rem;
+            }
+
+            /* Locked Navigation Items */
+            .nav-link-locked {
+                opacity: 0.6;
+                cursor: not-allowed;
+                pointer-events: auto;
+            }
+
+            .nav-link-locked:hover {
+                background: rgba(255, 255, 255, 0.05);
+                transform: none;
+            }
+
+            .nav-lock {
+                opacity: 0.7;
+                font-size: 0.75rem;
+            }
+
+            /* Navigation Badges */
+            .nav-badge {
+                font-size: 0.625rem;
+                padding: 0.2rem 0.4rem;
+                border-radius: 10px;
+                font-weight: 600;
+                max-width: 32px;
+                min-width: 20px;
+                text-align: center;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: middle;
+            }
+
+            /* Ensure badges are visible in collapsed sidebar */
+            body.sb-sidenav-toggled .nav-badge {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 2;
+                display: inline-block !important;
+            }
+
+            /* Tooltip for badges in collapsed mode */
+            body.sb-sidenav-toggled .nav-link .nav-badge[title] {
+                cursor: pointer;
+            }
+
+            /* Upgrade CTA - Compact version */
+            .upgrade-cta {
+                background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 107, 53, 0.05) 100%);
+                border: 1px solid rgba(255, 107, 53, 0.2);
+                border-radius: 8px;
+                padding: 0.75rem;
+                margin: 0 0.75rem;
+                text-align: center;
+            }
+
+            .upgrade-header {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 0.7rem;
+                margin-bottom: 0.4rem;
+                color: var(--orange);
+            }
+
+            .upgrade-header i {
+                margin-right: 0.35rem;
+                font-size: 0.65rem;
+            }
+
+            .upgrade-text {
+                font-size: 0.65rem;
+                color: rgba(255, 255, 255, 0.8);
+                line-height: 1.2;
+                margin-bottom: 0.6rem;
+            }
+
+            .btn-upgrade {
+                background: var(--orange);
+                color: var(--white);
+                border: none;
+                padding: 0.4rem 0.75rem;
+                border-radius: 5px;
+                font-size: 0.65rem;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .btn-upgrade:hover {
+                background: var(--orange-hover);
+                color: var(--white);
+                transform: translateY(-1px);
+                box-shadow: 0 3px 8px rgba(255, 107, 53, 0.3);
+            }
+
+            .btn-upgrade i {
+                margin-right: 0.3rem;
+                font-size: 0.6rem;
+            }
+
+            /* Enhanced Sidebar Footer */
+            .sb-sidenav-footer {
+                background: rgba(0, 0, 0, 0.2);
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 1rem;
+            }
+
+            .sidebar-footer-content {
+                text-align: center;
+            }
+
+            .package-info {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .package-badge {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.5rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+                min-width: 120px;
+            }
+
+            .package-badge i {
+                margin-right: 0.5rem;
+            }
+
+            .package-badge.basic {
+                background: rgba(108, 117, 125, 0.2);
+                color: #6c757d;
+                border: 1px solid rgba(108, 117, 125, 0.3);
+            }
+
+            .package-badge.starter {
+                background: rgba(40, 167, 69, 0.2);
+                color: #28a745;
+                border: 1px solid rgba(40, 167, 69, 0.3);
+            }
+
+            .package-badge.business {
+                background: rgba(0, 123, 255, 0.2);
+                color: #007bff;
+                border: 1px solid rgba(0, 123, 255, 0.3);
+            }
+
+            .package-badge.professional {
+                background: rgba(0, 123, 255, 0.2);
+                color: #007bff;
+                border: 1px solid rgba(0, 123, 255, 0.3);
+            }
+
+            .package-badge.enterprise {
+                background: rgba(255, 107, 53, 0.2);
+                color: var(--orange);
+                border: 1px solid rgba(255, 107, 53, 0.3);
+            }
+
+            .package-features {
+                font-size: 0.7rem;
+                color: rgba(255, 255, 255, 0.6);
+            }
+
+            /* Search bar styling */
+            .search-form .form-control {
+                font-size: 0.85rem;
+                border-radius: 6px 0 0 6px;
+                background: rgba(255, 255, 255, 0.12) !important;
+                border: 1px solid rgba(255, 255, 255, 0.18) !important;
+                color: #fff !important;
+                box-shadow: none;
+            }
+
+            .search-form .form-control:focus {
+                background: rgba(255, 255, 255, 0.18) !important;
+                border-color: var(--orange) !important;
+                color: #fff !important;
+            }
+
+            .search-form .btn-outline-secondary {
+                border-radius: 0 6px 6px 0;
+                border-color: var(--orange) !important;
+                color: var(--orange) !important;
+                background: rgba(255, 255, 255, 0.08) !important;
+            }
+
+            .search-form .btn-outline-secondary:hover {
+                background: var(--orange) !important;
+                color: #fff !important;
+            }
+
+            /* Responsive Sidebar */
+            @media (max-width: 768px) {
+                .sb-sidenav {
+                    width: 100%;
+                }
+
+                .nav-link {
+                    margin: 0 0.5rem 0.25rem;
+                }
+
+                .upgrade-cta {
+                    margin: 0 0.5rem;
+                    padding: 0.6rem;
+                }
+
+                .upgrade-text {
+                    font-size: 0.6rem;
+                }
+
+                .btn-upgrade {
+                    padding: 0.35rem 0.6rem;
+                    font-size: 0.6rem;
+                }
+            }
+
+            /* Sidebar collapsed state */
+            body.sb-sidenav-toggled .sb-sidenav {
+                width: 70px;
+            }
+
+            body.sb-sidenav-toggled .nav-text,
+            body.sb-sidenav-toggled .nav-group-header span,
+            body.sb-sidenav-toggled .nav-badge,
+            body.sb-sidenav-toggled .upgrade-cta,
+            body.sb-sidenav-toggled .sidebar-footer-content {
+                display: none;
+            }
+
+            body.sb-sidenav-toggled .nav-link {
+                justify-content: center;
+                margin: 0 0.5rem 0.25rem;
+            }
+
+            body.sb-sidenav-toggled .nav-group-header {
+                justify-content: center;
+                padding: 0.75rem 0.5rem;
+            }
+
+            body.sb-sidenav-toggled .nav-group-header i {
+                margin-right: 0;
+            }
+
+            /* Logo in top navbar adjustments */
+            .sb-topnav .sidebar-logo {
+                max-height: 40px !important;
+                transition: all 0.3s ease;
+            }
+
+            .sb-topnav .sidebar-logo:hover {
+                transform: scale(1.05);
+                filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+            }
+
+            /* Responsive logo in navbar */
+            @media (max-width: 768px) {
+                .sb-topnav .sidebar-logo {
+                    max-height: 35px !important;
+                }
+            }
+
+            body.sb-sidenav-toggled .sb-nav-link-icon {
+                margin-right: 0;
+            }
+
+            /* Client content area styling */
+            #layoutSidenav_content {
+                background: var(--client-surface);
+            }
+
+            /* Update cards for client */
+            .card {
+                border: none;
+                border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+                transition: all 0.2s ease;
+            }
+
+            .card:hover {
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+                transform: translateY(-1px);
+            }
+
+            /* Enhanced Topbar */
+            .sb-topnav {
+                background: var(--topbar-bg);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+
+            /* Dark theme search box styling */
+            .search-form .form-control {
+                background: rgba(255, 255, 255, 0.1) !important;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                color: var(--white) !important;
+                font-size: 0.875rem;
+            }
+
+            .search-form .form-control::placeholder {
+                color: rgba(255, 255, 255, 0.6) !important;
+            }
+
+            .search-form .form-control:focus {
+                background: rgba(255, 255, 255, 0.15) !important;
+                border-color: var(--orange) !important;
+                box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.25) !important;
+                color: var(--white) !important;
+            }
+
+            .search-form .btn-outline-secondary {
+                border-color: rgba(255, 255, 255, 0.2) !important;
+                color: rgba(255, 255, 255, 0.8) !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+            }
+
+            .search-form .btn-outline-secondary:hover {
+                background: var(--orange) !important;
+                border-color: var(--orange) !important;
+                color: var(--white) !important;
+            }
+
+            /* Theme toggle button */
+            .theme-toggle {
+                color: rgba(255, 255, 255, 0.8) !important;
+                background: transparent !important;
+                border: none !important;
+                font-size: 1.1rem;
+                transition: all 0.3s ease;
+                padding: 0.5rem;
+                border-radius: 6px;
+            }
+
+            .theme-toggle:hover {
+                color: var(--orange) !important;
+                background: rgba(255, 107, 53, 0.1) !important;
+                transform: scale(1.1);
+            }
+
+            .theme-toggle:focus {
+                box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.3) !important;
+                color: var(--orange) !important;
+                outline: none !important;
+            }
+
+            /* Enhanced Dropdowns */
+            .dropdown-menu {
+                border: none;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+                padding: 0.5rem 0;
+                margin-top: 0.5rem;
+            }
+
+            .dropdown-header {
+                padding: 0.75rem 1rem 0.5rem;
+                font-weight: 600;
+                color: var(--steel-black);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                margin-bottom: 0.5rem;
+            }
+
+            .dropdown-item {
+                padding: 0.6rem 1rem;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+            }
+
+            .dropdown-item:hover {
+                background: rgba(255, 107, 53, 0.1);
+                color: var(--orange);
+            }
+
+            .dropdown-item i {
+                width: 16px;
+                text-align: center;
+            }
+
+            /* Icon circles for notifications */
+            .icon-circle {
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 0.75rem;
+            }
+
+            /* Badge styling */
+            .badge-counter {
+                position: absolute;
+                top: -6px;
+                right: -6px;
+                font-size: 0.65rem;
+                padding: 0.25em 0.5em;
+            }
+
+            /* Responsive improvements */
+            @media (max-width: 576px) {
+                .navbar-nav .nav-item .dropdown-menu {
+                    position: absolute;
+                    right: 0;
+                    left: auto;
+                    min-width: 250px;
+                }
+            }
+
+            /* Focus and accessibility improvements */
+            .nav-link:focus,
+            .btn:focus {
+                box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.3);
+                outline: none;
+            }
+
+            /* Smooth transitions for all interactive elements */
+            .nav-link,
+            .btn,
+            .dropdown-item,
+            .card {
+                transition: all 0.3s ease;
+            }
+
+            /* Update buttons for client */
+            .btn-primary {
+                background: var(--orange);
+                border: none;
+                font-weight: 500;
+                color: var(--white);
+                border-radius: 8px;
+                padding: 0.5rem 1rem;
+            }
+
+            .btn-primary:hover,
+            .btn-primary:focus {
+                background: var(--orange-hover);
+                transform: translateY(-1px);
+                color: var(--white);
+                box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+            }
+
+            .btn-outline-secondary {
+                border-color: rgba(255, 255, 255, 0.3);
+                color: rgba(255, 255, 255, 0.8);
+            }
+
+            .btn-outline-secondary:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.5);
+                color: var(--white);
+            }
+        </style>
+        {% block styles %}{% endblock %}
+        {% block head_extra %}{% endblock %}
+    </head>
+
+    <body class="sb-nav-fixed">
+        <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999"></div>
+        <div id="layoutSidenav">
+            <!-- Sidebar -->
+            <div id="layoutSidenav_nav">
+                <nav class="sb-sidenav sb-sidenav-dark" id="sidenavAccordion">
+                    <div class="sb-sidenav-menu">
+                        <div class="nav">
+                            <!-- Dashboard -->
+                            <div class="nav-group">
+                                <a class="nav-link {% if request.endpoint == 'client.client_dashboard' %}active{% endif %}"
+                                    href="{{ url_for('client.client_dashboard') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-grid-3x3-gap"></i></div>
+                                    <span class="nav-text">{{ _('Dashboard') }}</span>
+                                </a>
+                            </div>
+
+                            <!-- Transaction Management -->
+                            <div class="nav-group">
+                                <div class="nav-group-header">
+                                    <i class="bi bi-arrow-left-right"></i>
+                                    <span>{{ _('Transactions') }}</span>
+                                </div>
+
+                                {% if current_user and current_user.has_feature('api_basic') %}
+                                <a class="nav-link {% if request.endpoint in ['client.payments', 'client.payment_history'] %}active{% endif %}"
+                                    href="{{ url_for('client.payments') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-credit-card"></i></div>
+                                    <span class="nav-text">{{ _('Payments') }}</span>
+                                </a>
+
+                                <a class="nav-link {% if request.endpoint in ['client.withdraw', 'client.withdrawal_history'] %}active{% endif %}"
+                                    href="{{ url_for('client.withdraw') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-arrow-up-circle"></i></div>
+                                    <span class="nav-text">Withdrawals</span>
+                                </a>
+                                {% else %}
+                                {% set upgrade_pkg = get_upgrade_package_name(current_user.package.slug if current_user and current_user.package else '') %}
+                                <a class="nav-link nav-link-locked" href="#" data-bs-toggle="tooltip"
+                                    title="Upgrade to {{ upgrade_pkg }} to unlock payment features">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-credit-card"></i></div>
+                                    <span class="nav-text">Payments</span>
+                                    <div class="nav-lock"><i class="bi bi-lock-fill"></i></div>
+                                </a>
+                                <a class="nav-link nav-link-locked" href="#" data-bs-toggle="tooltip"
+                                    title="Upgrade to {{ upgrade_pkg }} to unlock withdrawal features">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-arrow-up-circle"></i></div>
+                                    <span class="nav-text">Withdrawals</span>
+                                    <div class="nav-lock"><i class="bi bi-lock-fill"></i></div>
+                                </a>
+                                {% endif %}
+                            </div>
+
+                            <!-- Business Tools -->
+                            <div class="nav-group">
+                                <div class="nav-group-header">
+                                    <i class="bi bi-briefcase"></i>
+                                    <span>Business</span>
+                                </div>
+
+                                <a class="nav-link {% if request.endpoint == 'client.invoices' %}active{% endif %}"
+                                    href="{{ url_for('client.invoices') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-file-earmark-text"></i></div>
+                                    <span class="nav-text">Invoices</span>
+                                </a>
+
+                                <a class="nav-link {% if request.endpoint == 'client.documents' %}active{% endif %}"
+                                    href="{{ url_for('client.documents') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-folder2-open"></i></div>
+                                    <span class="nav-text">Documents</span>
+                                </a>
+
+                                <a class="nav-link {% if request.endpoint == 'client.wallet_configure' %}active{% endif %}"
+                                    href="{{ url_for('client.wallet_configure') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-wallet2"></i></div>
+                                    <span class="nav-text">Wallet Management</span>
+                                    {% if current_user.is_flat_rate() %}
+                                    <span class="nav-badge bg-info">Critical</span>
+                                    {% endif %}
+                                </a>
+
+                                <a class="nav-link {% if request.endpoint in ['client.withdrawal_requests', 'client.create_withdrawal_request', 'client.view_withdrawal_request'] %}active{% endif %}"
+                                    href="{{ url_for('client.withdrawal_requests') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-arrow-up-circle-fill"></i></div>
+                                    <span class="nav-text">Withdrawal Requests</span>
+                                    <!-- Show pending count if any -->
+                                    {% set pending_count = current_user.get_pending_withdrawal_requests_count()
+                                    if current_user.get_pending_withdrawal_requests_count else 0 %}
+                                    {% if pending_count > 0 %}
+                                    <span class="nav-badge bg-warning">{{ pending_count }}</span>
+                                    {% endif %}
+                                </a>
+
+                                <a class="nav-link nav-sub {% if request.endpoint == 'client.withdrawal_analytics' %}active{% endif %}"
+                                    href="{{ url_for('client.withdrawal_analytics') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-graph-up"></i></div>
+                                    <span class="nav-text">Analytics & Reports</span>
+                                </a>
+                            </div>
+
+                            <!-- API & Integration -->
+                            {% if current_user and current_user.has_feature('api_basic') %}
+                            <div class="nav-group">
+                                <div class="nav-group-header">
+                                    <i class="fas fa-code"></i>
+                                    <span>Developer</span>
+                                </div>
+
+                                <a class="nav-link {% if request.endpoint == 'client.api_management' %}active{% endif %}"
+                                    href="{{ url_for('client.api_management') }}">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-tools"></i></div>
+                                    <span class="nav-text">API Management</span>
+                                </a>
+
+                                <!-- Advanced API features for api_advanced users -->
+                                {% if current_user.has_feature('api_advanced') %}
+                                <!-- Webhooks link temporarily disabled: endpoint does not exist -->
+                                {#
+                                <a class="nav-link {% if request.endpoint == 'client.webhooks' %}active{% endif %}"
+                                    href="{{ url_for('client.webhooks') if url_for('client.webhooks', _external=False) else '#' }}">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-webhook"></i></div>
+                                    <span class="nav-text">Webhooks</span>
+                                </a>
+                                #}
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <!-- Locked API section for users without API access -->
+                            <div class="nav-group">
+                                <div class="nav-group-header">
+                                    <i class="fas fa-code"></i>
+                                    <span>Developer</span>
+                                </div>
+
+                                {% set upgrade_pkg = get_upgrade_package_name(current_user.package.slug if current_user and current_user.package else '') %}
+                                <a class="nav-link nav-link-locked" href="#" data-bs-toggle="tooltip"
+                                    title="Upgrade to {{ upgrade_pkg }} or higher to access API management">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-tools"></i></div>
+                                    <span class="nav-text">API Management</span>
+                                    <div class="nav-lock"><i class="bi bi-lock-fill"></i></div>
+                                </a>
+
+                                <a class="nav-link nav-link-locked" href="#" data-bs-toggle="tooltip"
+                                    title="Upgrade to {{ upgrade_pkg }} or higher to access API documentation">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-book"></i></div>
+                                    <span class="nav-text">API Documentation</span>
+                                    <div class="nav-lock"><i class="bi bi-lock-fill"></i></div>
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            <!-- Account & Support -->
+                            <div class="nav-group">
+                                <div class="nav-group-header">
+                                    <i class="bi bi-person-gear"></i>
+                                    <span>Account</span>
+                                </div>
+
+                                <a class="nav-link {% if request.endpoint == 'client.profile' %}active{% endif %}"
+                                    href="{{ url_for('client.profile') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-person-circle"></i></div>
+                                    <span class="nav-text">Profile</span>
+                                </a>
+
+                                <a class="nav-link {% if request.endpoint == 'client.settings' %}active{% endif %}"
+                                    href="{{ url_for('client.settings') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-gear"></i></div>
+                                    <span class="nav-text">Settings</span>
+                                </a>
+
+                                <a class="nav-link {% if request.endpoint == 'client.support' %}active{% endif %}"
+                                    href="{{ url_for('client.support') }}">
+                                    <div class="sb-nav-link-icon"><i class="bi bi-headset"></i></div>
+                                    <span class="nav-text">Support</span>
+                                    {% if current_user and current_user.has_feature('support_priority') %}
+                                    <span class="nav-badge bg-warning">Priority</span>
+                                    {% endif %}
+                                </a>
+                            </div>
+
+                            <!-- Upgrade CTA -->
+                            {% if current_user and current_user.package %}
+                            {% set current_package = current_user.package %}
+                            {% set package_slug = current_package.slug if current_package else '' %}
+                            {% set is_commission = current_user.is_commission_based() %}
+                            {% set is_flat_rate = current_user.is_flat_rate() %}
+
+                            {# Determine upgrade recommendation based on client type and current package #}
+                            {% if is_commission %}
+                            {# Commission-based clients: always offer flat-rate enterprise #}
+                            {% set upgrade_package = 'professional_flat_rate' %}
+                            {% set upgrade_name = 'Enterprise' %}
+                            {% set upgrade_reason = 'Switch to flat-rate pricing and unlock all enterprise features' %}
+                            {% set show_upgrade = true %}
+                            {% elif is_flat_rate %}
+                            {# Flat-rate clients: offer next tier #}
+                            {% if package_slug == 'starter_flat_rate' %}
+                            {% set upgrade_package = 'business_flat_rate' %}
+                            {% set upgrade_name = 'Business' %}
+                            {% set upgrade_reason = 'Unlock advanced analytics and priority support' %}
+                            {% set show_upgrade = true %}
+                            {% elif package_slug == 'business_flat_rate' %}
+                            {% set upgrade_package = 'enterprise_flat_rate' %}
+                            {% set upgrade_name = 'Enterprise' %}
+                            {% set upgrade_reason = 'Get unlimited volume and all enterprise features' %}
+                            {% set show_upgrade = true %}
+                            {% else %}
+                            {# Already at highest flat-rate tier #}
+                            {% set show_upgrade = false %}
+                            {% endif %}
+                            {% else %}
+                            {# No package or unknown type #}
+                            {% set upgrade_package = 'business_flat_rate' %}
+                            {% set upgrade_name = 'Business' %}
+                            {% set upgrade_reason = 'Get started with advanced features' %}
+                            {% set show_upgrade = true %}
+                            {% endif %}
+
+                            {% if show_upgrade %}
+                            <div class="nav-group mt-auto">
+                                <div class="upgrade-cta">
+                                    <div class="upgrade-header">
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                        <span>Upgrade Available</span>
+                                    </div>
+                                    <div class="upgrade-text">
+                                        {{ upgrade_reason }}
+                                    </div>
+                                    <a href="{{ url_for('main.pricing') }}" class="btn btn-upgrade">
+                                        <i class="bi bi-arrow-up"></i>
+                                        Upgrade to {{ upgrade_name }}
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Footer with Compact Package Info -->
+                    <div class="sb-sidenav-footer">
+                        <div class="sidebar-footer-content">
+                            {% if current_user and current_user.package %}
+                            <div class="package-info">
+                                {% set package_display_name = current_user.package.name.replace(' Flat
+                                Rate','').replace(' Commission', '') %}
+                                <div class="package-badge {{ package_display_name.lower() }}">
+                                    <i class="bi bi-gem"></i>
+                                    <span>{{ package_display_name }}</span>
+                                </div>
+                                <div class="package-features">
+                                    {% set features = current_user.get_features() if
+                                    current_user.get_features else [] %}
+                                    {% set all_features = current_user.get_all_possible_features() if
+                                    current_user.get_all_possible_features else [] %}
+                                    {% set locked_features = all_features|reject('in', features)|list %}
+                                    <small>
+                                        <span data-bs-toggle="tooltip" data-bs-placement="top"
+                                            title="Locked: {{ locked_features|join(', ') }}">
+                                            {{ features|length }} of {{ all_features|length }} features active
+                                        </span>
+                                    </small>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="package-info">
+                                <div class="package-badge basic">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <span>No Plan</span>
+                                </div>
+                                <a href="{{ url_for('main.pricing') }}" class="btn btn-sm btn-outline-light mt-2">
+                                    Select Plan
+                                </a>
+                            </div>
+                            {% endif %}
+                            <!-- Upgrade Plan Button -->
+                            <button class="btn btn-upgrade mt-3 w-100" data-bs-toggle="modal"
+                                data-bs-target="#upgradeModal">
+                                <i class="bi bi-arrow-up"></i> Upgrade Plan
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            <!-- Main Content -->
+            <div id="layoutSidenav_content">
+                <!-- Topbar -->
+                <nav class="sb-topnav navbar navbar-expand navbar-dark">
+                    <!-- Sidebar toggle button-->
+                    <button class="btn btn-link btn-sm order-1 order-lg-0 me-3" id="sidebarToggle" type="button"
+                        title="Toggle Sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <!-- Brand Logo in Top Navbar -->
+                    <div class="d-flex align-items-center me-auto">
+                        <a href="{{ url_for('client.client_dashboard') }}" class="text-decoration-none me-3">
+                            <img src="{{ url_for('static', filename='img/paycrypt_logo_d.png') }}" alt="PayCrypt Logo"
+                                class="img-fluid sidebar-logo" style="max-height: 45px;">
+                        </a>
+                        <div class="vr text-secondary me-3" style="height: 30px;"></div>
+                        <h5 class="mb-0 text-white fw-normal">
+                            {% block page_title %}
+                            {% if request.endpoint == 'client.dashboard' %}{{ _('Dashboard') }}
+                            {% elif request.endpoint == 'client.payments' %}{{ _('Payments') }}
+                            {% elif request.endpoint == 'client.withdraw' %}{{ _('Withdrawals') }}
+                            {% elif request.endpoint == 'client.invoices' %}{{ _('Invoices') }}
+                            {% elif request.endpoint == 'client.documents' %}{{ _('Documents') }}
+                            {% elif request.endpoint == 'client.api_management' %}{{ _('API Management') }}
+                            {% elif request.endpoint == 'client.profile' %}{{ _('Profile') }}
+                            {% elif request.endpoint == 'client.settings' %}{{ _('Settings') }}
+                            {% elif request.endpoint == 'client.support' %}{{ _('Support') }}
+                            {% else %}{{ _('Client Portal') }}
+                            {% endif %}
+                            {% endblock %}
+                        </h5>
+                    </div>
+
+                    <!-- Navbar -->
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        <!-- Search -->
+                        <li class="nav-item d-none d-md-block">
+                            <form class="d-flex search-form" style="min-width: 280px;">
+                                <div class="input-group">
+                                    <input class="form-control form-control-sm" type="text"
+                                        placeholder="{{ _('Search transactions, invoices...') }}" aria-label="Search">
+                                    <button class="btn btn-outline-secondary btn-sm" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </li>
+
+                        <!-- Theme Toggle -->
+                        <li class="nav-item">
+                            <button class="nav-link theme-toggle" id="themeToggle" type="button" title="Toggle Theme">
+                                <i class="bi bi-moon-fill" id="themeIcon"></i>
+                            </button>
+                        </li>
+
+                        <!-- Quick Actions -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link" href="#" id="quickActionsDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false" title="Quick Actions">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="quickActionsDropdown">
+                                <h6 class="dropdown-header">{{ _('Quick Actions') }}</h6>
+                                {% if (current_user and current_user.has_feature('api_basic')) or (current_user.is_flat_rate() and current_user.package and current_user.package.slug == 'enterprise_flat_rate') %}
+                                <a class="dropdown-item" href="{{ url_for('client.payments') }}"
+                                    title="Create a new payment" data-bs-toggle="tooltip">
+                                    <i class="bi bi-credit-card me-2"></i>New Payment
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('client.withdraw') }}"
+                                    title="Withdraw funds to your connected wallet" data-bs-toggle="tooltip">
+                                    <i class="bi bi-arrow-up-circle me-2"></i>New Withdrawal
+                                </a>
+                                {% endif %}
+                                <a class="dropdown-item" href="{{ url_for('client.invoices') }}"
+                                    title="Create or download invoices" data-bs-toggle="tooltip">
+                                    <i class="bi bi-file-earmark-text me-2"></i>Create Invoice
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('client.invoices') }}"
+                                    title="Download your latest or past invoices instantly for accounting."
+                                    data-bs-toggle="tooltip">
+                                    <i class="bi bi-download me-2"></i>Download Invoice
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('client.support') }}"
+                                    title="Contact support for help" data-bs-toggle="tooltip">
+                                    <i class="bi bi-headset me-2"></i>Contact Support
+                                </a>
+                            </div>
+                        </li>
+
+                        <!-- Notifications -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link" href="#" id="alertsDropdown" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false" title="Notifications">
+                                <i class="bi bi-bell"></i>
+                                <span class="badge bg-danger badge-counter">3</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="alertsDropdown">
+                                <h6 class="dropdown-header">Recent Notifications</h6>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="me-3">
+                                        <div class="icon-circle bg-primary">
+                                            <i class="bi bi-check-circle text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-muted">2 hours ago</div>
+                                        <span class="fw-bold">Payment processed successfully</span>
+                                    </div>
+                                </a>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="me-3">
+                                        <div class="icon-circle bg-success">
+                                            <i class="bi bi-arrow-up text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-muted">1 day ago</div>
+                                        <span class="fw-bold">Withdrawal approved</span>
+                                    </div>
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-center small text-muted" href="#">View All
+                                    Notifications</a>
+                            </div>
+                        </li>
+
+                        <div class="topbar-divider d-none d-sm-block"></div>
+
+                        <!-- Language Switcher Dropdown (GET links) -->
+                        <li class="nav-item dropdown no-arrow">
+                            <div class="d-flex align-items-center" style="min-width:120px;">
+                                <select class="form-select form-select-sm me-2" onchange="window.location.href=this.value;">
+                                    <option value="{{ url_for('main.set_language', language='en') }}" {% if get_locale() == 'en' %}selected{% endif %}>English</option>
+                                    <option value="{{ url_for('main.set_language', language='tr') }}" {% if get_locale() == 'tr' %}selected{% endif %}>Türkçe</option>
+                                </select>
+                            </div>
+                        </li>
+
+                        <div class="topbar-divider d-none d-sm-block"></div>
+
+                        <!-- User Menu -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="me-2 d-none d-lg-inline text-gray-300" style="font-size: 0.875rem;">
+                                    {{ current_user.username if current_user.is_authenticated else 'Client' }}
+                                </span>
+                                <i class="bi bi-person-circle fs-5"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+                                <h6 class="dropdown-header">
+                                    <i class="bi bi-person-circle me-2"></i>
+                                    {{ current_user.username if current_user.is_authenticated else 'Client' }}
+                                </h6>
+                                <a class="dropdown-item" href="{{ url_for('client.profile') }}">
+                                    <i class="bi bi-person me-2"></i>Profile
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('client.settings') }}">
+                                    <i class="bi bi-gear me-2"></i>Settings
+                                </a>
+                                {% if current_user and current_user.has_feature('api_basic') %}
+                                <a class="dropdown-item" href="{{ url_for('client.api_management') }}">
+                                    <i class="bi bi-tools me-2"></i>API Management
+                                </a>
+                                {% endif %}
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ url_for('client.logout') }}">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </nav>
+                <!-- End of Topbar -->
+                <main>
+                    <div class="container-fluid px-4">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                        {% set shown_messages = [] %}
+                        {% for category, message in messages %}
+                        {% if message not in shown_messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% set _ = shown_messages.append(message) %}
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+                        {% block content %}
+                        {% block page_content %}{% endblock %}
+                        {% endblock %}
+                    </div>
+                </main>
+                <footer class="sticky-footer bg-white">
+                    <div class="container my-auto">
+                        <div class="copyright text-center my-auto">
+                            <span>Copyright &copy; PayCrypt 2025</span>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+        <!-- Scripts -->
+        {% block scripts %}
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+        <script src="{{ url_for('static', filename='js/admin-layout.js') }}"></script>
+        <script>
+            function showToast(message, type = 'info') {
+                const toastContainer = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast align-items-center text-white bg-${type} border-0`;
+                toast.role = 'alert';
+                toast.setAttribute('aria-live', 'assertive');
+                toast.setAttribute('aria-atomic', 'true');
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                `;
+                toastContainer.appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 5000 });
+                bsToast.show();
+                toast.addEventListener('hidden.bs.toast', function () {
+                    toast.remove();
+                });
+            }
+            function initThemeToggle() {
+                // Theme toggle messages
+                const messages = {
+                    lightMode: "{{ _('Switched to Light Mode') }}",
+                    darkMode: "{{ _('Switched to Dark Mode') }}"
+                };
+
+                const themeToggle = document.getElementById('themeToggle');
+                const themeIcon = document.getElementById('themeIcon');
+                const body = document.body;
+                const savedTheme = localStorage.getItem('theme') || 'light';
+
+                if (savedTheme === 'dark') {
+                    body.setAttribute('data-theme', 'dark');
+                    body.classList.add('dark-theme');
+                    themeIcon.className = 'bi bi-sun-fill';
+                } else {
+                    body.removeAttribute('data-theme');
+                    body.classList.remove('dark-theme');
+                    themeIcon.className = 'bi bi-moon-fill';
+                }
+
+                themeToggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const currentTheme = body.getAttribute('data-theme');
+
+                    if (currentTheme === 'dark') {
+                        body.removeAttribute('data-theme');
+                        body.classList.remove('dark-theme');
+                        themeIcon.className = 'bi bi-moon-fill';
+                        localStorage.setItem('theme', 'light');
+                        showToast(messages.lightMode, 'info');
+                    } else {
+                        body.setAttribute('data-theme', 'dark');
+                        body.classList.add('dark-theme');
+                        themeIcon.className = 'bi bi-sun-fill';
+                        localStorage.setItem('theme', 'dark');
+                        showToast(messages.darkMode, 'info');
+                    }
+
+                    setTimeout(() => {
+                        if (window.updateLogoColors) {
+                            updateLogoColors();
+                        }
+                    }, 100);
+                });
+            }
+            document.addEventListener('DOMContentLoaded', function () {
+                initThemeToggle();
+
+                // Initialize tooltips for locked features
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+
+                // Enhanced sidebar toggle animation
+                const sidebarToggle = document.getElementById('sidebarToggle');
+                const body = document.body;
+
+                if (sidebarToggle) {
+                    sidebarToggle.addEventListener('click', function () {
+                        body.classList.toggle('sb-sidenav-toggled');
+
+                        // Store preference
+                        localStorage.setItem('sb|sidebar-toggle', body.classList.contains('sb-sidenav-toggled'));
+                    });
+                }
+
+                // Restore sidebar state
+                if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
+                    body.classList.add('sb-sidenav-toggled');
+                }
+
+                // Smooth scroll for internal links
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const target = document.querySelector(this.getAttribute('href'));
+                        if (target) {
+                            target.scrollIntoView({
+                                behavior: 'smooth'
+                            });
+                        }
+                    });
+                });
+            });
+            window.showToast = showToast;
+        </script>
+        {% endblock %}
+        {% block dashboard_scripts %}{% endblock %}
+        <script>
+            // Sidebar toggle logic
+            document.addEventListener('DOMContentLoaded', function () {
+                var sidebarToggle = document.getElementById('sidebarToggle');
+                if (sidebarToggle) {
+                    sidebarToggle.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        document.body.classList.toggle('sb-sidenav-toggled');
+                        // Optionally persist state
+                        if (window.localStorage) {
+                            if (document.body.classList.contains('sb-sidenav-toggled')) {
+                                localStorage.setItem('sb|sidebar-toggle', 'toggled');
+                            } else {
+                                localStorage.removeItem('sb|sidebar-toggle');
+                            }
+                        }
+                    });
+                    // Restore state on load
+                    if (window.localStorage && localStorage.getItem('sb|sidebar-toggle') === 'toggled') {
+                        document.body.classList.add('sb-sidenav-toggled');
+                    }
+                }
+            });
+        </script>
+        <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="logoutModalLabel">{{ _('Confirm Logout') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ _('Are you sure you want to logout?') }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel')
+                            }}</button>
+                        <a href="{{ url_for('client.logout') }}" class="btn btn-primary">{{ _('Logout') }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upgrade Modal -->
+        <div class="modal fade" id="upgradeModal" tabindex="-1" aria-labelledby="upgradeModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="upgradeModalLabel">Upgrade Plan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Benefit Highlights</h6>
+                        <ul>
+                            <li>Unlock more features and higher limits</li>
+                            <li>Priority support</li>
+                            <li>Advanced analytics</li>
+                        </ul>
+                        <h6>Pricing Comparison</h6>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Plan</th>
+                                    <th>Monthly</th>
+                                    <th>Features</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Current</td>
+                                    <td>${{ current_user.package.price_monthly if current_user and current_user.package else '-' }}</td>
+                                    <td>{{ features|length }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Upgrade</td>
+                                    <td>${{ upgrade_package_price if upgrade_package_price else '-' }}</td>
+                                    <td>{{ all_features|length }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('main.pricing') }}" class="btn btn-primary">Upgrade Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+</html>

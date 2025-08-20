@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Cryptocurrency Tools - PayCrypt{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Hero Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8 text-center">
+            <div class="mb-4">
+                <i class="fas fa-tools text-gradient" style="font-size: 4rem;"></i>
+            </div>
+            <h1 class="display-4 fw-bold mb-3">
+                Professional <span class="text-gradient">Crypto Tools</span>
+            </h1>
+            <p class="lead text-muted">
+                Comprehensive suite of professional cryptocurrency analysis and trading tools 
+                designed for smart investors and traders.
+            </p>
+        </div>
+    </div>
+
+    <!-- Tools Grid -->
+    <div class="row g-4">
+        {% for tool in tools %}
+        <div class="col-lg-6 col-xl-4">
+            <div class="card h-100 {% if tool.status == 'active' %}border-primary{% elif tool.status == 'coming_soon' %}border-secondary{% endif %} position-relative">
+                {% if tool.status == 'coming_soon' %}
+                <div class="position-absolute top-0 end-0 m-2">
+                    <span class="badge bg-secondary">Coming Soon</span>
+                </div>
+                {% endif %}
+                
+                <div class="card-body d-flex flex-column">
+                    <!-- Tool Icon -->
+                    <div class="text-center mb-3">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle {% if tool.status == 'active' %}bg-primary{% else %}bg-secondary{% endif %} text-white" style="width: 60px; height: 60px;">
+                            <i class="{{ tool.icon }}" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Tool Info -->
+                    <h5 class="card-title text-center mb-3">{{ tool.name }}</h5>
+                    <p class="card-text text-muted flex-grow-1">{{ tool.description }}</p>
+                    
+                    <!-- Features List -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-star me-1"></i>
+                            Key Features:
+                        </h6>
+                        <ul class="list-unstyled mb-0">
+                            {% for feature in tool.features %}
+                            <li class="mb-1">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <small>{{ feature }}</small>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <!-- Action Button -->
+                    <div class="text-center mt-auto">
+                        {% if tool.status == 'active' %}
+                        <a href="{{ url_for(tool.url) }}" class="btn btn-primary">
+                            <i class="fas fa-rocket me-2"></i>
+                            Launch Tool
+                        </a>
+                        {% else %}
+                        <button class="btn btn-outline-secondary" disabled>
+                            <i class="fas fa-clock me-2"></i>
+                            Coming Soon
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light border-0">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <div class="h2 text-primary mb-0">20+</div>
+                            <small class="text-muted">Supported Blockchains</small>
+                        </div>
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <div class="h2 text-success mb-0">99.9%</div>
+                            <small class="text-muted">Uptime Reliability</small>
+                        </div>
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <div class="h2 text-info mb-0">Real-time</div>
+                            <small class="text-muted">Data Updates</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h2 text-warning mb-0">Free</div>
+                            <small class="text-muted">Professional Tools</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Notice -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <i class="fas fa-info-circle me-3 fs-4"></i>
+                <div>
+                    <strong>Important:</strong> All tools are provided for informational purposes only. 
+                    Always conduct your own research and never invest more than you can afford to lose.
+                    Cryptocurrency investments carry inherent risks.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Enhanced card hover effects */
+.card {
+    transition: all 0.3s ease;
+    border-width: 2px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175) !important;
+}
+
+.card.border-primary:hover {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 1rem 3rem rgba(78, 115, 223, 0.3) !important;
+}
+
+/* Icon animations */
+.card:hover .fa-tools,
+.card:hover .fas {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Feature list styling */
+.list-unstyled li {
+    transition: all 0.2s ease;
+}
+
+.list-unstyled li:hover {
+    transform: translateX(5px);
+}
+
+/* Statistics section */
+.card.bg-light {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+}
+</style>
+{% endblock %}

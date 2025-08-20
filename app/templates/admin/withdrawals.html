@@ -1,0 +1,1000 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ _('Withdrawal Requests') }} - {{ _('Admin Panel') }}{% endblock %}
+
+{% block content %}
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">{{ _('Withdrawal Requests') }}</h1>
+    <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+        <i class="bi bi-download me-2"></i>{{ _('Generate Report') }}
+    </a>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <!-- Pending Withdrawals Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            {{ _('Pending Withdrawals') }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_counts.get('PENDING', 0) }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-hourglass-split fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approved Withdrawals Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            {{ _('Approved Today') }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_counts.get('APPROVED', 0) }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Withdrawals Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            {{ _('Completed Today') }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_counts.get('COMPLETED', 0) }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle-fill fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejected Withdrawals Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            {{ _('Rejected Today') }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ status_counts.get('REJECTED', 0) }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-x-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">{{ _('Withdrawal Requests') }}</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                        aria-labelledby="dropdownMenuLink">
+                        <a class="dropdown-item" href="#">{{ _('Export to Excel') }}</a>
+                        <a class="dropdown-item" href="#">{{ _('Print List') }}</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">{{ _('View All') }}</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Filter Form -->
+                <form method="get" class="mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">{{ _('Status') }}</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="all" {% if status=='all' %}selected{% endif %}>{{ _('All Statuses') }}
+                                </option>
+                                <option value="pending" {% if status=='pending' %}selected{% endif %}>{{ _('Pending') }}
+                                    ({{ status_counts.get('PENDING', 0) }})</option>
+                                <option value="approved" {% if status=='approved' %}selected{% endif %}>{{ _('Approved')
+                                    }} ({{ status_counts.get('APPROVED', 0) }})</option>
+                                <option value="completed" {% if status=='completed' %}selected{% endif %}>{{
+                                    _('Completed') }} ({{ status_counts.get('COMPLETED', 0) }})</option>
+                                <option value="rejected" {% if status=='rejected' %}selected{% endif %}>{{ _('Rejected')
+                                    }} ({{ status_counts.get('REJECTED', 0) }})</option>
+                                <option value="cancelled" {% if status=='cancelled' %}selected{% endif %}>{{
+                                    _('Cancelled') }} ({{ status_counts.get('CANCELLED', 0) }})</option>
+                                <option value="failed" {% if status=='failed' %}selected{% endif %}>{{ _('Failed') }}
+                                    ({{ status_counts.get('FAILED', 0) }})</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="coin" class="form-label">{{ _('Coin') }}</label>
+                            <select name="coin" id="coin" class="form-select">
+                                <option value="">{{ _('All Coins') }}</option>
+                                <option value="BTC">Bitcoin (BTC)</option>
+                                <option value="ETH">Ethereum (ETH)</option>
+                                <option value="LTC">Litecoin (LTC)</option>
+                                <option value="XRP">Ripple (XRP)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_from" class="form-label">{{ _('From Date') }}</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="date_to" class="form-label">{{ _('To Date') }}</label>
+                            <div class="input-group">
+                                <input type="date" class="form-control" id="date_to" name="date_to">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-funnel"></i> {{ _('Filter') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Withdrawals Table -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 80px;">{{ _('ID') }}</th>
+                                <th style="width: 150px;">{{ _('Client') }}</th>
+                                <th style="width: 120px;">{{ _('Amount') }}</th>
+                                <th style="width: 100px;">{{ _('Network') }}</th>
+                                <th style="width: 200px;">{{ _('Address') }}</th>
+                                <th style="width: 120px;">{{ _('Status') }}</th>
+                                <th style="width: 130px;">{{ _('Requested') }}</th>
+                                <th style="width: 150px;">{{ _('Actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if withdrawals.items %}
+                            {% for withdrawal in withdrawals.items %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-secondary">#{{ withdrawal.id }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-2">
+                                            <div class="avatar-title bg-primary rounded-circle">
+                                                {{ withdrawal.client.username[0].upper() }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">{{ withdrawal.client.username }}</div>
+                                            {% if withdrawal.client.company_name %}
+                                            <small class="text-muted">{{ withdrawal.client.company_name }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold">{{ "%.8f"|format(withdrawal.amount) }}</span>
+                                        <span class="badge bg-info">{{ withdrawal.coin }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if withdrawal.blockchain %}
+                                    <span class="badge bg-secondary">{{ withdrawal.blockchain }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="address-container">
+                                            <span class="text-truncate d-inline-block" style="max-width: 120px;"
+                                                data-bs-toggle="tooltip" title="{{ withdrawal.address }}">
+                                                {{ withdrawal.address }}
+                                            </span>
+                                            {% if withdrawal.memo %}
+                                            <br><small class="text-muted">Memo: {{ withdrawal.memo }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary ms-2 copy-address"
+                                            data-address="{{ withdrawal.address }}" data-bs-toggle="tooltip"
+                                            title="Copy address">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if withdrawal.status == 'PENDING' %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-hourglass-split me-1"></i> {{ _('Pending') }}
+                                    </span>
+                                    {% elif withdrawal.status == 'APPROVED' %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-check-circle me-1"></i> {{ _('Approved') }}
+                                    </span>
+                                    {% elif withdrawal.status == 'COMPLETED' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle-fill me-1"></i> {{ _('Completed') }}
+                                    </span>
+                                    {% if withdrawal.tx_hash %}
+                                    <br><small class="text-muted">
+                                        TX: {{ withdrawal.tx_hash[:8] }}...
+                                    </small>
+                                    {% endif %}
+                                    {% elif withdrawal.status == 'REJECTED' %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle me-1"></i> {{ _('Rejected') }}
+                                    </span>
+                                    {% elif withdrawal.status == 'CANCELLED' %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-x-circle me-1"></i> {{ _('Cancelled') }}
+                                    </span>
+                                    {% elif withdrawal.status == 'FAILED' %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-exclamation-triangle me-1"></i> {{ _('Failed') }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span>{{ withdrawal.created_at.strftime('%Y-%m-%d') }}</span>
+                                        <small class="text-muted">{{ withdrawal.created_at.strftime('%H:%M') }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-gear me-1"></i>{{ _('Actions') }}
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item"
+                                                    href="{{ url_for('withdrawal_admin.view_withdrawal', withdrawal_id=withdrawal.id) }}">
+                                                    <i class="bi bi-eye me-2"></i>{{ _('View Details') }}
+                                                </a>
+                                            </li>
+                                            {% if withdrawal.status == 'PENDING' %}
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-success"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#approveWithdrawalModal{{ withdrawal.id }}">
+                                                    <i class="bi bi-check-lg me-2"></i>{{ _('Approve') }}
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#rejectWithdrawalModal{{ withdrawal.id }}">
+                                                    <i class="bi bi-x-lg me-2"></i>{{ _('Reject') }}
+                                                </button>
+                                            </li>
+                                            {% elif withdrawal.status == 'APPROVED' %}
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item text-success"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#completeWithdrawalModal{{ withdrawal.id }}">
+                                                    <i class="bi bi-check-circle me-2"></i>{{ _('Mark Completed') }}
+                                                </button>
+                                            </li>
+                                            {% endif %}
+                                            {% if withdrawal.tx_hash %}
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item"
+                                                    href="https://blockchain.info/tx/{{ withdrawal.tx_hash }}"
+                                                    target="_blank">
+                                                    <i class="bi bi-box-arrow-up-right me-2"></i>{{ _('View on
+                                                    Blockchain') }}
+                                                </a>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Approve Withdrawal Modal -->
+                            <div class="modal fade" id="approveWithdrawalModal{{ withdrawal.id }}" tabindex="-1"
+                                aria-labelledby="approveWithdrawalModalLabel{{ withdrawal.id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-success text-white">
+                                            <h5 class="modal-title" id="approveWithdrawalModalLabel{{ withdrawal.id }}">
+                                                <i class="bi bi-check-circle me-2"></i>{{ _('Approve Withdrawal') }}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form
+                                            action="{{ url_for('withdrawal_admin.approve_withdrawal', withdrawal_id=withdrawal.id) }}"
+                                            method="POST">
+                                            <div class="modal-body">
+                                                <!-- Withdrawal Summary -->
+                                                <div class="card mb-3">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title">{{ _('Withdrawal Summary') }}</h6>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <strong>{{ _('Client') }}:</strong> {{
+                                                                withdrawal.client.username }}<br>
+                                                                <strong>{{ _('Amount') }}:</strong> {{
+                                                                "%.8f"|format(withdrawal.amount) }} {{ withdrawal.coin
+                                                                }}<br>
+                                                                <strong>{{ _('Network') }}:</strong> {{
+                                                                withdrawal.blockchain or 'N/A' }}
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <strong>{{ _('Address') }}:</strong><br>
+                                                                <code class="small">{{ withdrawal.address }}</code>
+                                                                {% if withdrawal.memo %}
+                                                                <br><strong>{{ _('Memo') }}:</strong> {{ withdrawal.memo
+                                                                }}
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="alert alert-warning">
+                                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                                    <strong>{{ _('Confirm Approval') }}:</strong> {{ _('This will
+                                                    approve the withdrawal request and notify the client.') }}
+                                                    {{ _('Make sure you have verified the withdrawal details.') }}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="approveNote{{ withdrawal.id }}" class="form-label">{{
+                                                        _('Admin Note') }} ({{ _('optional') }}):</label>
+                                                    <textarea class="form-control" id="approveNote{{ withdrawal.id }}"
+                                                        name="note" rows="3"
+                                                        placeholder="{{ _('Add any notes about this approval...') }}"></textarea>
+                                                    <input type="hidden" name="action" value="approve">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-check-lg me-1"></i>{{ _('Approve Withdrawal') }}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reject Withdrawal Modal -->
+                            <div class="modal fade" id="rejectWithdrawalModal{{ withdrawal.id }}" tabindex="-1"
+                                aria-labelledby="rejectWithdrawalModalLabel{{ withdrawal.id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title" id="rejectWithdrawalModalLabel{{ withdrawal.id }}">
+                                                <i class="bi bi-x-circle me-2"></i>{{ _('Reject Withdrawal') }}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form
+                                            action="{{ url_for('withdrawal_admin.reject_withdrawal', withdrawal_id=withdrawal.id) }}"
+                                            method="POST">
+                                            <div class="modal-body">
+                                                <!-- Withdrawal Summary -->
+                                                <div class="card mb-3">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title">{{ _('Withdrawal Summary') }}</h6>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <strong>{{ _('Client') }}:</strong> {{
+                                                                withdrawal.client.username }}<br>
+                                                                <strong>{{ _('Amount') }}:</strong> {{
+                                                                "%.8f"|format(withdrawal.amount) }} {{ withdrawal.coin
+                                                                }}<br>
+                                                                <strong>{{ _('Network') }}:</strong> {{
+                                                                withdrawal.blockchain or 'N/A' }}
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <strong>{{ _('Address') }}:</strong><br>
+                                                                <code class="small">{{ withdrawal.address }}</code>
+                                                                {% if withdrawal.memo %}
+                                                                <br><strong>{{ _('Memo') }}:</strong> {{ withdrawal.memo
+                                                                }}
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="alert alert-danger">
+                                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                                    <strong>{{ _('Confirm Rejection') }}:</strong> {{ _('This will
+                                                    reject the withdrawal request and notify the client.') }}
+                                                    {{ _('The funds will remain in the client\'s account.') }}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="rejectNote{{ withdrawal.id }}" class="form-label">
+                                                        <span class="text-danger">*</span> {{ _('Reason for rejection')
+                                                        }} ({{ _('required') }}):
+                                                    </label>
+                                                    <textarea class="form-control" id="rejectNote{{ withdrawal.id }}"
+                                                        name="note" rows="4" required
+                                                        placeholder="{{ _('Please provide a clear reason for rejecting this withdrawal...') }}"></textarea>
+                                                    <input type="hidden" name="action" value="reject">
+                                                    <div class="form-text">
+                                                        {{ _('Common reasons') }}: {{ _('Invalid address') }}, {{
+                                                        _('insufficient funds') }}, {{ _('security concerns') }}, {{
+                                                        _('document verification required') }}, etc.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="bi bi-x-lg me-1"></i>{{ _('Reject Withdrawal') }}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Complete Withdrawal Modal -->
+                            <div class="modal fade" id="completeWithdrawalModal{{ withdrawal.id }}" tabindex="-1"
+                                aria-labelledby="completeWithdrawalModalLabel{{ withdrawal.id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-success text-white">
+                                            <h5 class="modal-title"
+                                                id="completeWithdrawalModalLabel{{ withdrawal.id }}">
+                                                <i class="bi bi-check-circle-fill me-2"></i>{{ _('Complete Withdrawal')
+                                                }}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form
+                                            action="{{ url_for('withdrawal_admin.process_withdrawal', withdrawal_id=withdrawal.id, action='complete') }}"
+                                            method="POST">
+                                            <div class="modal-body">
+                                                <!-- Withdrawal Summary -->
+                                                <div class="card mb-3">
+                                                    <div class="card-body">
+                                                        <h6 class="card-title">{{ _('Withdrawal Summary') }}</h6>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <strong>{{ _('Client') }}:</strong> {{
+                                                                withdrawal.client.username }}<br>
+                                                                <strong>{{ _('Amount') }}:</strong> {{
+                                                                "%.8f"|format(withdrawal.amount) }} {{ withdrawal.coin
+                                                                }}<br>
+                                                                <strong>{{ _('Network') }}:</strong> {{
+                                                                withdrawal.blockchain or 'N/A' }}
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <strong>{{ _('Address') }}:</strong><br>
+                                                                <code class="small">{{ withdrawal.address }}</code>
+                                                                {% if withdrawal.memo %}
+                                                                <br><strong>{{ _('Memo') }}:</strong> {{ withdrawal.memo
+                                                                }}
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="alert alert-info">
+                                                    <i class="bi bi-info-circle me-2"></i>
+                                                    <strong>{{ _('Mark as Completed') }}:</strong> {{ _('Use this when
+                                                    the withdrawal transaction has been successfully processed') }}
+                                                    {{ _('and confirmed on the blockchain.') }}
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="txHash{{ withdrawal.id }}" class="form-label">
+                                                        <i class="bi bi-link-45deg me-1"></i>{{ _('Transaction Hash')
+                                                        }}:
+                                                    </label>
+                                                    <input type="text" class="form-control"
+                                                        id="txHash{{ withdrawal.id }}" name="tx_hash"
+                                                        placeholder="{{ _('Enter the blockchain transaction hash') }}"
+                                                        pattern="[a-fA-F0-9]{64}"
+                                                        title="{{ _('Enter a valid transaction hash (64 characters)') }}">
+                                                    <div class="form-text">
+                                                        {{ _('The transaction hash from the blockchain network') }} ({{
+                                                        _('optional but recommended for tracking') }})
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="completeNote{{ withdrawal.id }}" class="form-label">{{
+                                                        _('Admin Note') }} ({{ _('optional') }}):</label>
+                                                    <textarea class="form-control" id="completeNote{{ withdrawal.id }}"
+                                                        name="note" rows="3"
+                                                        placeholder="{{ _('Add any notes about this completion...') }}"></textarea>
+                                                    <input type="hidden" name="action" value="complete">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-check-circle-fill me-1"></i>{{ _('Mark as
+                                                    Completed') }}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.5;"></i>
+                                        <h5 class="mt-3 mb-2">{{ _('No withdrawal requests found') }}</h5>
+                                        {% if status and status != 'all' %}
+                                        <p class="mb-2">{{ _('No withdrawal requests with status "{{ status.title() }}"
+                                            found.') }}</p>
+                                        {% else %}
+                                        <p class="mb-2">{{ _('No withdrawal requests have been made yet.') }}</p>
+                                        {% endif %}
+                                        <p class="small text-muted">
+                                            {{ _('Withdrawal requests will appear here when clients submit them.') }}
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if withdrawals.pages > 1 %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if withdrawals.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('withdrawal_admin.user_withdrawal_requests', page=withdrawals.prev_num, status=status) }}"
+                                aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&laquo;</span>
+                        </li>
+                        {% endif %}
+
+                        {% for page_num in withdrawals.iter_pages(left_edge=1, right_edge=1, left_current=2,
+                        right_current=3) %}
+                        {% if page_num %}
+                        <li class="page-item {% if page_num == withdrawals.page %}active{% endif %}">
+                            <a class="page-link"
+                                href="{{ url_for('withdrawal_admin.user_withdrawal_requests', page=page_num, status=status) }}">{{
+                                page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if withdrawals.has_next %}
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('withdrawal_admin.user_withdrawal_requests', page=withdrawals.next_num, status=status) }}"
+                                aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&raquo;</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% set address_copied = _('Address copied to clipboard!') %}
+{% set failed_to_copy = _('Failed to copy address') %}
+{% set provide_rejection_reason = _('Please provide a reason for rejection') %}
+{% set valid_tx_hash = _('Please enter a valid transaction hash (64 hex characters)') %}
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Copy address to clipboard
+        document.querySelectorAll('.copy-address').forEach(button => {
+            button.addEventListener('click', function () {
+                const address = this.getAttribute('data-address');
+                const originalText = this.innerHTML;
+
+                // Show loading state
+                this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                this.disabled = true;
+
+                navigator.clipboard.writeText(address).then(() => {
+                    // Show success state
+                    this.innerHTML = '<i class="bi bi-check"></i>';
+                    this.classList.remove('btn-outline-secondary');
+                    this.classList.add('btn-success');
+
+                    // Use translated string variables in JS
+                    showToast(address_copied, 'success');
+
+                    // Reset button after 2 seconds
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-secondary');
+                        this.disabled = false;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    this.innerHTML = '<i class="bi bi-x"></i>';
+                    this.classList.remove('btn-outline-secondary');
+                    this.classList.add('btn-danger');
+
+                    // Show error toast
+                    showToast(failed_to_copy, 'error');
+
+                    // Reset button after 2 seconds
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.classList.remove('btn-danger');
+                        this.classList.add('btn-outline-secondary');
+                        this.disabled = false;
+                    }, 2000);
+                });
+            });
+        });
+
+        // Handle form submissions with loading states
+        document.querySelectorAll('form[action*="process_withdrawal_action"]').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const action = this.querySelector('input[name="action"]').value;
+
+                // Additional validation for rejection
+                if (action === 'reject') {
+                    const noteField = this.querySelector('textarea[name="note"]');
+                    if (!noteField.value.trim()) {
+                        e.preventDefault();
+                        showToast(provide_rejection_reason, 'error');
+                        noteField.focus();
+                        return false;
+                    }
+                }
+
+                // Additional validation for completion with tx hash
+                if (action === 'complete') {
+                    const txHashField = this.querySelector('input[name="tx_hash"]');
+                    if (txHashField && txHashField.value.trim()) {
+                        // Basic validation for tx hash format
+                        const txHash = txHashField.value.trim();
+                        if (!/^[a-fA-F0-9]{64}$/.test(txHash)) {
+                            e.preventDefault();
+                            showToast(valid_tx_hash, 'error');
+                            txHashField.focus();
+                            return false;
+                        }
+                    }
+                }
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> {{ _('Processing...') }}';
+
+            // Reset if form doesn't submit for some reason
+            setTimeout(() => {
+                if (submitBtn.disabled) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            }, 10000);
+        }
+            });
+        });
+
+    // Auto-refresh pending withdrawals count
+    setInterval(function () {
+        updatePendingCount();
+    }, 30000); // Refresh every 30 seconds
+
+    // Enhanced filter functionality
+    const statusFilter = document.getElementById('status');
+    const coinFilter = document.getElementById('coin');
+
+    if (statusFilter) {
+        statusFilter.addEventListener('change', function () {
+            // Auto-submit form when status changes
+            this.form.submit();
+        });
+    }
+
+    if (coinFilter) {
+        coinFilter.addEventListener('change', function () {
+            // Auto-submit form when coin changes
+            this.form.submit();
+        });
+    }
+
+    // Add export functionality
+    addExportFunctionality();
+    });
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        const toastContainer = document.getElementById('toast-container') || createToastContainer();
+
+        const toastId = 'toast-' + Date.now();
+        const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+        const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle';
+
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-${icon} me-2"></i>${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+        toast.show();
+
+        // Remove toast element after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', function () {
+            this.remove();
+        });
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed top-0 end-0 p-3';
+        container.style.zIndex = '1055';
+        document.body.appendChild(container);
+        return container;
+    }
+
+    // Update pending withdrawals count
+    function updatePendingCount() {
+        fetch('/admin/api/withdrawals/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update the pending count in the stats cards
+                const pendingCountElement = document.querySelector('.card.border-left-primary .h5');
+                if (pendingCountElement && data.pending_count !== undefined) {
+                    pendingCountElement.textContent = data.pending_count;
+                }
+            })
+            .catch(err => console.error('Failed to update withdrawal stats:', err));
+    }
+
+    // Add export functionality
+    function addExportFunctionality() {
+        const exportButtons = document.querySelectorAll('.dropdown-item[href*="export"]');
+        exportButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>{{ _('Generating...') }}';
+
+            // Get current filters
+            const params = new URLSearchParams(window.location.search);
+            const exportUrl = this.href + '?' + params.toString();
+
+            // Create temporary download link
+            const link = document.createElement('a');
+            link.href = exportUrl;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Reset button
+            setTimeout(() => {
+                this.innerHTML = originalText;
+            }, 2000);
+        });
+    });
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function (e) {
+        // Ctrl/Cmd + R to refresh
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            window.location.reload();
+        }
+
+        // Escape to close modals
+        if (e.key === 'Escape') {
+            const openModals = document.querySelectorAll('.modal.show');
+            openModals.forEach(modal => {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+    }
+
+    .avatar-title {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .address-container {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .table> :not(caption)>*>* {
+        padding: 0.75rem 0.5rem;
+        vertical-align: middle;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .dropdown-menu {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f8f9fc;
+        transform: translateX(2px);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-lg {
+        max-width: 800px;
+    }
+
+    .card {
+        border: 1px solid #e3e6f0;
+        border-radius: 0.35rem;
+    }
+
+    .card-title {
+        color: #5a5c69;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    code {
+        background-color: #f8f9fc;
+        color: #5a5c69;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .form-text {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .toast-container {
+        z-index: 1055;
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .table-responsive {
+            border: 1px solid #e3e6f0;
+            border-radius: 0.35rem;
+        }
+
+        .btn-group-sm>.btn,
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .dropdown {
+            position: static !important;
+        }
+
+        .dropdown-menu {
+            position: absolute !important;
+            will-change: transform;
+        }
+    }
+
+    /* Loading animation */
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .spinner-border-sm {
+        animation: spin 0.75s linear infinite;
+    }
+</style>
+{% endblock %}

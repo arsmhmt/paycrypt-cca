@@ -1,0 +1,665 @@
+{% extends "auth/base.html" %}
+
+{% block title %}Admin Login{% endblock %}
+{% block subtitle %}Administrator Portal Access{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('auth.admin_login') }}" id="loginForm" class="modern-form" autocomplete="on">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="form-group">
+        <label for="username" class="form-label">
+            <i class="bi bi-person-badge me-2"></i>Administrator Username
+        </label>
+        <div class="input-group-enhanced">
+            <input type="text" class="form-control-enhanced" id="username" name="username" 
+                   placeholder="Enter your admin username" required autofocus
+                   autocomplete="username" spellcheck="false"
+                   data-validation="username">
+            <div class="input-border"></div>
+            <div class="validation-icon"></div>
+        </div>
+        <div class="field-error" id="username-error"></div>
+    </div>
+    
+    <div class="form-group">
+        <label for="password" class="form-label">
+            <i class="bi bi-shield-lock me-2"></i>Password
+        </label>
+        <div class="input-group-enhanced">
+            <input type="password" class="form-control-enhanced" id="password" name="password" 
+                   placeholder="Enter your password" required
+                   autocomplete="current-password" minlength="8"
+                   data-validation="password">
+            <button type="button" class="password-toggle-btn" id="togglePassword" tabindex="-1">
+                <i class="bi bi-eye-slash"></i>
+            </button>
+            <div class="input-border"></div>
+            <div class="validation-icon"></div>
+        </div>
+        <div class="field-error" id="password-error"></div>
+        <div class="password-strength-meter" id="passwordStrength">
+            <div class="strength-bar"></div>
+            <span class="strength-text"></span>
+        </div>
+    </div>
+    
+    <div class="form-options">
+        <div class="form-check-enhanced">
+            <input class="form-check-input" type="checkbox" id="remember" name="remember" 
+                   autocomplete="on">
+            <label class="form-check-label" for="remember">
+                <span class="checkmark"></span>
+                Keep me signed in for 7 days
+                <small class="text-muted d-block">Only select this on trusted devices</small>
+            </label>
+        </div>
+        <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">
+            <i class="bi bi-key me-1"></i>Forgot password?
+        </a>
+    </div>
+    
+    <button type="submit" class="btn-admin-login" id="submitBtn">
+        <span class="btn-content">
+            <i class="bi bi-shield-check me-2"></i>
+            Access Admin Panel
+        </span>
+        <div class="btn-loading">
+            <div class="spinner-admin"></div>
+        </div>
+    </button>
+    
+    <div class="admin-note">
+        <i class="bi bi-info-circle me-2"></i>
+        <span>Authorized personnel only. All access attempts are logged and monitored.</span>
+    </div>
+    
+    <!-- Rate Limiting Info -->
+    <div class="security-info" id="securityInfo">
+        <small class="text-muted">
+            <i class="bi bi-shield me-1"></i>
+            Protected by advanced security measures
+        </small>
+    </div>
+</form>
+
+<style>
+    /* Enhanced Modern Form Styles */
+    .modern-form {
+        animation: formSlideIn 0.5s ease-out;
+        position: relative;
+    }
+
+    @keyframes formSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .form-group {
+        margin-bottom: 1.75rem;
+        position: relative;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 0.95rem;
+        letter-spacing: -0.01em;
+    }
+
+    .input-group-enhanced {
+        position: relative;
+    }
+
+    .form-control-enhanced {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        background: #ffffff;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .form-control-enhanced:focus {
+        outline: none;
+        border-color: #4e73df;
+        background: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 
+            0 8px 30px rgba(78, 115, 223, 0.12),
+            0 4px 16px rgba(78, 115, 223, 0.08);
+    }
+
+    .input-border {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #4e73df, #FF6B35);
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+        border-radius: 1px;
+    }
+
+    .form-control-enhanced:focus + .password-toggle-btn + .input-border,
+    .form-control-enhanced:focus + .input-border {
+        width: 100%;
+    }
+
+    .password-toggle-btn {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #a0aec0;
+        cursor: pointer;
+        font-size: 1.1rem;
+        z-index: 2;
+        transition: all 0.2s ease;
+        border-radius: 6px;
+        padding: 0.25rem;
+    }
+
+    .password-toggle-btn:hover {
+        color: #4e73df;
+        background: rgba(78, 115, 223, 0.1);
+    }
+
+    .form-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .form-check-enhanced {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .form-check-enhanced .form-check-input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .checkmark {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        margin-right: 0.75rem;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+
+    .form-check-enhanced .form-check-input:checked + .form-check-label .checkmark {
+        background: linear-gradient(135deg, #4e73df, #224abe);
+        border-color: #4e73df;
+    }
+
+    .form-check-enhanced .form-check-input:checked + .form-check-label .checkmark::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 6px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    .form-check-label {
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: #4a5568;
+        user-select: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .forgot-link {
+        color: #4e73df;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+    }
+
+    .forgot-link:hover {
+        color: #224abe;
+        background: rgba(78, 115, 223, 0.1);
+        text-decoration: none;
+    }
+
+    .btn-admin-login {
+        width: 100%;
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 1.125rem 1.5rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 16px rgba(78, 115, 223, 0.3);
+    }
+
+    .btn-admin-login::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-admin-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(78, 115, 223, 0.4);
+    }
+
+    .btn-admin-login:hover::before {
+        left: 100%;
+    }
+
+    .btn-admin-login:active {
+        transform: translateY(0);
+    }
+
+    .btn-content {
+        transition: opacity 0.2s ease;
+    }
+
+    .btn-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-admin-login.loading .btn-content {
+        opacity: 0;
+    }
+
+    .btn-admin-login.loading .btn-loading {
+        display: flex;
+    }
+
+    .spinner-admin {
+        width: 24px;
+        height: 24px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: adminSpin 1s linear infinite;
+    }
+
+    @keyframes adminSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .admin-note {
+        background: rgba(255, 107, 53, 0.1);
+        border: 1px solid rgba(255, 107, 53, 0.2);
+        border-radius: 8px;
+        padding: 0.875rem 1rem;
+        text-align: center;
+        color: #c53030;
+        font-size: 0.85rem;
+        margin-top: 1rem;
+    }
+
+    /* Validation Styles */
+    .field-error {
+        color: #e53e3e;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        display: none;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .field-error.show {
+        display: block;
+    }
+
+    .validation-icon {
+        position: absolute;
+        right: 3.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control-enhanced.valid + .input-border + .validation-icon::before {
+        content: "✓";
+        color: #38a169;
+    }
+
+    .form-control-enhanced.invalid + .input-border + .validation-icon::before {
+        content: "⚠";
+        color: #e53e3e;
+    }
+
+    /* Password Strength Meter */
+    .password-strength-meter {
+        margin-top: 0.5rem;
+        display: none;
+    }
+
+    .password-strength-meter.show {
+        display: block;
+        animation: slideDown 0.3s ease-out;
+    }
+
+    .strength-bar {
+        height: 4px;
+        width: 100%;
+        background: #e2e8f0;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 0.25rem;
+    }
+
+    .strength-bar::after {
+        content: '';
+        display: block;
+        height: 100%;
+        width: 0%;
+        background: #e53e3e;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+    }
+
+    .strength-bar.weak::after {
+        width: 25%;
+        background: #e53e3e;
+    }
+
+    .strength-bar.fair::after {
+        width: 50%;
+        background: #dd6b20;
+    }
+
+    .strength-bar.good::after {
+        width: 75%;
+        background: #38a169;
+    }
+
+    .strength-bar.strong::after {
+        width: 100%;
+        background: #2f855a;
+    }
+
+    .strength-text {
+        font-size: 0.75rem;
+        color: #718096;
+    }
+
+    /* Security Info */
+    .security-info {
+        text-align: center;
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: rgba(79, 115, 223, 0.05);
+        border: 1px solid rgba(79, 115, 223, 0.1);
+        border-radius: 0.5rem;
+    }
+
+    /* Enhanced Button States */
+    .btn-admin-login:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-admin-login.loading .btn-content {
+        opacity: 0;
+    }
+
+    .btn-admin-login.loading .btn-loading {
+        opacity: 1;
+    }
+
+    /* Accessibility Improvements */
+    .form-control-enhanced:focus {
+        box-shadow: 0 0 0 3px rgba(79, 115, 223, 0.1);
+        outline: 2px solid #4e73df;
+        outline-offset: 2px;
+    }
+
+    .password-toggle-btn:focus {
+        box-shadow: 0 0 0 2px rgba(79, 115, 223, 0.5);
+        outline: none;
+    }
+
+    /* Enhanced animations */
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            max-height: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            max-height: 100px;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 480px) {
+        .form-control-enhanced {
+            padding: 0.875rem 1rem;
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+        
+        .admin-note {
+            font-size: 0.8rem;
+            padding: 0.75rem;
+        }
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+        .form-control-enhanced {
+            border: 2px solid #000;
+        }
+        
+        .btn-admin-login {
+            border: 2px solid #000;
+        }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+        .modern-form,
+        .field-error,
+        .password-strength-meter,
+        .form-control-enhanced,
+        .btn-admin-login {
+            animation: none;
+            transition: none;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const togglePassword = document.getElementById('togglePassword');
+    const submitBtn = document.getElementById('submitBtn');
+    const strengthMeter = document.getElementById('passwordStrength');
+    
+    // Enhanced form validation
+    function validateField(field) {
+        const value = field.value.trim();
+        const fieldName = field.name;
+        let isValid = true;
+        let errorMessage = '';
+        
+        if (fieldName === 'username') {
+            if (value.length < 2) {
+                isValid = false;
+                errorMessage = 'Username must be at least 2 characters long';
+            }
+        } else if (fieldName === 'password') {
+            if (value.length < 8) {
+                isValid = false;
+                errorMessage = 'Password must be at least 8 characters long';
+            }
+        }
+        
+        const errorElement = document.getElementById(fieldName + '-error');
+        if (isValid) {
+            field.classList.remove('invalid');
+            field.classList.add('valid');
+            errorElement.classList.remove('show');
+        } else {
+            field.classList.remove('valid');
+            field.classList.add('invalid');
+            errorElement.textContent = errorMessage;
+            errorElement.classList.add('show');
+        }
+        
+        return isValid;
+    }
+    
+    // Password strength checker
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        const checks = {
+            length: password.length >= 8,
+            lowercase: /[a-z]/.test(password),
+            uppercase: /[A-Z]/.test(password),
+            numbers: /\d/.test(password),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
+        
+        strength = Object.values(checks).filter(Boolean).length;
+        
+        const strengthBar = strengthMeter.querySelector('.strength-bar');
+        const strengthText = strengthMeter.querySelector('.strength-text');
+        
+        strengthMeter.classList.add('show');
+        
+        if (strength < 2) {
+            strengthBar.className = 'strength-bar weak';
+            strengthText.textContent = 'Weak password';
+        } else if (strength < 3) {
+            strengthBar.className = 'strength-bar fair';
+            strengthText.textContent = 'Fair password';
+        } else if (strength < 4) {
+            strengthBar.className = 'strength-bar good';
+            strengthText.textContent = 'Good password';
+        } else {
+            strengthBar.className = 'strength-bar strong';
+            strengthText.textContent = 'Strong password';
+        }
+    }
+    
+    // Enhanced password toggle
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        const icon = this.querySelector('i');
+        icon.className = type === 'password' ? 'bi bi-eye-slash' : 'bi bi-eye';
+        
+        // Accessibility
+        this.setAttribute('aria-label', type === 'password' ? 'Show password' : 'Hide password');
+    });
+    
+    // Real-time validation
+    [usernameInput, passwordInput].forEach(input => {
+        input.addEventListener('blur', () => validateField(input));
+        input.addEventListener('input', () => {
+            if (input.classList.contains('invalid')) {
+                validateField(input);
+            }
+            
+            if (input === passwordInput && input.value.length > 0) {
+                checkPasswordStrength(input.value);
+            } else if (input === passwordInput) {
+                strengthMeter.classList.remove('show');
+            }
+        });
+    });
+    
+    // Enhanced form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const isUsernameValid = validateField(usernameInput);
+        const isPasswordValid = validateField(passwordInput);
+        
+        if (isUsernameValid && isPasswordValid) {
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            // Add slight delay for better UX
+            setTimeout(() => {
+                form.submit();
+            }, 300);
+        } else {
+            // Focus on first invalid field
+            const firstInvalid = form.querySelector('.invalid');
+            if (firstInvalid) {
+                firstInvalid.focus();
+            }
+        }
+    });
+    
+    // Prevent multiple submissions
+    let isSubmitting = false;
+    form.addEventListener('submit', function(e) {
+        if (isSubmitting) {
+            e.preventDefault();
+            return false;
+        }
+        isSubmitting = true;
+    });
+    
+    // Auto-focus management
+    if (usernameInput.value.trim()) {
+        passwordInput.focus();
+    }
+});
+</script>
+{% endblock %}

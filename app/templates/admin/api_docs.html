@@ -1,0 +1,30 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}API Documentation - PayCrypt Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">API Documentation</h1>
+    <p>Welcome to the PayCrypt API documentation. Here you will find information about available endpoints, authentication, and usage examples.</p>
+    <hr>
+    <h3>Authentication</h3>
+    <p>All API requests require JWT authentication. Obtain your token via the login endpoint and include it in the <code>Authorization</code> header as <code>Bearer &lt;token&gt;</code>.</p>
+    <hr>
+    <h3>Endpoints</h3>
+    <ul>
+        <li><strong>POST</strong> <code>/api/v1/login</code> - Obtain JWT token</li>
+        <li><strong>POST</strong> <code>/api/v1/refresh</code> - Refresh JWT token</li>
+        <li><strong>GET</strong> <code>/api/v1/payments</code> - List payments</li>
+        <li><strong>POST</strong> <code>/api/v1/payments</code> - Create payment</li>
+        <li><strong>GET</strong> <code>/api/v1/withdrawals</code> - List withdrawals</li>
+        <li><strong>POST</strong> <code>/api/v1/withdrawals</code> - Request withdrawal</li>
+        <!-- Add more as needed -->
+    </ul>
+    <hr>
+    <h3>Example Request</h3>
+    <pre><code>curl -X GET "https://yourdomain.com/api/v1/payments" \
+     -H "Authorization: Bearer &lt;your_jwt_token&gt;"
+</code></pre>
+    <p>For more details, contact support or see the full developer documentation.</p>
+</div>
+{% endblock %}

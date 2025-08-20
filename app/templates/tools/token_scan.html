@@ -1,0 +1,525 @@
+{% extends 'base.html' %}
+
+{% block title %}Token Security Scanner - Smart Contract Audit - PayCrypt{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card bg-gradient-warning text-dark mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-shield-virus me-2"></i>
+                                Token Security Scanner
+                            </h2>
+                            <p class="mb-0 opacity-90">
+                                Comprehensive smart contract security analysis with scoring
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="badge bg-dark text-warning fs-6 px-3 py-2">
+                                <i class="fas fa-microscope me-1"></i>
+                                Deep Analysis
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2 text-primary"></i>
+                        Smart Contract Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="chain" class="form-label">
+                                <i class="fas fa-link me-1"></i>
+                                Blockchain
+                            </label>
+                            <select name="chain" id="chain" class="form-select" required>
+                                <option value="">Select blockchain...</option>
+                                {% for chain_id, chain_name in chains.items() %}
+                                <option value="{{ chain_id }}" {% if request.form.get('chain') == chain_id %}selected{% endif %}>
+                                    {{ chain_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">
+                                <i class="fas fa-file-contract me-1"></i>
+                                Token Contract Address
+                            </label>
+                            <input type="text" 
+                                   name="address" 
+                                   id="address" 
+                                   class="form-control" 
+                                   placeholder="0x..." 
+                                   required
+                                   value="{{ request.form.get('address', '') }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="fas fa-shield-virus me-1"></i>
+                                Scan Token
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if result and result.success %}
+            <!-- Security Score -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-{% if result.security_score >= 80 %}success{% elif result.security_score >= 60 %}warning{% else %}danger{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-award me-2"></i>
+                            Security Score
+                        </h5>
+                        <div class="badge bg-light text-{% if result.security_score >= 80 %}success{% elif result.security_score >= 60 %}warning{% else %}danger{% endif %} fs-4">
+                            {{ result.security_score }}/100
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="progress mb-3" style="height: 20px;">
+                                <div class="progress-bar bg-{% if result.security_score >= 80 %}success{% elif result.security_score >= 60 %}warning{% else %}danger{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ result.security_score }}%"
+                                     aria-valuenow="{{ result.security_score }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ result.security_score }}%
+                                </div>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-3">
+                                    <div class="border-end">
+                                        <div class="h6 text-{% if result.security_score >= 80 %}success{% else %}muted{% endif %}">80-100</div>
+                                        <small class="text-muted">Excellent</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border-end">
+                                        <div class="h6 text-{% if result.security_score >= 60 and result.security_score < 80 %}warning{% else %}muted{% endif %}">60-79</div>
+                                        <small class="text-muted">Good</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border-end">
+                                        <div class="h6 text-{% if result.security_score >= 40 and result.security_score < 60 %}warning{% else %}muted{% endif %}">40-59</div>
+                                        <small class="text-muted">Fair</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="h6 text-{% if result.security_score < 40 %}danger{% else %}muted{% endif %}">0-39</div>
+                                    <small class="text-muted">Poor</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="display-4 mb-2">
+                                {% if result.security_score >= 80 %}
+                                    <i class="fas fa-shield-check text-success"></i>
+                                {% elif result.security_score >= 60 %}
+                                    <i class="fas fa-shield-alt text-warning"></i>
+                                {% elif result.security_score >= 40 %}
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-skull-crossbones text-danger"></i>
+                                {% endif %}
+                            </div>
+                            <div class="h5 text-{% if result.security_score >= 80 %}success{% elif result.security_score >= 60 %}warning{% else %}danger{% endif %}">
+                                {% if result.security_score >= 80 %}
+                                    EXCELLENT
+                                {% elif result.security_score >= 60 %}
+                                    GOOD
+                                {% elif result.security_score >= 40 %}
+                                    FAIR
+                                {% else %}
+                                    POOR
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Information -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Token Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="border-start border-primary border-3 ps-3">
+                                <small class="text-muted">Name</small>
+                                <div class="fw-bold">{{ result.token_info.name }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-start border-success border-3 ps-3">
+                                <small class="text-muted">Symbol</small>
+                                <div class="fw-bold">{{ result.token_info.symbol }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-start border-info border-3 ps-3">
+                                <small class="text-muted">Chain</small>
+                                <div class="fw-bold">{{ result.token_info.chain }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border-start border-warning border-3 ps-3">
+                                <small class="text-muted">Analyzed</small>
+                                <div class="fw-bold">{{ result.timestamp }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Factors Analysis -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow h-100">
+                        <div class="card-header bg-danger text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Risk Factors ({{ result.risk_factors|length }})
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if result.risk_factors %}
+                                {% for factor in result.risk_factors %}
+                                <div class="alert alert-{% if factor.level == 'CRITICAL' %}danger{% else %}warning{% endif %} mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span><strong>{{ factor.level }}:</strong> {{ factor.factor }}</span>
+                                        <i class="fas fa-{% if factor.level == 'CRITICAL' %}times-circle text-danger{% else %}exclamation-triangle text-warning{% endif %}"></i>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-success mb-0">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    No critical risk factors detected.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow h-100">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                Security Recommendations
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                {% for rec in result.recommendations %}
+                                <li class="mb-2">
+                                    {% if rec.startswith('✅') %}
+                                        <div class="text-success">{{ rec }}</div>
+                                    {% elif rec.startswith('⚠️') %}
+                                        <div class="text-warning">{{ rec }}</div>
+                                    {% elif rec.startswith('🚨') %}
+                                        <div class="text-danger">{{ rec }}</div>
+                                    {% else %}
+                                        <div class="text-muted">{{ rec }}</div>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Analysis -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow h-100">
+                        <div class="card-header bg-secondary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-user-shield me-2"></i>
+                                Ownership Analysis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Renounced</span>
+                                    <span class="badge bg-{% if result.ownership_analysis.renounced %}success{% else %}danger{% endif %}">
+                                        {% if result.ownership_analysis.renounced %}✅{% else %}❌{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Can Mint</span>
+                                    <span class="badge bg-{% if result.ownership_analysis.can_mint %}danger{% else %}success{% endif %}">
+                                        {% if result.ownership_analysis.can_mint %}❌{% else %}✅{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Can Pause</span>
+                                    <span class="badge bg-{% if result.ownership_analysis.can_pause %}danger{% else %}success{% endif %}">
+                                        {% if result.ownership_analysis.can_pause %}❌{% else %}✅{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Hidden Owner</span>
+                                    <span class="badge bg-{% if result.ownership_analysis.hidden_owner %}danger{% else %}success{% endif %}">
+                                        {% if result.ownership_analysis.hidden_owner %}❌{% else %}✅{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow h-100">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                Trading Analysis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Can Buy</span>
+                                    <span class="badge bg-{% if result.trading_analysis.can_buy %}success{% else %}danger{% endif %}">
+                                        {% if result.trading_analysis.can_buy %}✅{% else %}❌{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Can Sell All</span>
+                                    <span class="badge bg-{% if result.trading_analysis.can_sell_all %}success{% else %}danger{% endif %}">
+                                        {% if result.trading_analysis.can_sell_all %}✅{% else %}❌{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Buy Tax</span>
+                                    <span class="badge bg-{% if result.trading_analysis.buy_tax > 10 %}danger{% elif result.trading_analysis.buy_tax > 5 %}warning{% else %}success{% endif %}">
+                                        {{ "{:.1f}".format(result.trading_analysis.buy_tax) }}%
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Sell Tax</span>
+                                    <span class="badge bg-{% if result.trading_analysis.sell_tax > 10 %}danger{% elif result.trading_analysis.sell_tax > 5 %}warning{% else %}success{% endif %}">
+                                        {{ "{:.1f}".format(result.trading_analysis.sell_tax) }}%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow h-100">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-code me-2"></i>
+                                Contract Analysis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Proxy Contract</span>
+                                    <span class="badge bg-{% if result.contract_analysis.is_proxy %}warning{% else %}success{% endif %}">
+                                        {% if result.contract_analysis.is_proxy %}⚠️{% else %}✅{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>External Calls</span>
+                                    <span class="badge bg-{% if result.contract_analysis.has_external_call %}warning{% else %}success{% endif %}">
+                                        {% if result.contract_analysis.has_external_call %}⚠️{% else %}✅{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Gas Abuse</span>
+                                    <span class="badge bg-{% if result.contract_analysis.gas_abuse %}danger{% else %}success{% endif %}">
+                                        {% if result.contract_analysis.gas_abuse %}❌{% else %}✅{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Fake Token</span>
+                                    <span class="badge bg-{% if result.contract_analysis.fake_token %}danger{% else %}success{% endif %}">
+                                        {% if result.contract_analysis.fake_token %}❌{% else %}✅{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Security Guide -->
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        Token Security Guide
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success">✅ Good Security Indicators:</h6>
+                            <ul class="text-muted mb-4">
+                                <li>High security score (80-100)</li>
+                                <li>Renounced ownership</li>
+                                <li>Low or no buy/sell taxes</li>
+                                <li>No mint function</li>
+                                <li>No pause function</li>
+                                <li>Verified contract source code</li>
+                            </ul>
+                            
+                            <h6 class="text-info">🔍 What We Check:</h6>
+                            <ul class="text-muted">
+                                <li>Smart contract functions</li>
+                                <li>Owner privileges</li>
+                                <li>Trading restrictions</li>
+                                <li>Tax mechanisms</li>
+                                <li>Proxy patterns</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-danger">🚨 Red Flags to Avoid:</h6>
+                            <ul class="text-muted mb-4">
+                                <li>Low security score (<40)</li>
+                                <li>High taxes (>15% total)</li>
+                                <li>Cannot sell tokens</li>
+                                <li>Owner can mint tokens</li>
+                                <li>Hidden owner</li>
+                                <li>Blacklist functions</li>
+                            </ul>
+                            
+                            <div class="alert alert-warning">
+                                <small><strong>Disclaimer:</strong> This analysis is for informational purposes only. Always conduct thorough research and consider multiple factors before making investment decisions.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Progress bar animation */
+.progress-bar {
+    transition: width 2s ease-in-out;
+}
+
+/* Form styling */
+#address {
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* List group styling */
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.8rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .col-3 {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+
+<script>
+// Address validation
+document.getElementById('address').addEventListener('input', function(e) {
+    const value = e.target.value;
+    if (value && !value.startsWith('0x')) {
+        e.target.setCustomValidity('Address must start with 0x');
+    } else if (value && value.length !== 42) {
+        e.target.setCustomValidity('Address must be 42 characters long');
+    } else {
+        e.target.setCustomValidity('');
+    }
+});
+
+// Animate progress bar on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        setTimeout(() => {
+            progressBar.style.width = progressBar.getAttribute('aria-valuenow') + '%';
+        }, 500);
+    }
+});
+
+// Chain-specific address validation
+document.getElementById('chain').addEventListener('change', function(e) {
+    const addressField = document.getElementById('address');
+    const selectedChain = e.target.selectedOptions[0].text;
+    
+    if (selectedChain) {
+        addressField.placeholder = `Enter ${selectedChain} token address (0x...)`;
+    }
+});
+
+// Auto-focus address field when chain is selected
+document.getElementById('chain').addEventListener('change', function() {
+    if (this.value) {
+        document.getElementById('address').focus();
+    }
+});
+</script>
+{% endblock %}

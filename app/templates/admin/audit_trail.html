@@ -1,0 +1,206 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Audit Trail - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-shield-lock me-2"></i>Audit Trail
+        </h1>
+        <div>
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary">
+                <i class="bi bi-x-lg me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="bi bi-funnel me-2"></i>Filters
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin.audit_trail') }}">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Action Type</label>
+                        <select name="action_type" class="form-select">
+                            <option value="">All Actions</option>
+                            {% for action in AuditActionType %}
+                            <option value="{{ action.value }}" {% if request.args.get('action_type')==action.value
+                                %}selected{% endif %}>
+                                {{ action.name.replace('_', ' ').title() }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Entity Type</label>
+                        <select name="entity_type" class="form-select">
+                            <option value="">All Entities</option>
+                            <option value="payment" {% if request.args.get('entity_type')=='payment' %}selected{% endif
+                                %}>
+                                Payment
+                            </option>
+                            <option value="client" {% if request.args.get('entity_type')=='client' %}selected{% endif
+                                %}>
+                                Client
+                            </option>
+                            <option value="recurring_payment" {% if request.args.get('entity_type')=='recurring_payment'
+                                %}selected{% endif %}>
+                                Recurring Payment
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">User</label>
+                        <select name="user_id" class="form-select">
+                            <option value="">All Users</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if request.args.get('user_id')==str(user.id) %}selected{%
+                                endif %}>
+                                {{ user.email }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Date Range</label>
+                        <div class="input-group">
+                            <input type="date" name="start_date" class="form-control"
+                                value="{{ request.args.get('start_date') }}">
+                            <span class="input-group-text">to</span>
+                            <input type="date" name="end_date" class="form-control"
+                                value="{{ request.args.get('end_date') }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-filter me-1"></i> Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Audit Trail Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="bi bi-table me-2"></i>Audit Trail Entries
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>Changes</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in audit_entries %}
+                        <tr>
+                            <td>
+                                {{ entry.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </td>
+                            <td>
+                                {{ entry.user.email }}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{
+                                    'success' if entry.action_type == 'create' else
+                                    'warning' if entry.action_type == 'update' else
+                                    'danger' if entry.action_type == 'delete' else
+                                    'info' if entry.action_type == 'status_change' else
+                                    'primary' }}">
+                                    {{ entry.format_action() }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ entry.entity_type.replace('_', ' ').title() }} #{{ entry.entity_id }}
+                            </td>
+                            <td>
+                                {% if entry.format_changes() %}
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#changes-{{ entry.id }}">
+                                    View Changes
+                                </button>
+                                <div class="collapse" id="changes-{{ entry.id }}">
+                                    <div class="mt-2">
+                                        {% for change in entry.format_changes() %}
+                                        <div class="mb-2">
+                                            <strong>{{ change.field }}</strong>:
+                                            <span class="text-muted">{{ change.old }}</span>
+                                            →
+                                            <span class="text-primary">{{ change.new }}</span>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ entry.ip_address }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                No audit entries found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Initialize date pickers with today's date
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelector('input[name="start_date"]').value = today;
+        document.querySelector('input[name="end_date"]').value = today;
+
+        // Add event listener to date inputs
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            input.addEventListener('change', function () {
+                // Ensure start date is not after end date
+                const startDate = document.querySelector('input[name="start_date"]').value;
+                const endDate = document.querySelector('input[name="end_date"]').value;
+
+                if (startDate && endDate && startDate > endDate) {
+                    alert('Start date cannot be after end date');
+                    this.value = '';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

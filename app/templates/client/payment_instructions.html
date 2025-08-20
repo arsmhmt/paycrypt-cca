@@ -1,0 +1,49 @@
+{% extends 'client/base.html' %}
+{% block title %}Payment Instructions{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Deposit Instructions</h2>
+    <div class="alert alert-info">
+        <strong>Send exactly:</strong>
+        <span class="text-monospace h4">{{ payment.crypto_amount }} BTC</span>
+        <br>
+        <strong>To this address:</strong>
+        <span class="text-monospace">{{ wallet_address }}</span>
+    </div>
+    <div class="mb-3">
+        <strong>Exchange Rate:</strong> 1 BTC = {{ payment.exchange_rate }} {{ payment.currency }}<br>
+        <strong>Fiat Amount:</strong> {{ payment.fiat_amount }} {{ payment.currency }}
+    </div>
+    <div class="mb-3">
+        <strong>Rate valid for:</strong> <span id="rate-timer">{{ rate_expiry_minutes }}:00</span> minutes
+    </div>
+    <!-- Optional: QR code (replace src with your QR code generator) -->
+    <div class="mb-3">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?data={{ wallet_address }}&amp;size=150x150" alt="QR Code" />
+    </div>
+    <div class="alert alert-warning">
+        Please send the exact amount within the time window. Late or incorrect payments may not be credited automatically.
+    </div>
+    <a href="{{ url_for('client.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+<script>
+// Simple timer for rate validity
+let minutes = {{ rate_expiry_minutes }};
+let seconds = 0;
+const timerEl = document.getElementById('rate-timer');
+const timer = setInterval(function() {
+    if (seconds === 0) {
+        if (minutes === 0) {
+            clearInterval(timer);
+            timerEl.textContent = 'Expired';
+            return;
+        }
+        minutes--;
+        seconds = 59;
+    } else {
+        seconds--;
+    }
+    timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}, 1000);
+</script>
+{% endblock %}

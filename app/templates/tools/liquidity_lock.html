@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+
+{% block title %}Liquidity Lock Checker - Rug Pull Protection - PayCrypt{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card bg-gradient-success text-white mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-lock me-2"></i>
+                                Liquidity Lock Checker
+                            </h2>
+                            <p class="mb-0 opacity-90">
+                                Verify locked liquidity on Unicrypt, Team Finance, and other platforms
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="badge bg-light text-success fs-6 px-3 py-2">
+                                <i class="fas fa-shield-check me-1"></i>
+                                Rug Pull Protection
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2 text-primary"></i>
+                        Liquidity Lock Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="chain" class="form-label">
+                                <i class="fas fa-link me-1"></i>
+                                Blockchain
+                            </label>
+                            <select name="chain" id="chain" class="form-select" required>
+                                <option value="">Select blockchain...</option>
+                                {% for chain_id, chain_name in chains.items() %}
+                                <option value="{{ chain_id }}" {% if request.form.get('chain') == chain_id %}selected{% endif %}>
+                                    {{ chain_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">
+                                <i class="fas fa-file-contract me-1"></i>
+                                Token Contract Address
+                            </label>
+                            <input type="text" 
+                                   name="address" 
+                                   id="address" 
+                                   class="form-control" 
+                                   placeholder="0x..." 
+                                   required
+                                   value="{{ request.form.get('address', '') }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-lock me-1"></i>
+                                Check Locks
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if result and result.success %}
+            <!-- Lock Status Overview -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-{% if result.lock_status.total_locked_percentage >= 80 %}success{% elif result.lock_status.total_locked_percentage >= 50 %}warning{% else %}danger{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            Lock Status Overview
+                        </h5>
+                        <div class="badge bg-light text-{% if result.lock_status.total_locked_percentage >= 80 %}success{% elif result.lock_status.total_locked_percentage >= 50 %}warning{% else %}danger{% endif %} fs-4">
+                            {{ result.lock_status.total_locked_percentage }}% Locked
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <div class="border-end">
+                                        <div class="h3 text-primary mb-1">{{ result.lock_status.total_locked_percentage }}%</div>
+                                        <small class="text-muted">Locked</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="border-end">
+                                        <div class="h3 text-success mb-1">{{ result.lock_status.lock_platforms|length }}</div>
+                                        <small class="text-muted">Platforms</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="border-end">
+                                        <div class="h3 text-{% if result.lock_status.risk_level == 'HIGH' %}danger{% elif result.lock_status.risk_level == 'MEDIUM' %}warning{% else %}success{% endif %} mb-1">
+                                            {{ result.lock_status.risk_level }}
+                                        </div>
+                                        <small class="text-muted">Risk Level</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    {% if result.lock_status.earliest_unlock %}
+                                    <div class="h6 text-info mb-1">{{ result.lock_status.earliest_unlock }}</div>
+                                    <small class="text-muted">Next Unlock</small>
+                                    {% else %}
+                                    <div class="h6 text-muted mb-1">N/A</div>
+                                    <small class="text-muted">Next Unlock</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-{% if result.lock_status.total_locked_percentage >= 80 %}success{% elif result.lock_status.total_locked_percentage >= 50 %}warning{% else %}danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ result.lock_status.total_locked_percentage }}%"
+                                         aria-valuenow="{{ result.lock_status.total_locked_percentage }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ result.lock_status.total_locked_percentage }}% Liquidity Locked
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="display-4 mb-2">
+                                {% if result.lock_status.total_locked_percentage >= 80 %}
+                                    <i class="fas fa-shield-check text-success"></i>
+                                {% elif result.lock_status.total_locked_percentage >= 50 %}
+                                    <i class="fas fa-shield-alt text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                                {% endif %}
+                            </div>
+                            <div class="h5 text-{% if result.lock_status.total_locked_percentage >= 80 %}success{% elif result.lock_status.total_locked_percentage >= 50 %}warning{% else %}danger{% endif %}">
+                                {% if result.lock_status.total_locked_percentage >= 80 %}
+                                    WELL PROTECTED
+                                {% elif result.lock_status.total_locked_percentage >= 50 %}
+                                    PARTIALLY PROTECTED
+                                {% else %}
+                                    HIGH RISK
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Information -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Token Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="border-start border-primary border-3 ps-3">
+                                <small class="text-muted">Contract Address</small>
+                                <div class="fw-bold font-monospace">{{ result.token_info.address[:10] }}...{{ result.token_info.address[-8:] }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-start border-success border-3 ps-3">
+                                <small class="text-muted">Blockchain</small>
+                                <div class="fw-bold">{{ result.token_info.chain }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-start border-info border-3 ps-3">
+                                <small class="text-muted">Last Checked</small>
+                                <div class="fw-bold">{{ result.timestamp }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lock Platforms Results -->
+            <div class="row g-4 mb-4">
+                {% for lock in result.lock_details %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow h-100">
+                        <div class="card-header bg-{% if lock.status == 'Locked' %}success{% elif lock.status == 'Partial' %}warning{% else %}light{% endif %} 
+                                    text-{% if lock.status == 'Locked' %}white{% elif lock.status == 'Partial' %}dark{% else %}muted{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    {% if lock.platform == 'Unicrypt' %}
+                                        <i class="fas fa-university me-2"></i>
+                                    {% elif lock.platform == 'Team Finance' %}
+                                        <i class="fas fa-users me-2"></i>
+                                    {% elif lock.platform == 'DxSale' %}
+                                        <i class="fas fa-shopping-cart me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-lock me-2"></i>
+                                    {% endif %}
+                                    {{ lock.platform }}
+                                </h6>
+                                <span class="badge bg-{% if lock.status == 'Locked' %}light text-success{% elif lock.status == 'Partial' %}dark text-warning{% else %}secondary{% endif %}">
+                                    {{ lock.status }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                {% if lock.status == 'Locked' %}
+                                    <div class="display-6 text-success mb-2">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                    <h5 class="text-success">{{ lock.locked_percentage }}% Locked</h5>
+                                    {% if lock.lock_value %}
+                                    <div class="h6 mb-2">${{ "{:,.2f}".format(lock.lock_value) }}</div>
+                                    {% endif %}
+                                {% elif lock.status == 'Partial' %}
+                                    <div class="display-6 text-warning mb-2">
+                                        <i class="fas fa-lock-open"></i>
+                                    </div>
+                                    <h5 class="text-warning">{{ lock.locked_percentage }}% Locked</h5>
+                                {% else %}
+                                    <div class="display-6 text-muted mb-2">
+                                        <i class="fas fa-unlock"></i>
+                                    </div>
+                                    <h5 class="text-muted">No Lock Found</h5>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="list-group list-group-flush">
+                                {% if lock.unlock_date %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Unlock Date</span>
+                                    <small class="fw-bold">{{ lock.unlock_date }}</small>
+                                </div>
+                                {% endif %}
+                                {% if lock.lock_value %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Lock Value</span>
+                                    <small class="fw-bold">${{ "{:,.0f}".format(lock.lock_value) }}</small>
+                                </div>
+                                {% endif %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Platform Trust</span>
+                                    <span class="badge bg-{% if lock.platform in ['Unicrypt', 'Team Finance'] %}success{% else %}warning{% endif %}">
+                                        {% if lock.platform in ['Unicrypt', 'Team Finance'] %}High{% else %}Medium{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Recommendations -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Lock-Based Recommendations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for rec in result.recommendations %}
+                        <li class="mb-2">
+                            {% if rec.startswith('✅') %}
+                                <div class="text-success">{{ rec }}</div>
+                            {% elif rec.startswith('⚠️') %}
+                                <div class="text-warning">{{ rec }}</div>
+                            {% elif rec.startswith('🚨') %}
+                                <div class="text-danger">{{ rec }}</div>
+                            {% else %}
+                                <div class="text-muted">{{ rec }}</div>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Lock Platforms Information -->
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-building me-2"></i>
+                        Liquidity Lock Platforms
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card border h-100">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="fas fa-university text-primary" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h6 class="card-title">Unicrypt</h6>
+                                    <p class="card-text text-muted">
+                                        Leading platform for locking liquidity and tokens. Most trusted by the DeFi community.
+                                    </p>
+                                    <div class="badge bg-primary">Most Popular</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border h-100">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="fas fa-users text-success" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h6 class="card-title">Team Finance</h6>
+                                    <p class="card-text text-muted">
+                                        Professional platform offering liquidity locks, token locks, and vesting services.
+                                    </p>
+                                    <div class="badge bg-success">Professional</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border h-100">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="fas fa-shopping-cart text-info" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h6 class="card-title">DxSale</h6>
+                                    <p class="card-text text-muted">
+                                        Launchpad platform that also provides liquidity locking services for new projects.
+                                    </p>
+                                    <div class="badge bg-info">Launchpad</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-success">Why Liquidity Locks Matter:</h6>
+                                        <ul class="mb-0 text-muted">
+                                            <li>Prevents rug pulls</li>
+                                            <li>Provides investor confidence</li>
+                                            <li>Ensures project commitment</li>
+                                            <li>Protects token price stability</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="text-success">Lock Best Practices:</h6>
+                                        <ul class="mb-0 text-muted">
+                                            <li>Lock 80%+ of liquidity</li>
+                                            <li>Use reputable platforms</li>
+                                            <li>Lock for 6+ months minimum</li>
+                                            <li>Verify lock certificates</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="text-primary">Risk Assessment Scale:</h6>
+                                    <div class="row text-center">
+                                        <div class="col-md-3">
+                                            <div class="badge bg-success w-100 mb-2">80-100% Locked</div>
+                                            <small class="text-success">Low Risk</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="badge bg-warning w-100 mb-2">50-79% Locked</div>
+                                            <small class="text-warning">Medium Risk</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="badge bg-danger w-100 mb-2">20-49% Locked</div>
+                                            <small class="text-danger">High Risk</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="badge bg-dark w-100 mb-2">0-19% Locked</div>
+                                            <small class="text-dark">Extreme Risk</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Form styling */
+#address {
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* Progress bar styling */
+.progress-bar {
+    transition: width 2s ease-in-out;
+}
+
+/* List group styling */
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.8rem;
+}
+
+/* Platform card styling */
+.card.border {
+    border-color: #dee2e6 !important;
+}
+
+.card.border:hover {
+    border-color: #28a745 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .display-6 {
+        font-size: 1.5rem;
+    }
+    
+    .col-md-3 {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+
+<script>
+// Address validation
+document.getElementById('address').addEventListener('input', function(e) {
+    const value = e.target.value;
+    if (value && !value.startsWith('0x')) {
+        e.target.setCustomValidity('Address must start with 0x');
+    } else if (value && value.length !== 42) {
+        e.target.setCustomValidity('Address must be 42 characters long');
+    } else {
+        e.target.setCustomValidity('');
+    }
+});
+
+// Animate progress bar on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        setTimeout(() => {
+            progressBar.style.width = progressBar.getAttribute('aria-valuenow') + '%';
+        }, 500);
+    }
+});
+
+// Chain-specific address validation
+document.getElementById('chain').addEventListener('change', function(e) {
+    const addressField = document.getElementById('address');
+    const selectedChain = e.target.selectedOptions[0].text;
+    
+    if (selectedChain) {
+        addressField.placeholder = `Enter ${selectedChain} token address (0x...)`;
+    }
+});
+
+// Auto-focus address field when chain is selected
+document.getElementById('chain').addEventListener('change', function() {
+    if (this.value) {
+        document.getElementById('address').focus();
+    }
+});
+
+// Countdown timer for unlock dates
+function startCountdown(unlockDate, elementId) {
+    const countDownDate = new Date(unlockDate).getTime();
+    
+    const timer = setInterval(function() {
+        const now = new Date().getTime();
+        const distance = countDownDate - now;
+        
+        if (distance < 0) {
+            clearInterval(timer);
+            document.getElementById(elementId).innerHTML = "UNLOCKED";
+            return;
+        }
+        
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        
+        document.getElementById(elementId).innerHTML = days + "d " + hours + "h " + minutes + "m";
+    }, 1000);
+}
+
+// Initialize countdowns if unlock dates exist
+document.addEventListener('DOMContentLoaded', function() {
+    const unlockElements = document.querySelectorAll('[data-unlock-date]');
+    unlockElements.forEach(function(element) {
+        const unlockDate = element.getAttribute('data-unlock-date');
+        if (unlockDate) {
+            startCountdown(unlockDate, element.id);
+        }
+    });
+});
+</script>
+{% endblock %}

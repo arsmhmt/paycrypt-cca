@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="theme-color" content="#6366f1">
+  
+  <!-- Favicon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon.png') }}">
+  
+  <!-- SEO Meta Tags -->
+  <title>PayCrypt - Advanced Crypto Payment Gateway & DeFi Tools Platform</title>
+  <meta name="description" content="Professional crypto payment gateway, bank integration, automated trading bots, and 14 powerful DeFi analysis tools. Drive traffic with free tools, convert with premium services.">
+  <meta name="keywords" content="crypto payment gateway, bank payment gateway, trading bots, DeFi tools, gas tracker, MEV protection, airdrop hunter, rug pull alerts">
+  <meta name="author" content="PayCrypt">
+  <link rel="canonical" href="https://paycrypt.online/">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://paycrypt.online/">
+  <meta property="og:title" content="PayCrypt - Advanced Crypto Payment Gateway & DeFi Tools">
+  <meta property="og:description" content="Professional crypto payment solutions with 14 powerful DeFi analysis tools. Free tools drive traffic, premium services drive revenue.">
+  <meta property="og:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://paycrypt.online/">
+  <meta name="twitter:title" content="PayCrypt - Advanced Crypto Payment Gateway & DeFi Tools">
+  <meta name="twitter:description" content="Professional crypto payment solutions with 14 powerful DeFi analysis tools.">
+  <meta name="twitter:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "PayCrypt",
+    "url": "https://paycrypt.online/",
+    "logo": "https://paycrypt.online/static/img/paycrypt_logo.png",
+    "description": "Advanced crypto payment gateway and DeFi tools platform for businesses and traders",
+    "serviceType": ["Payment Gateway", "DeFi Tools", "Trading Bots"],
+    "areaServed": "Worldwide"
+  }
+  </script>
+  
+  <!-- External Resources -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-color: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary-color: #0ea5e9;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --dark-bg: #0f172a;
+      --card-bg: #1e293b;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --border-color: #334155;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Header Styles */
+    .navbar {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 0;
+    }
+
+    .navbar-brand img {
+      height: 40px;
+      width: auto;
+    }
+
+    .navbar-nav .nav-link {
+      color: var(--text-secondary);
+      margin: 0 1rem;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .navbar-nav .nav-link:hover {
+      color: var(--primary-color);
+    }
+
+    /* Hero Section */
+    .hero-section {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      padding: 120px 0 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%236366f1" stop-opacity="0.1"/><stop offset="100%" stop-color="%236366f1" stop-opacity="0"/></radialGradient></defs><circle cx="500" cy="500" r="500" fill="url(%23a)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+
+    .btn-primary-custom {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      border: none;
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: white;
+    }
+
+    .btn-primary-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+      color: white;
+    }
+
+    .btn-outline-custom {
+      border: 2px solid var(--primary-color);
+      color: var(--primary-color);
+      padding: 10px 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      background: transparent;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .btn-outline-custom:hover {
+      background: var(--primary-color);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    /* Stats Section */
+    .stats-section {
+      padding: 60px 0;
+      background: var(--card-bg);
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .stat-number {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    /* Services Section */
+    .services-section {
+      padding: 100px 0;
+      background: var(--dark-bg);
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      margin-bottom: 4rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .service-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 15px;
+      padding: 2.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+
+    .service-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      border-color: var(--primary-color);
+    }
+
+    .service-icon {
+      font-size: 3rem;
+      color: var(--primary-color);
+      margin-bottom: 1.5rem;
+    }
+
+    .service-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .service-description {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .service-link {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    .service-link:hover {
+      color: var(--secondary-color);
+    }
+
+    /* Tools Section */
+    .tools-section {
+      padding: 100px 0;
+      background: linear-gradient(135deg, var(--card-bg) 0%, var(--dark-bg) 100%);
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .tool-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--primary-color);
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+    }
+
+    .tool-icon {
+      font-size: 2rem;
+      color: var(--success-color);
+      margin-bottom: 1rem;
+    }
+
+    .tool-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .tool-description {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* CTA Section */
+    .cta-section {
+      padding: 100px 0;
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+      text-align: center;
+    }
+
+    .cta-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: white;
+    }
+
+    .cta-description {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: rgba(255, 255, 255, 0.9);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--card-bg);
+      padding: 60px 0 30px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer-brand {
+      margin-bottom: 2rem;
+    }
+
+    .footer-description {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary-color);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border-color);
+      padding-top: 2rem;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .stat-item {
+        padding: 1rem;
+      }
+      
+      .service-card {
+        padding: 2rem;
+      }
+    }
+
+    /* Animation Classes */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s ease;
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('routes.index') }}">
+        <img src="{{ url_for('static', filename='img/paycrypt_logo.png') }}" alt="PayCrypt">
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#services">Services</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#tools">Free Tools</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#contact">Contact</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-content fade-in">
+        <h1 class="hero-title">PayCrypt Payment Gateway</h1>
+        <p class="hero-subtitle">
+          Professional crypto payment solutions, bank integration, and automated trading bots. 
+          Explore our free DeFi tools and upgrade to premium services.
+        </p>
+        <div class="cta-buttons">
+          <a href="#services" class="btn-primary-custom pulse">
+            <i class="fas fa-rocket me-2"></i>Get Payment Gateway
+          </a>
+          <a href="#tools" class="btn-outline-custom">
+            <i class="fas fa-tools me-2"></i>Free DeFi Tools
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-3 col-sm-6">
+          <div class="stat-item fade-in">
+            <div class="stat-number">14</div>
+            <div class="stat-label">DeFi Analysis Tools</div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="stat-item fade-in">
+            <div class="stat-number">100+</div>
+            <div class="stat-label">Supported Cryptocurrencies</div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="stat-item fade-in">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label">Technical Support</div>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="stat-item fade-in">
+            <div class="stat-number">99.9%</div>
+            <div class="stat-label">Uptime Guarantee</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section id="services" class="services-section">
+    <div class="container">
+      <h2 class="section-title fade-in">Premium Payment Solutions</h2>
+      <p class="section-subtitle fade-in">
+        Transform your business with our professional payment gateway and automation services
+      </p>
+      <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+          <div class="service-card fade-in">
+            <div class="service-icon">
+              <i class="fab fa-bitcoin"></i>
+            </div>
+            <h3 class="service-title">Crypto Payment Gateway</h3>
+            <p class="service-description">
+              Accept 100+ cryptocurrencies with instant settlements, low fees, and enterprise-grade security. 
+              Perfect for e-commerce, SaaS, and digital businesses.
+            </p>
+            <a href="#contact" class="service-link">Get Started <i class="fas fa-arrow-right ms-1"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+          <div class="service-card fade-in">
+            <div class="service-icon">
+              <i class="fas fa-university"></i>
+            </div>
+            <h3 class="service-title">Bank Payment Gateway</h3>
+            <p class="service-description">
+              Traditional payment processing with credit cards, bank transfers, and digital wallets. 
+              Seamless integration with existing systems.
+            </p>
+            <a href="#contact" class="service-link">Learn More <i class="fas fa-arrow-right ms-1"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+          <div class="service-card fade-in">
+            <div class="service-icon">
+              <i class="fas fa-robot"></i>
+            </div>
+            <h3 class="service-title">Automated Trading Bots</h3>
+            <p class="service-description">
+              Custom trading bots, arbitrage systems, and DeFi automation. 
+              Maximize profits with AI-powered strategies and risk management.
+            </p>
+            <a href="#contact" class="service-link">Order Bot <i class="fas fa-arrow-right ms-1"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tools Section -->
+  <section id="tools" class="tools-section">
+    <div class="container">
+      <h2 class="section-title fade-in">Free DeFi Analysis Tools</h2>
+      <p class="section-subtitle fade-in">
+        Powerful tools to analyze tokens, track gas prices, and discover opportunities in DeFi
+      </p>
+      <div class="tools-grid">
+        <div class="tool-card fade-in" onclick="window.open('{{ url_for('tools.token_analyzer') }}', '_blank')">
+          <div class="tool-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <div class="tool-title">Token Security Analyzer</div>
+          <div class="tool-description">Comprehensive security analysis for any token with risk assessment</div>
+        </div>
+        
+        <div class="tool-card fade-in" onclick="window.open('{{ url_for('tools.gas_tracker') }}', '_blank')">
+          <div class="tool-icon">
+            <i class="fas fa-gas-pump"></i>
+          </div>
+          <div class="tool-title">Gas Price Tracker</div>
+          <div class="tool-description">Real-time gas prices across multiple chains with optimal timing</div>
+        </div>
+        
+        <div class="tool-card fade-in" onclick="window.open('{{ url_for('tools.honeypot_checker') }}', '_blank')">
+          <div class="tool-icon">
+            <i class="fas fa-bug"></i>
+          </div>
+          <div class="tool-title">Honeypot Detector</div>
+          <div class="tool-description">Detect honeypot tokens and avoid trading traps</div>
+        </div>
+        
+        <div class="tool-card fade-in" onclick="window.open('{{ url_for('tools.mev_protection') }}', '_blank')">
+          <div class="tool-icon">
+            <i class="fas fa-user-shield"></i>
+          </div>
+          <div class="tool-title">MEV Protection</div>
+          <div class="tool-description">Protect your trades from MEV bots and front-running</div>
+        </div>
+        
+        <div class="tool-card fade-in" onclick="window.open('{{ url_for('tools.airdrop_hunter') }}', '_blank')">
+          <div class="tool-icon">
+            <i class="fas fa-parachute-box"></i>
+          </div>
+          <div class="tool-title">Airdrop Hunter</div>
+          <div class="tool-description">Discover eligible airdrops and maximize your rewards</div>
+        </div>
+        
+        <div class="tool-card fade-in" onclick="window.open('{{ url_for('tools.rug_alert') }}', '_blank')">
+          <div class="tool-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="tool-title">Rug Pull Alerts</div>
+          <div class="tool-description">Real-time monitoring and alerts for potential rug pulls</div>
+        </div>
+        
+        <div class="tool-card fade-in" onclick="window.open('{{ url_for('tools.whale_tracker') }}', '_blank')">
+          <div class="tool-icon">
+            <i class="fas fa-whale"></i>
+          </div>
+          <div class="tool-title">Whale Tracker</div>
+          <div class="tool-description">Track large wallet movements and whale activities</div>
+        </div>
+        
+        <div class="tool-card fade-in" onclick="window.open('{{ url_for('tools.dex_analyzer') }}', '_blank')">
+          <div class="tool-icon">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div class="tool-title">DEX Analyzer</div>
+          <div class="tool-description">Analyze DEX pairs, liquidity, and trading opportunities</div>
+        </div>
+      </div>
+      <div class="text-center mt-5">
+        <p class="text-muted">+ 6 more professional analysis tools available</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <h2 class="cta-title fade-in">Ready to Transform Your Business?</h2>
+      <p class="cta-description fade-in">
+        Join thousands of businesses using PayCrypt for secure payments and automated trading. 
+        Start with our free tools, upgrade to premium services.
+      </p>
+      <div class="cta-buttons">
+        <a href="#contact" class="btn btn-light btn-lg px-5 py-3 me-3">
+          <i class="fas fa-comments me-2"></i>Contact Sales
+        </a>
+        <a href="#tools" class="btn btn-outline-light btn-lg px-5 py-3">
+          <i class="fas fa-play me-2"></i>Try Free Tools
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact" class="footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4">
+          <div class="footer-brand">
+            <img src="{{ url_for('static', filename='img/paycrypt_logo.png') }}" alt="PayCrypt" height="40">
+          </div>
+          <p class="footer-description">
+            PayCrypt provides professional crypto payment solutions, bank integration, 
+            and automated trading systems for businesses worldwide.
+          </p>
+          <div class="footer-links">
+            <a href="mailto:support@paycrypt.online"><i class="fas fa-envelope me-2"></i>Email</a>
+            <a href="https://t.me/paycryptonline"><i class="fab fa-telegram me-2"></i>Telegram</a>
+          </div>
+        </div>
+        <div class="col-lg-8">
+          <div class="row">
+            <div class="col-md-4">
+              <h5 class="text-white mb-3">Services</h5>
+              <ul class="list-unstyled">
+                <li><a href="#contact" class="text-muted text-decoration-none">Crypto Gateway</a></li>
+                <li><a href="#contact" class="text-muted text-decoration-none">Bank Gateway</a></li>
+                <li><a href="#contact" class="text-muted text-decoration-none">Trading Bots</a></li>
+                <li><a href="#contact" class="text-muted text-decoration-none">API Integration</a></li>
+              </ul>
+            </div>
+            <div class="col-md-4">
+              <h5 class="text-white mb-3">Tools</h5>
+              <ul class="list-unstyled">
+                <li><a href="{{ url_for('tools.token_analyzer') }}" class="text-muted text-decoration-none">Token Analyzer</a></li>
+                <li><a href="{{ url_for('tools.gas_tracker') }}" class="text-muted text-decoration-none">Gas Tracker</a></li>
+                <li><a href="{{ url_for('tools.honeypot_checker') }}" class="text-muted text-decoration-none">Honeypot Checker</a></li>
+                <li><a href="{{ url_for('tools.whale_tracker') }}" class="text-muted text-decoration-none">Whale Tracker</a></li>
+              </ul>
+            </div>
+            <div class="col-md-4">
+              <h5 class="text-white mb-3">Support</h5>
+              <ul class="list-unstyled">
+                <li><a href="#contact" class="text-muted text-decoration-none">Documentation</a></li>
+                <li><a href="#contact" class="text-muted text-decoration-none">API Docs</a></li>
+                <li><a href="#contact" class="text-muted text-decoration-none">24/7 Support</a></li>
+                <li><a href="#contact" class="text-muted text-decoration-none">Status Page</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 PayCrypt. All rights reserved. Professional crypto payment solutions and DeFi tools.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Smooth scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Fade in animation on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.fade-in').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Navbar background on scroll
+    window.addEventListener('scroll', function() {
+      const navbar = document.querySelector('.navbar');
+      if (window.scrollY > 50) {
+        navbar.style.background = 'rgba(15, 23, 42, 0.98)';
+      } else {
+        navbar.style.background = 'rgba(15, 23, 42, 0.95)';
+      }
+    });
+
+    // Counter animation
+    function animateCounters() {
+      const counters = document.querySelectorAll('.stat-number');
+      counters.forEach(counter => {
+        const target = parseInt(counter.textContent);
+        const increment = target / 100;
+        let current = 0;
+        
+        const timer = setInterval(() => {
+          current += increment;
+          if (current >= target) {
+            counter.textContent = target + (counter.textContent.includes('%') ? '%' : '');
+            clearInterval(timer);
+          } else {
+            counter.textContent = Math.floor(current) + (counter.textContent.includes('%') ? '%' : '');
+          }
+        }, 20);
+      });
+    }
+
+    // Trigger counter animation when stats section is visible
+    const statsSection = document.querySelector('.stats-section');
+    const statsObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCounters();
+          statsObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    if (statsSection) {
+      statsObserver.observe(statsSection);
+    }
+
+    // Tool card click effects
+    document.querySelectorAll('.tool-card').forEach(card => {
+      card.addEventListener('click', function() {
+        this.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          this.style.transform = '';
+        }, 150);
+      });
+    });
+  </script>
+</body>
+</html>

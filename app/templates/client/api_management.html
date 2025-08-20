@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}API Management{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h4 mb-0">API Management</h1>
+  <form method="post" action="{{ url_for('client.create_api_key_management') }}" class="d-flex gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="text" name="name" class="form-control" placeholder="Key name" style="max-width: 220px;">
+      <button class="btn btn-primary" type="submit">Create Key</button>
+    </form>
+  </div>
+
+  {% if api_keys %}
+  <div class="card mb-4">
+    <div class="card-body">
+      <h6 class="text-muted mb-3">Your API Keys</h6>
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Prefix</th>
+              <th>Status</th>
+              <th>Rate Limit</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for k in api_keys %}
+            <tr>
+              <td>{{ k.name }}</td>
+              <td><code>{{ k.key_prefix }}</code></td>
+              <td>
+                {% if k.is_active %}
+                  <span class="badge bg-success">Active</span>
+                {% else %}
+                  <span class="badge bg-secondary">Inactive</span>
+                {% endif %}
+              </td>
+              <td>{{ k.rate_limit or 60 }}/min</td>
+              <td>{{ k.created_at.strftime('%Y-%m-%d') if k.created_at else '' }}</td>
+              <td class="text-end">
+                {% if k.is_active %}
+                <form method="post" action="{{ url_for('client.deactivate_api_key', key_id=k.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-body">
+      <h6 class="text-muted mb-3">Integration</h6>
+      <p class="mb-2">All requests must include HMAC headers:</p>
+      <ul>
+        <li><code>X-Paycrypt-Key</code>: your API key</li>
+        <li><code>X-Paycrypt-Timestamp</code>: unix seconds</li>
+        <li><code>X-Paycrypt-Signature</code>: hex sha256 hmac of <code>"&lt;timestamp&gt;.&lt;body&gt;"</code> using your secret</li>
+      </ul>
+      <p class="mb-2">Create payment session:</p>
+      <pre class="bg-light p-3 rounded small"><code>POST /api/v1/payment_sessions
+{
+  "order_id": "ORD-123",
+  "amount": "49.00",
+  "currency": "USD",
+  "customer": {"email": "a@b.com"},
+  "metadata": {"source": "smartbetslip"},
+  "success_url": "https://merchant.tld/pay/success?oid=ORD-123",
+  "cancel_url": "https://merchant.tld/pay/cancel?oid=ORD-123",
+  "webhook_url": "https://merchant.tld/api/paycrypt/webhook"
+}
+</code></pre>
+      <p class="mb-2">Webhook events are sent to your <code>webhook_url</code> with the same headers.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

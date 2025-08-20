@@ -1,0 +1,305 @@
+{% extends "admin/base.html" %}
+{% set active_page = 'withdrawals' %}
+
+{% block title %}Client Withdrawal Requests - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-building me-2"></i>Client Withdrawal Requests (B2B)
+        </h1>
+        <div class="btn-group">
+            <a href="{{ url_for('withdrawal_admin.client_withdrawal_bulk') }}" class="btn btn-primary">
+                <i class="bi bi-briefcase me-1"></i> Bulk Actions
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Requests</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Approved</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.approved }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Rejected</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.rejected }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-x-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-info">Filters</h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">All Statuses</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                        <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="client" class="form-label">Client</label>
+                    <select class="form-select" id="client" name="client">
+                        <option value="">All Clients</option>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}" {% if client_filter == client.id %}selected{% endif %}>
+                            {{ client.company_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-info me-2">
+                        <i class="bi bi-search me-1"></i> Filter
+                    </button>
+                    <a href="{{ url_for('withdrawal_admin.client_withdrawal_requests') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client Withdrawal Requests Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-info">Client Balance Withdrawal Requests</h6>
+        </div>
+        <div class="card-body">
+            {% if withdrawals.items %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Client</th>
+                            <th>Package Type</th>
+                            <th>Amount</th>
+                            <th>Net Amount</th>
+                            <th>Currency</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for withdrawal in withdrawals.items %}
+                        <tr>
+                            <td>{{ withdrawal.id }}</td>
+                            <td>
+                                <strong>{{ withdrawal.client.company_name }}</strong>
+                                {% if withdrawal.client.package %}
+                                <br><small class="text-muted">{{ withdrawal.client.package.name }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if withdrawal.client.package %}
+                                    {% if withdrawal.client.package.client_type.name == 'COMMISSION' %}
+                                        <span class="badge bg-success bg-opacity-10 text-success">Commission-based</span>
+                                    {% else %}
+                                        <span class="badge bg-info bg-opacity-10 text-info">Flat-rate</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>${{ "%.2f"|format(withdrawal.amount) }}</td>
+                            <td>
+                                {% if withdrawal.net_amount %}
+                                    ${{ "%.2f"|format(withdrawal.net_amount) }}
+                                    {% if withdrawal.fee and withdrawal.fee > 0 %}
+                                        <br><small class="text-muted">Fee: ${{ "%.2f"|format(withdrawal.fee) }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ withdrawal.currency }}</td>
+                            <td>
+                                {% if withdrawal.status.value == 'pending' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% elif withdrawal.status.value == 'approved' %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif withdrawal.status.value == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ withdrawal.status.value.title() }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ withdrawal.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if withdrawal.status.value == 'pending' %}
+                                <div class="btn-group" role="group">
+                                    <form method="POST" action="{{ url_for('withdrawal_admin.approve_withdrawal', withdrawal_id=withdrawal.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-success" 
+                                                onclick="return confirm('Are you sure you want to approve this client withdrawal?')">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#rejectModal" 
+                                            data-withdrawal-id="{{ withdrawal.id }}">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if withdrawals.pages > 1 %}
+            <nav aria-label="Withdrawal pagination">
+                <ul class="pagination justify-content-center">
+                    {% if withdrawals.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('withdrawal_admin.client_withdrawal_requests', page=withdrawals.prev_num, status=status_filter, client=client_filter) }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in withdrawals.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != withdrawals.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('withdrawal_admin.client_withdrawal_requests', page=page_num, status=status_filter, client=client_filter) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if withdrawals.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('withdrawal_admin.client_withdrawal_requests', page=withdrawals.next_num, status=status_filter, client=client_filter) }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-building display-1 text-muted"></i>
+                <h5 class="mt-3">No client withdrawal requests found</h5>
+                <p class="text-muted">There are no client withdrawal requests matching your current filters.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectModalLabel">Reject Client Withdrawal Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="rejectForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason for rejection</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required
+                                  placeholder="Please provide a reason for rejecting this client withdrawal request..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle me-1"></i> Reject Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle reject modal
+document.addEventListener('DOMContentLoaded', function() {
+    const rejectModal = document.getElementById('rejectModal');
+    const rejectForm = document.getElementById('rejectForm');
+    
+    rejectModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const withdrawalId = button.getAttribute('data-withdrawal-id');
+        rejectForm.action = `/admin/withdrawals/${withdrawalId}/reject`;
+    });
+});
+</script>
+{% endblock %}

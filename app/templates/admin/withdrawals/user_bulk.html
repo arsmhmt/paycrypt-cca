@@ -1,0 +1,219 @@
+{% extends "admin/base.html" %}
+{% set active_page = 'withdrawals' %}
+
+{% block title %}Bulk User Withdrawal Actions - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="bi bi-check2-all me-2"></i>Bulk User Withdrawal Actions
+        </h1>
+        <a href="{{ url_for('withdrawal_admin.user_withdrawal_requests') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Requests
+        </a>
+    </div>
+
+    {% if pending_withdrawals %}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Pending User Withdrawal Requests</h6>
+        </div>
+        <div class="card-body">
+            <form method="POST" id="bulkForm">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="action" class="form-label">Action</label>
+                        <select class="form-select" id="action" name="action" required>
+                            <option value="">Select action...</option>
+                            <option value="approve">Approve Selected</option>
+                            <option value="reject">Reject Selected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6" id="reasonField" style="display: none;">
+                        <label for="reason" class="form-label">Rejection Reason</label>
+                        <input type="text" class="form-control" id="reason" name="reason" 
+                               placeholder="Enter reason for rejection...">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAll">
+                        <label class="form-check-label" for="selectAll">
+                            Select All
+                        </label>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th width="50">
+                                    <input type="checkbox" id="headerCheckbox" class="form-check-input">
+                                </th>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Client</th>
+                                <th>Amount</th>
+                                <th>Currency</th>
+                                <th>Created</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for withdrawal in pending_withdrawals %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="withdrawal_ids" value="{{ withdrawal.id }}" 
+                                           class="form-check-input withdrawal-checkbox">
+                                </td>
+                                <td>{{ withdrawal.id }}</td>
+                                <td>
+                                    {% if withdrawal.user %}
+                                        {{ withdrawal.user.username or withdrawal.user.email }}
+                                    {% else %}
+                                        <span class="text-muted">Unknown User</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ withdrawal.client.company_name }}</td>
+                                <td>${{ "%.2f"|format(withdrawal.amount) }}</td>
+                                <td>{{ withdrawal.currency }}</td>
+                                <td>{{ withdrawal.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if withdrawal.description %}
+                                        <small class="text-muted">{{ withdrawal.description[:50] }}{% if withdrawal.description|length > 50 %}...{% endif %}</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span class="text-muted">
+                            <span id="selectedCount">0</span> of {{ pending_withdrawals|length }} selected
+                        </span>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                            <i class="bi bi-check-circle me-1"></i> Execute Action
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="card shadow">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-check-circle display-1 text-muted"></i>
+            <h5 class="mt-3">No Pending User Withdrawal Requests</h5>
+            <p class="text-muted">All user withdrawal requests have been processed.</p>
+            <a href="{{ url_for('withdrawal_admin.user_withdrawal_requests') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left me-1"></i> Back to All Requests
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const headerCheckbox = document.getElementById('headerCheckbox');
+    const withdrawalCheckboxes = document.querySelectorAll('.withdrawal-checkbox');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const submitBtn = document.getElementById('submitBtn');
+    const actionSelect = document.getElementById('action');
+    const reasonField = document.getElementById('reasonField');
+    const bulkForm = document.getElementById('bulkForm');
+
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.withdrawal-checkbox:checked').length;
+        selectedCountSpan.textContent = selectedCount;
+        
+        // Enable/disable submit button
+        const hasSelection = selectedCount > 0;
+        const hasAction = actionSelect.value !== '';
+        submitBtn.disabled = !(hasSelection && hasAction);
+
+        // Update select all checkbox state
+        if (selectedCount === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+            headerCheckbox.indeterminate = false;
+            headerCheckbox.checked = false;
+        } else if (selectedCount === withdrawalCheckboxes.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+            headerCheckbox.indeterminate = false;
+            headerCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+            selectAllCheckbox.checked = false;
+            headerCheckbox.indeterminate = true;
+            headerCheckbox.checked = false;
+        }
+    }
+
+    // Handle select all functionality
+    function handleSelectAll(isChecked) {
+        withdrawalCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+        updateSelectedCount();
+    }
+
+    selectAllCheckbox.addEventListener('change', function() {
+        handleSelectAll(this.checked);
+    });
+
+    headerCheckbox.addEventListener('change', function() {
+        handleSelectAll(this.checked);
+    });
+
+    // Handle individual checkbox changes
+    withdrawalCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+
+    // Handle action selection
+    actionSelect.addEventListener('change', function() {
+        const isReject = this.value === 'reject';
+        reasonField.style.display = isReject ? 'block' : 'none';
+        if (isReject) {
+            document.getElementById('reason').required = true;
+        } else {
+            document.getElementById('reason').required = false;
+        }
+        updateSelectedCount();
+    });
+
+    // Handle form submission
+    bulkForm.addEventListener('submit', function(e) {
+        const selectedCount = document.querySelectorAll('.withdrawal-checkbox:checked').length;
+        const action = actionSelect.value;
+        
+        if (selectedCount === 0) {
+            e.preventDefault();
+            alert('Please select at least one withdrawal request.');
+            return;
+        }
+
+        const actionText = action === 'approve' ? 'approve' : 'reject';
+        const confirmation = confirm(`Are you sure you want to ${actionText} ${selectedCount} withdrawal request(s)?`);
+        
+        if (!confirmation) {
+            e.preventDefault();
+        }
+    });
+
+    // Initial count update
+    updateSelectedCount();
+});
+</script>
+{% endblock %}

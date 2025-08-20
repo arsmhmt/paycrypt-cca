@@ -1,0 +1,159 @@
+<!-- Feature Showcase Component -->
+<!-- Safe feature showcase without recursion -->
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-primary text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-star"></i>
+            Your Plan Features
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- API Access Features -->
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center">
+                        {% if current_user.client.has_feature('api_basic') %}
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="text-success fw-bold">Basic API Access</span>
+                        {% else %}
+                        <i class="fas fa-times-circle text-muted me-2"></i>
+                        <span class="text-muted">Basic API Access</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">Make basic API calls to our platform</small>
+                </div>
+            </div>
+
+            <!-- Advanced API Features -->
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center">
+                        {% if current_user.client.has_feature('api_advanced') %}
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="text-success fw-bold">Advanced API</span>
+                        {% else %}
+                        <i class="fas fa-times-circle text-muted me-2"></i>
+                        <span class="text-muted">Advanced API</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">Access premium API endpoints</small>
+                </div>
+            </div>
+
+            <!-- Dashboard Analytics -->
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center">
+                        {% if current_user.client.has_feature('dashboard_analytics') %}
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="text-success fw-bold">Analytics Dashboard</span>
+                        {% else %}
+                        <i class="fas fa-times-circle text-muted me-2"></i>
+                        <span class="text-muted">Analytics Dashboard</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">Detailed analytics and insights</small>
+                </div>
+            </div>
+
+            <!-- Real-time Dashboard -->
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center">
+                        {% if current_user.client.has_feature('dashboard_realtime') %}
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="text-success fw-bold">Real-time Updates</span>
+                        {% else %}
+                        <i class="fas fa-times-circle text-muted me-2"></i>
+                        <span class="text-muted">Real-time Updates</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">Live transaction monitoring</small>
+                </div>
+            </div>
+
+            <!-- Wallet Management -->
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center">
+                        {% if current_user.client.has_feature('wallet_management') %}
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="text-success fw-bold">Wallet Management</span>
+                        {% else %}
+                        <i class="fas fa-times-circle text-muted me-2"></i>
+                        <span class="text-muted">Wallet Management</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">Manage crypto wallets</small>
+                </div>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center">
+                        {% if current_user.client.has_feature('history_view') %}
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="text-success fw-bold">Transaction History</span>
+                        {% else %}
+                        <i class="fas fa-times-circle text-muted me-2"></i>
+                        <span class="text-muted">Transaction History</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">View complete transaction history</small>
+                </div>
+            </div>
+
+            <!-- Priority Support -->
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="feature-item">
+                    <div class="d-flex align-items-center">
+                        {% if current_user.client.has_feature('support_priority') %}
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span class="text-success fw-bold">Priority Support</span>
+                        {% else %}
+                        <i class="fas fa-times-circle text-muted me-2"></i>
+                        <span class="text-muted">Priority Support</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">24/7 priority customer support</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Package Info -->
+        <div class="mt-4 p-3 bg-light rounded">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">Current Package</h6>
+                    <p class="mb-0 text-muted">{{ get_package_display_name(current_user.client.package_id) }}</p>
+                </div>
+                <div class="text-end">
+                    <a href="/client/packages" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-up"></i>
+                        Upgrade Plan
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .feature-item {
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .feature-item:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+</style>

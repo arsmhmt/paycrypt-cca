@@ -1,0 +1,399 @@
+{% extends "tools/base.html" %}
+
+{% extends "base.html" %}
+
+{% block title %}🛡️ MEV Protection Checker - Protect Against Front-Running Attacks | PayCrypt{% endblock %}
+
+{% block head %}
+<!-- SEO Meta Tags for MEV Protection -->
+<meta name="description" content="🛡️ Protect your DeFi trades from MEV bots and front-running attacks. Check safe DEX routes, analyze MEV risk, and secure your transactions with our free MEV protection tool.">
+<meta name="keywords" content="MEV protection, front-running protection, DeFi security, MEV bot protection, sandwich attack prevention, DEX security, blockchain MEV, maximal extractable value, trading protection, DeFi safety tools">
+<meta name="author" content="PayCrypt - DeFi Security Solutions">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://paycrypt.online/tools/mev-protection">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paycrypt.online/tools/mev-protection">
+<meta property="og:title" content="🛡️ MEV Protection Checker - Protect Against Front-Running | PayCrypt">
+<meta property="og:description" content="🛡️ Secure your DeFi trades from MEV bots and front-running attacks. Free professional MEV protection and analysis tool.">
+<meta property="og:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta property="og:site_name" content="PayCrypt DeFi Tools">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://paycrypt.online/tools/mev-protection">
+<meta name="twitter:title" content="🛡️ MEV Protection - Secure Your DeFi Trades">
+<meta name="twitter:description" content="🛡️ Protect against MEV bots and front-running attacks with our free MEV protection analyzer.">
+<meta name="twitter:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta name="twitter:creator" content="@paycryptonline">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "MEV Protection Checker",
+  "alternateName": "Front-Running Protection Tool",
+  "url": "https://paycrypt.online/tools/mev-protection",
+  "description": "Professional MEV protection tool to secure DeFi trades from front-running attacks and MEV bot exploitation.",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "provider": {
+    "@type": "Organization",
+    "name": "PayCrypt",
+    "url": "https://paycrypt.online"
+  },
+  "featureList": [
+    "MEV risk analysis",
+    "Front-running protection",
+    "Safe DEX routes",
+    "Transaction security",
+    "Bot protection",
+    "Trade optimization",
+    "Risk assessment"
+  ]
+}
+</script>
+{% endblock %}
+
+{% block tool_content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="tool-icon me-3">
+                            <i class="fas fa-robot fa-2x"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title mb-1">MEV Protection Checker</h2>
+                            <p class="mb-0">Detect MEV bot activity and protect against front-running attacks</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="chain" class="form-label">Blockchain</label>
+                            <select name="chain" id="chain" class="form-select" required>
+                                <option value="">Select Blockchain</option>
+                                {% for chain_id, chain_name in chains.items() %}
+                                    <option value="{{ chain_id }}" {% if chain == chain_id %}selected{% endif %}>
+                                        {{ chain_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">Token/Wallet Address</label>
+                            <input type="text" name="address" id="address" class="form-control" 
+                                   placeholder="0x..." value="{{ address or '' }}" required>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="fas fa-shield-alt me-2"></i>Analyze MEV
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    {% if result and result.success %}
+    <div class="row mb-4">
+        <!-- MEV Risk Score -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tachometer-alt me-2"></i>MEV Risk Score
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="position-relative d-inline-block">
+                        <div class="progress-circle" data-percentage="{{ result.mev_analysis.mev_activity_score }}">
+                            <span class="progress-value">{{ result.mev_analysis.mev_activity_score }}</span>
+                        </div>
+                    </div>
+                    <h6 class="mt-3 mb-0 text-{{ 'success' if result.mev_analysis.mev_activity_score < 30 else 'warning' if result.mev_analysis.mev_activity_score < 70 else 'danger' }}">
+                        {% if result.mev_analysis.mev_activity_score < 30 %}LOW RISK
+                        {% elif result.mev_analysis.mev_activity_score < 70 %}MEDIUM RISK
+                        {% else %}HIGH RISK{% endif %}
+                    </h6>
+                    <small class="text-muted">MEV Activity Score</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Analysis -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Risk Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">Bot Activity</h6>
+                                    <small class="text-muted">Automated trading detected</small>
+                                </div>
+                                <span class="badge bg-{{ 'success' if not result.mev_analysis.bot_activity_detected else 'danger' }}">
+                                    {{ 'Detected' if result.mev_analysis.bot_activity_detected else 'Clean' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">Front-running Risk</h6>
+                                    <small class="text-muted">Transaction copying risk</small>
+                                </div>
+                                <span class="badge bg-{{ 'success' if result.mev_analysis.front_running_risk == 'LOW' else 'warning' if result.mev_analysis.front_running_risk == 'MEDIUM' else 'danger' }}">
+                                    {{ result.mev_analysis.front_running_risk }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">Sandwich Attack Risk</h6>
+                                    <small class="text-muted">Price manipulation risk</small>
+                                </div>
+                                <span class="badge bg-{{ 'success' if result.mev_analysis.sandwich_attack_risk == 'LOW' else 'warning' if result.mev_analysis.sandwich_attack_risk == 'MEDIUM' else 'danger' }}">
+                                    {{ result.mev_analysis.sandwich_attack_risk }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <h6 class="mb-1">Recent MEV Attacks</h6>
+                                    <small class="text-muted">Last 24 hours</small>
+                                </div>
+                                <span class="badge bg-{{ 'success' if result.mev_analysis.recent_mev_attacks == 0 else 'danger' }}">
+                                    {{ result.mev_analysis.recent_mev_attacks }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Protection Recommendations -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Protection Strategies
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for recommendation in result.protection_recommendations %}
+                    <div class="d-flex align-items-start mb-3">
+                        <i class="fas fa-check-circle text-success me-3 mt-1"></i>
+                        <span>{{ recommendation }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Safe DEXes -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exchange-alt me-2"></i>MEV-Protected DEXes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for dex in result.safe_dexes %}
+                    <div class="d-flex justify-content-between align-items-center p-3 mb-2 border rounded">
+                        <div>
+                            <h6 class="mb-1">{{ dex.name }}</h6>
+                            <small class="text-muted">Fee: {{ dex.fee }}</small>
+                        </div>
+                        <span class="badge bg-{{ 'success' if dex.protection_level == 'HIGH' else 'warning' if dex.protection_level == 'MEDIUM' else 'danger' }}">
+                            {{ dex.protection_level }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MEV Statistics -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>MEV Market Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="p-3 bg-danger bg-opacity-10 rounded">
+                                <h4 class="text-danger mb-1">{{ result.mev_stats.total_mev_extracted_24h }}</h4>
+                                <small class="text-muted">MEV Extracted (24h)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-warning bg-opacity-10 rounded">
+                                <h4 class="text-warning mb-1">{{ result.mev_stats.avg_loss_per_victim }}</h4>
+                                <small class="text-muted">Avg Loss per Victim</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-success bg-opacity-10 rounded">
+                                <h4 class="text-success mb-1">{{ result.mev_stats.protection_success_rate }}</h4>
+                                <small class="text-muted">Protection Success Rate</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-info bg-opacity-10 rounded">
+                                <h4 class="text-info mb-1">{{ result.chain }}</h4>
+                                <small class="text-muted">Analyzed Chain</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif result and not result.success %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Error:</strong> {{ result.error }}
+    </div>
+    {% else %}
+    <!-- Initial State -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Enter address to analyze MEV risks</h5>
+                    <p class="text-muted">Get comprehensive protection against front-running and sandwich attacks</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="p-3 bg-primary bg-opacity-10 rounded">
+                                <i class="fas fa-eye fa-2x text-primary mb-2"></i>
+                                <h6>Bot Detection</h6>
+                                <small class="text-muted">Identify automated trading activity</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-warning bg-opacity-10 rounded">
+                                <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
+                                <h6>Risk Assessment</h6>
+                                <small class="text-muted">Evaluate front-running threats</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-success bg-opacity-10 rounded">
+                                <i class="fas fa-lock fa-2x text-success mb-2"></i>
+                                <h6>Protection Tips</h6>
+                                <small class="text-muted">Get MEV protection strategies</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.tool-icon {
+    background: rgba(255,255,255,0.2);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+}
+
+.progress-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#dc3545 0deg, #dc3545 calc(var(--percentage) * 3.6deg), #e9ecef calc(var(--percentage) * 3.6deg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-circle::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+}
+
+.progress-value {
+    position: relative;
+    z-index: 1;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if result and result.success %}
+    const circle = document.querySelector('.progress-circle');
+    if (circle) {
+        circle.style.setProperty('--percentage', '{{ result.mev_analysis.mev_activity_score }}');
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

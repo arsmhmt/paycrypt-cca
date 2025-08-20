@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}{% endblock %}</title>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7CZLMMBED4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-7CZLMMBED4');
+    </script>
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='img/favicon-180x180.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            /* Brand Colors - Extracted from Logo */
+            --brand-primary: #4e73df;      /* Logo blue - main primary */
+            --brand-secondary: #FF6B35;    /* Logo orange - main secondary */
+            --brand-primary-dark: #3d5bc7; /* Darker blue for hover states */
+            --brand-secondary-dark: #e05d2e; /* Darker orange for hover states */
+            
+            /* Logo-based gradients */
+            --brand-gradient: linear-gradient(135deg, #4e73df 0%, #FF6B35 100%);
+            --brand-gradient-reverse: linear-gradient(135deg, #FF6B35 0%, #4e73df 100%);
+            --brand-gradient-light: linear-gradient(135deg, rgba(78, 115, 223, 0.1) 0%, rgba(255, 107, 53, 0.1) 100%);
+            --brand-gradient-dark: linear-gradient(135deg, #3d5bc7 0%, #e05d2e 100%);
+            
+            /* Extended palette based on logo colors */
+            --brand-blue-50: #eff6ff;
+            --brand-blue-100: #dbeafe;
+            --brand-blue-200: #bfdbfe;
+            --brand-blue-500: #4e73df;
+            --brand-blue-600: #3d5bc7;
+            --brand-blue-700: #2c4ba3;
+            
+            --brand-orange-50: #fff7ed;
+            --brand-orange-100: #ffedd5;
+            --brand-orange-200: #fed7aa;
+            --brand-orange-500: #FF6B35;
+            --brand-orange-600: #e05d2e;
+            --brand-orange-700: #c2410c;
+            
+            /* Semantic Colors - Harmonized with brand */
+            --success: #10b981;    /* Green that complements orange/blue */
+            --info: #0ea5e9;       /* Blue variant */
+            --warning: #f59e0b;    /* Amber that works with orange */
+            --danger: #ef4444;     /* Red */
+            
+            /* Neutral Colors */
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            /* Layout Colors */
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            
+            /* Bootstrap Override - Use exact logo colors */
+            --bs-primary: var(--brand-primary);
+            --bs-secondary: var(--brand-secondary);
+            --bs-success: var(--success);
+            --bs-info: var(--info);
+            --bs-warning: var(--warning);
+            --bs-danger: var(--danger);
+            --bs-light: var(--gray-50);
+            --bs-dark: var(--gray-800);
+        }
+        
+        /* Global Typography */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            flex: 1;
+        }
+        
+        /* Enhanced Navigation */
+        .navbar-brand img {
+            filter: brightness(0) invert(1);
+        }
+        
+        .navbar-nav .dropdown-menu {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border-radius: 0.375rem;
+        }
+        
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+            background-color: var(--brand-primary);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .dropdown-item.disabled {
+            opacity: 0.5;
+        }
+        
+        /* Enhanced Alerts */
+        .alert {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        .alert .fas {
+            font-size: 1.1em;
+        }
+        
+        /* Enhanced Breadcrumb */
+        .breadcrumb {
+            background: rgba(78, 115, 223, 0.05);
+            border: 1px solid rgba(78, 115, 223, 0.1);
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: ">";
+            color: var(--brand-primary);
+        }
+        
+        .breadcrumb-item a {
+            color: var(--brand-primary);
+            transition: color 0.2s ease;
+        }
+        
+        .breadcrumb-item a:hover {
+            color: var(--brand-primary-dark);
+        }        
+        /* Unified Button Styles */
+        .btn {
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: var(--brand-gradient);
+            box-shadow: 0 0.125rem 0.25rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .btn-primary:hover {
+            background: var(--brand-gradient-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 0.25rem 0.5rem rgba(78, 115, 223, 0.3);
+        }
+        
+        .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        /* Enhanced Cards */
+        .card {
+            border: none;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .card-header {
+            background: rgba(78, 115, 223, 0.05);
+            border-bottom: 1px solid rgba(78, 115, 223, 0.1);
+            border-radius: 0.5rem 0.5rem 0 0 !important;
+            font-weight: 600;
+        }
+        
+        /* Form Controls */
+        .form-control, .form-select {
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+            transition: all 0.2s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        
+        /* Utility Classes */
+        .text-gradient {
+            background: var(--brand-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .shadow-primary {
+            box-shadow: 0 0.5rem 1rem rgba(78, 115, 223, 0.15) !important;
+        }
+        
+        /* Loading Animation */
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        .btn {
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+        
+        .btn-primary {
+            background: var(--brand-gradient);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--brand-gradient-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(78, 115, 223, 0.35);
+        }
+        
+        .btn-secondary {
+            background-color: var(--brand-secondary);
+            border-color: var(--brand-secondary);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--brand-secondary-dark);
+            border-color: var(--brand-secondary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.35);
+        }
+        
+        .btn-outline-primary {
+            color: var(--brand-primary);
+            border-color: var(--brand-primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--brand-primary);
+            border-color: var(--brand-primary);
+            color: white;
+        }
+
+        /* Unified Card Styles */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            background: var(--surface);
+            transition: all 0.2s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            transform: translateY(-1px);
+        }
+        
+        .card-header {
+            background: var(--brand-gradient-light);
+            border-bottom: 1px solid var(--border);
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* Navbar Unified Styling */
+        .navbar.bg-primary {
+            background: var(--brand-gradient) !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+            color: white !important;
+        }
+        
+        .nav-link {
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        body {
+            background-color: var(--light);
+        }
+
+        .sidebar {
+            background: #fff;
+            min-height: 100vh;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+
+        .main-content {
+            width: calc(100% - 250px);
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        /* Navbar with gradient */
+        .navbar.bg-primary {
+            background: var(--gradient) !important;
+        }
+
+        /* Card improvements */
+        .card {
+            border: none;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            border-radius: 0.375rem;
+        }
+
+        .card-header {
+            background: rgba(78, 115, 223, 0.1);
+            border-bottom: 1px solid rgba(78, 115, 223, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+            }
+            .sidebar {
+                position: fixed;
+                z-index: 1000;
+                width: 250px;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+        }
+        
+        /* Additional Mobile Responsive Styles */
+        @media (max-width: 576px) {
+            .container-fluid {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+            
+            .navbar-brand span {
+                display: none; /* Hide text on very small screens */
+            }
+            
+            .alert {
+                font-size: 0.875rem;
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            .navbar, footer, .breadcrumb, .alert, .btn {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+        }
+        
+        /* Ensure logo displays properly without filtering */
+        .navbar-brand img {
+            filter: none !important;
+            -webkit-filter: none !important;
+            mix-blend-mode: normal !important;
+            opacity: 1 !important;
+        }
+        
+        /* Override any dark theme effects on navbar logos */
+        .navbar-dark .navbar-brand img,
+        .navbar img {
+            filter: none !important;
+            -webkit-filter: none !important;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+    {% block styles %}{% endblock %}
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<!-- Enhanced Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background: var(--brand-gradient);">
+  <div class="container-fluid">
+    <!-- Brand with Logo -->
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.home') }}">
+      <img src="{{ url_for('static', filename='img/paycrypt_logo.png') }}" alt="PayCrypt" height="32" style="filter: none !important; mix-blend-mode: normal !important;">
+    </a>
+    
+    <!-- Mobile menu toggle -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <!-- Navigation Items -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <!-- Tools Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            <i class="fas fa-tools me-1"></i>Tools
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('tools.index') }}">
+              <i class="fas fa-th-large me-2"></i>All Tools
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header">Security Tools</h6></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.rugcheck') }}">
+              <i class="fas fa-shield-alt me-2"></i>Token Security Analyzer
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.honeypot_check') }}">
+              <i class="fas fa-bug me-2"></i>Honeypot Detector
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.mev_protection') }}">
+              <i class="fas fa-user-shield me-2"></i>MEV Protection
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.rug_alert') }}">
+              <i class="fas fa-exclamation-triangle me-2"></i>Rug Pull Alerts
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header">Analytics Tools</h6></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.gas_tracker') }}">
+              <i class="fas fa-gas-pump me-2"></i>Gas Price Tracker
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.wallet_profiler') }}">
+              <i class="fas fa-whale me-2"></i>Whale Tracker
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.dex_aggregator') }}">
+              <i class="fas fa-exchange-alt me-2"></i>DEX Analyzer
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.airdrop_hunter') }}">
+              <i class="fas fa-parachute-box me-2"></i>Airdrop Hunter
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><h6 class="dropdown-header">More Tools</h6></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.token_explorer') }}">
+              <i class="fas fa-search me-2"></i>Token Explorer
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.price_tracker') }}">
+              <i class="fas fa-chart-line me-2"></i>Price Tracker
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.liquidity_lock') }}">
+              <i class="fas fa-lock me-2"></i>Liquidity Lock Checker
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.audit_check') }}">
+              <i class="fas fa-clipboard-check me-2"></i>Smart Contract Audit
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.yield_calculator') }}">
+              <i class="fas fa-calculator me-2"></i>Yield Calculator
+            </a></li>
+            <li><a class="dropdown-item" href="{{ url_for('tools.token_scan') }}">
+              <i class="fas fa-search-plus me-2"></i>Token Scanner
+            </a></li>
+          </ul>
+        </li>
+      </ul>
+      
+      <!-- Right side items -->
+      <div class="d-flex align-items-center">
+        <!-- Language Selector -->
+                <form method="get" action="{{ url_for('main.set_language') }}" class="d-flex align-items-center me-3">
+          <label for="language" class="form-label text-white me-2 mb-0">
+            <i class="fas fa-globe"></i>
+          </label>
+          <select name="language" id="language" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 100px;">
+            <option value="en" {% if get_locale() == 'en' %}selected{% endif %}>English</option>
+            <option value="tr" {% if get_locale() == 'tr' %}selected{% endif %}>Türkçe</option>
+          </select>
+                    <noscript><button type="submit" class="btn btn-light btn-sm ms-2">Switch</button></noscript>
+        </form>
+        
+        <!-- User Menu (if authenticated) -->
+        {% if current_user and current_user.is_authenticated %}
+        <div class="dropdown">
+          <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-user me-1"></i>
+            {{ current_user.username if current_user.username else 'User' }}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>Profile</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('auth.logout') if url_for('auth.logout') else '#' }}">
+              <i class="fas fa-sign-out-alt me-2"></i>Logout
+            </a></li>
+          </ul>
+        </div>
+        {% else %}
+        <a href="{{ url_for('auth.login') if url_for('auth.login') else '#' }}" class="btn btn-outline-light">
+          <i class="fas fa-sign-in-alt me-1"></i>Login
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Enhanced Flash Messages -->
+<div class="container-fluid mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else ('success' if category == 'success' else ('warning' if category == 'warning' else 'info')) }} alert-dismissible fade show shadow-sm" role="alert">
+                    <div class="d-flex align-items-center">
+                        {% if category == 'error' %}
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% elif category == 'success' %}
+                            <i class="fas fa-check-circle me-2"></i>
+                        {% elif category == 'warning' %}
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle me-2"></i>
+                        {% endif %}
+                        <div class="flex-grow-1">{{ message }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<!-- Main Content Area -->
+<main class="main-content">
+    <!-- Breadcrumb Navigation (optional) -->
+    {% block breadcrumb %}
+    {% if request.endpoint and request.endpoint.startswith('tools.') %}
+    <div class="container-fluid">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb bg-light rounded p-2">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('main.index') if url_for('main.index') else '#' }}" class="text-decoration-none">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                {% if request.endpoint == 'tools.index' %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-tools"></i> Tools
+                </li>
+                {% else %}
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('tools.index') }}" class="text-decoration-none">
+                        <i class="fas fa-tools"></i> Tools
+                    </a>
+                </li>
+                {% if request.endpoint == 'tools.rugcheck' %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-shield-alt"></i> Token Security Analyzer
+                </li>
+                {% elif request.endpoint == 'tools.token_explorer' %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-search"></i> Token Explorer
+                </li>
+                {% endif %}
+                {% endif %}
+            </ol>
+        </nav>
+    </div>
+    {% endif %}
+    {% endblock %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Enhanced Footer -->
+<footer class="mt-5 py-4" style="background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%); color: white;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{{ url_for('static', filename='img/paycrypt_logo_d.png') }}" alt="PayCrypt" height="24" class="me-2">
+                    <span class="fw-bold">PayCrypt Tools</span>
+                </div>
+                <p class="text-light opacity-75 mb-0">
+                    Professional cryptocurrency tools and analytics for smart investors.
+                </p>
+            </div>
+            <div class="col-lg-6 text-lg-end">
+                <div class="mb-2">
+                    <small class="text-light opacity-50">
+                        <i class="fas fa-shield-check me-1"></i>
+                        Secure • Reliable • Professional
+                    </small>
+                </div>
+                <div>
+                    <small class="text-light opacity-50">
+                        © {{ moment().format('YYYY') if moment else '2024' }} PayCrypt. All rights reserved.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+    
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- CSRF Protection JS -->
+    <script>
+        // Set up CSRF token for AJAX requests
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get CSRF token from meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            // Add CSRF token to all AJAX requests
+            const originalFetch = window.fetch;
+            window.fetch = function() {
+                const [url, options = {}] = arguments;
+                if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method?.toUpperCase())) {
+                    options.headers = {
+                        ...options.headers,
+                        'X-CSRFToken': csrfToken
+                    };
+                }
+                return originalFetch.apply(this, [url, options]);
+            };
+            
+            // Initialize validation for forms
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        });
+    </script>
+    
+    <!-- Custom JS -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

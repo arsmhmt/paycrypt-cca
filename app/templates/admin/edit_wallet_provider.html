@@ -1,0 +1,675 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit {{ provider.name }} - Admin Panel{% endblock %}
+
+{% block styles %}
+<style>
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .provider-status-card {
+        border-left: 4px solid;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .status-healthy {
+        border-color: #28a745;
+        background: #d4edda;
+    }
+
+    .status-warning {
+        border-color: #ffc107;
+        background: #fff3cd;
+    }
+
+    .status-error {
+        border-color: #dc3545;
+        background: #f8d7da;
+    }
+
+    .status-unknown {
+        border-color: #6c757d;
+        background: #e2e3e5;
+    }
+
+    .form-control:focus {
+        border-color: #ff8c00;
+        box-shadow: 0 0 0 0.2rem rgba(255, 140, 0, 0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #ff8c00 0%, #f59e0b 100%);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #e67e00 0%, #d97706 100%);
+    }
+
+    .sensitive-field {
+        position: relative;
+    }
+
+    .sensitive-field .toggle-visibility {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: none;
+        color: #6c757d;
+        cursor: pointer;
+    }
+
+    .balance-summary {
+        background: linear-gradient(135deg, #ff8c00 0%, #f59e0b 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .wallet-address-item {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .address-display {
+        font-family: 'Courier New', monospace;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 8px;
+        font-size: 0.9rem;
+        word-break: break-all;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mt-4 mb-0">Edit {{ provider.name }}</h1>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.wallet_providers') }}">Wallet Providers</a></li>
+                <li class="breadcrumb-item active">Edit {{ provider.name }}</li>
+            </ol>
+        </div>
+        <div>
+            {% if provider.is_primary %}
+            <span class="badge bg-warning text-dark fs-6 me-2">PRIMARY PROVIDER</span>
+            {% endif %}
+            <span class="badge bg-secondary fs-6">{{ provider.provider_type.replace('_', ' ').title() }}</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Status Card -->
+            <div class="provider-status-card status-{{ provider.health_status }}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">
+                            {% if provider.health_status == 'healthy' %}
+                            <i class="bi bi-check-circle text-success"></i> Provider is healthy
+                            {% elif provider.health_status == 'warning' %}
+                            <i class="bi bi-exclamation-triangle text-warning"></i> Provider has warnings
+                            {% elif provider.health_status == 'error' %}
+                            <i class="bi bi-x-circle text-danger"></i> Provider has errors
+                            {% else %}
+                            <i class="bi bi-question-circle text-muted"></i> Status unknown
+                            {% endif %}
+                        </h6>
+                        {% if provider.last_health_check %}
+                        <small>Last checked: {{ provider.last_health_check.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                        {% endif %}
+                        {% if provider.health_error %}
+                        <div class="mt-2">
+                            <small><strong>Error:</strong> {{ provider.health_error }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="testConnection()">
+                            <i class="bi bi-wifi"></i> Test Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <form id="providerForm" method="POST">
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h5 class="mb-3">Basic Information</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Provider Name</label>
+                                <input type="text" class="form-control" id="name" name="name"
+                                    value="{{ provider.name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <input type="number" class="form-control" id="priority" name="priority"
+                                    value="{{ provider.priority }}" min="1" max="999">
+                                <div class="form-text">Lower numbers = higher priority (1 = highest).</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description"
+                            rows="2">{{ provider.description or '' }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if
+                                    provider.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Active Provider
+                                </label>
+                                <div class="form-text">Inactive providers won't be used for transactions.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API configuration (if not manual wallet) -->
+                {% if provider.provider_type != 'manual_wallet' %}
+                <div class="form-section">
+                    <h5 class="mb-3">API configuration</h5>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Security:</strong> Leave fields empty to keep existing credentials unchanged.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="api_key" class="form-label">API Key</label>
+                                <div class="sensitive-field">
+                                    <input type="password" class="form-control" id="api_key" name="api_key"
+                                        placeholder="Enter new API key to update"
+                                        value="{{ '*' * 20 if provider.api_key else '' }}">
+                                    <button type="button" class="toggle-visibility"
+                                        onclick="toggleVisibility('api_key')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="api_secret" class="form-label">API Secret</label>
+                                <div class="sensitive-field">
+                                    <input type="password" class="form-control" id="api_secret" name="api_secret"
+                                        placeholder="Enter new API secret to update"
+                                        value="{{ '*' * 20 if provider.api_secret else '' }}">
+                                    <button type="button" class="toggle-visibility"
+                                        onclick="toggleVisibility('api_secret')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if provider.provider_type == 'coinbase' %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="api_passphrase" class="form-label">API Passphrase</label>
+                                <div class="sensitive-field">
+                                    <input type="password" class="form-control" id="api_passphrase"
+                                        name="api_passphrase" placeholder="Enter new passphrase to update"
+                                        value="{{ '*' * 10 if provider.api_passphrase else '' }}">
+                                    <button type="button" class="toggle-visibility"
+                                        onclick="toggleVisibility('api_passphrase')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="sandbox_mode"
+                                        name="sandbox_mode" {% if provider.sandbox_mode %}checked{% endif %}>
+                                    <label class="form-check-label" for="sandbox_mode">
+                                        Sandbox/Test Mode
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Wallet Addresses (for manual wallets) -->
+                {% if provider.provider_type == 'manual_wallet' %}
+                <div class="form-section">
+                    <h5 class="mb-3">Wallet Addresses</h5>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Current wallet addresses for this provider. Update as needed.
+                    </div>
+
+                    {% set addresses = provider.wallet_addresses_dict or {} %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_BTC" class="form-label">Bitcoin (BTC) Address</label>
+                                <input type="text" class="form-control" id="address_BTC" name="address_BTC"
+                                    value="{{ addresses.get('BTC', '') }}" placeholder="bc1...">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_ETH" class="form-label">Ethereum (ETH) Address</label>
+                                <input type="text" class="form-control" id="address_ETH" name="address_ETH"
+                                    value="{{ addresses.get('ETH', '') }}" placeholder="0x...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_USDT" class="form-label">USDT Address</label>
+                                <input type="text" class="form-control" id="address_USDT" name="address_USDT"
+                                    value="{{ addresses.get('USDT', '') }}" placeholder="USDT address">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_XRP" class="form-label">Ripple (XRP) Address</label>
+                                <input type="text" class="form-control" id="address_XRP" name="address_XRP"
+                                    value="{{ addresses.get('XRP', '') }}" placeholder="rN...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address_LTC" class="form-label">Litecoin (LTC) Address</label>
+                                <input type="text" class="form-control" id="address_LTC" name="address_LTC"
+                                    value="{{ addresses.get('LTC', '') }}" placeholder="ltc1...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Capabilities -->
+                <div class="form-section">
+                    <h5 class="mb-3">Capabilities</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="supports_deposits"
+                                    name="supports_deposits" {% if provider.supports_deposits %}checked{% endif %}>
+                                <label class="form-check-label" for="supports_deposits">
+                                    <i class="bi bi-arrow-down-circle text-success"></i> Supports Deposits
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="supports_withdrawals"
+                                    name="supports_withdrawals" {% if provider.supports_withdrawals %}checked{% endif
+                                    %}>
+                                <label class="form-check-label" for="supports_withdrawals">
+                                    <i class="bi bi-arrow-up-circle text-primary"></i> Supports Withdrawals
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="supports_balance_check"
+                                    name="supports_balance_check" {% if provider.supports_balance_check %}checked{%
+                                    endif %}>
+                                <label class="form-check-label" for="supports_balance_check">
+                                    <i class="bi bi-wallet2 text-info"></i> Balance Checking
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div class="form-section">
+                    <h5 class="mb-3">Advanced Settings</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_requests_per_minute" class="form-label">Rate Limit
+                                    (requests/minute)</label>
+                                <input type="number" class="form-control" id="max_requests_per_minute"
+                                    name="max_requests_per_minute" value="{{ provider.max_requests_per_minute }}"
+                                    min="1" max="10000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <a href="{{ url_for('admin.wallet_providers') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Providers
+                        </a>
+                        {% if not provider.is_primary %}
+                        <button type="button" class="btn btn-warning ms-2" onclick="setPrimary()">
+                            <i class="bi bi-star"></i> Set as Primary
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-outline-primary me-2" onclick="syncBalances()">
+                            <i class="bi bi-arrow-clockwise"></i> Sync Balances
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Current Balances -->
+            {% if provider.balances %}
+            <div class="balance-summary">
+                <h6 class="mb-3">Current Balances</h6>
+                {% for balance in provider.balances %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>{{ balance.currency_code }}</span>
+                    <span class="fw-bold">{{ "%.6f"|format(balance.available_balance or 0) }}</span>
+                </div>
+                {% endfor %}
+                <div class="text-center mt-3">
+                    <button class="btn btn-outline-light btn-sm" onclick="syncBalances()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh Balances
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Provider Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Provider Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Provider Type:</small>
+                        <div class="fw-medium">{{ provider.provider_type.replace('_', ' ').title() }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Created:</small>
+                        <div class="fw-medium">{{ provider.created_at.strftime('%Y-%m-%d %H:%M') if provider.created_at
+                            else 'Unknown' }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Last Updated:</small>
+                        <div class="fw-medium">{{ provider.updated_at.strftime('%Y-%m-%d %H:%M') if provider.updated_at
+                            else 'Never' }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Status:</small>
+                        <div class="fw-medium">
+                            {% if provider.is_active %}
+                            <span class="text-success">Active</span>
+                            {% else %}
+                            <span class="text-danger">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            {% if not provider.is_primary %}
+            <div class="card border-danger mt-3">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Danger Zone</h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Permanently delete this wallet provider. This action cannot be undone.
+                    </p>
+                    <button type="button" class="btn btn-outline-danger" onclick="deleteProvider()">
+                        <i class="bi bi-trash"></i> Delete Provider
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the wallet provider "{{ provider.name }}"?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Toggle password visibility
+    function toggleVisibility(fieldId) {
+        const field = document.getElementById(fieldId);
+        const icon = field.nextElementSibling.querySelector('i');
+
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            field.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    }
+
+    // Form submission
+    document.getElementById('providerForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Saving...';
+
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                showToast('Provider updated successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                const result = await response.json();
+                showToast(`Error: ${result.error || 'Failed to update provider'}`, 'error');
+            }
+        } catch (error) {
+            showToast('Network error occurred', 'error');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    });
+
+    // Test connection
+    async function testConnection() {
+        showToast('Testing connection...', 'info');
+
+        try {
+            const response = await fetch(`/admin/wallet-providers/{{ provider.id }}/test-connection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('Connection test successful!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(`Connection test failed: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showToast('Error testing connection', 'error');
+        }
+    }
+
+    // Sync balances
+    async function syncBalances() {
+        const button = event ? event.target : document.querySelector('[onclick="syncBalances()"]');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Syncing...';
+        button.disabled = true;
+
+        try {
+            const response = await fetch(`/admin/wallet-providers/{{ provider.id }}/sync-balances`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('Balances synced successfully!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(`Failed to sync balances: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showToast('Error syncing balances', 'error');
+        } finally {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+
+    // Set as primary
+    async function setPrimary() {
+        try {
+            const response = await fetch(`/admin/wallet-providers/{{ provider.id }}/set-primary`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(result.message, 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(`Failed to set primary: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showToast('Error setting primary provider', 'error');
+        }
+    }
+
+    // Delete provider
+    function deleteProvider() {
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+        document.getElementById('confirmDelete').onclick = async function () {
+            try {
+                const response = await fetch(`/admin/wallet-providers/{{ provider.id }}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    setTimeout(() => {
+                        window.location.href = '/admin/wallet-providers';
+                    }, 1500);
+                } else {
+                    showToast(`Failed to delete: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast('Error deleting provider', 'error');
+            } finally {
+                modal.hide();
+            }
+        };
+
+        modal.show();
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        const toastContainer = document.getElementById('toast-container');
+        const toastId = 'toast-' + Date.now();
+
+        const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : type}" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toast = new bootstrap.Toast(document.getElementById(toastId));
+        toast.show();
+
+        // Remove toast element after it's hidden
+        document.getElementById(toastId).addEventListener('hidden.bs.toast', function () {
+            this.remove();
+        });
+    }
+</script>
+{% endblock %}

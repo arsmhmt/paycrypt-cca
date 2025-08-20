@@ -1,0 +1,77 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Email Templates - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Email Templates</h1>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Available Templates</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Password Reset
+                            <span class="badge bg-primary rounded-pill">Edit</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Account Verification
+                            <span class="badge bg-primary rounded-pill">Edit</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Payment Receipt
+                            <span class="badge bg-primary rounded-pill">Edit</span>
+                        </a>
+                        <!-- Add more templates as needed -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Email Settings</h6>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="mailServer" class="form-label">SMTP Server</label>
+                            <input type="text" class="form-control" id="mailServer" value="smtp.example.com">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="mailPort" class="form-label">Port</label>
+                                <input type="number" class="form-control" id="mailPort" value="587">
+                            </div>
+                            <div class="col">
+                                <label for="mailEncryption" class="form-label">Encryption</label>
+                                <select class="form-select" id="mailEncryption">
+                                    <option value="tls" selected>TLS</option>
+                                    <option value="ssl">SSL</option>
+                                    <option value="none">None</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mailUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="mailUsername" value="noreply@example.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="mailPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="mailPassword" placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Email Settings</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

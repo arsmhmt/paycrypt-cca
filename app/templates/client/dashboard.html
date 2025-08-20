@@ -1,0 +1,780 @@
+{% extends 'client/base.html' %}
+
+{% block title %}{{ _('Dashboard') }} - {{ client.company_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="margin-top: 1.5rem;">
+    <!-- Wallet Warning Panel -->
+    {% if wallets_down %}
+    <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>
+            {{ _('One or more wallets unavailable.') }} <a href="{{ url_for('client.wallet_configure') }}"
+                class="alert-link">{{ _('Troubleshoot now') }}</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Plan Usage Stats Bar -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-2">
+            <label class="form-label small">{{ _('Monthly Transactions') }}</label>
+            <div class="progress" style="height: 22px;">
+                {% set tx_pct = (monthly_transactions / monthly_transaction_limit * 100) if monthly_transaction_limit
+                else 0 %}
+                <div class="progress-bar bg-success" role="progressbar" style="width: {{ tx_pct|round(1) }}%;"
+                    aria-valuenow="{{ monthly_transactions }}" aria-valuemax="{{ monthly_transaction_limit }}">
+                    {{ monthly_transactions }} / {{ monthly_transaction_limit }} {{ _('tx this month') }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-2">
+            <label class="form-label small">{{ _('Monthly Volume') }}</label>
+            <div class="progress" style="height: 22px;">
+                {% set vol_pct = (monthly_volume / monthly_volume_limit * 100) if monthly_volume_limit else 0 %}
+                <div class="progress-bar bg-info" role="progressbar" style="width: {{ vol_pct|round(1) }}%;"
+                    aria-valuenow="{{ monthly_volume }}" aria-valuemax="{{ monthly_volume_limit }}">
+                    ${{ '{:,.2f}'.format(monthly_volume|default(0)) }} / ${{
+                    '{:,.2f}'.format(monthly_volume_limit|default(0)) }} {{ _('limit') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Heading -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4">
+
+        <div class="btn-toolbar">
+            <div class="btn-group me-2">
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="timeFilter"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-funnel me-1"></i>
+                        <span id="selectedTime">{{ _('Last 30 Days') }}</span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="timeFilter">
+                        <li><a class="dropdown-item" href="#" data-time="7">{{ _('Last 7 Days') }}</a></li>
+                        <li><a class="dropdown-item" href="#" data-time="30">{{ _('Last 30 Days') }}</a></li>
+                        <li><a class="dropdown-item" href="#" data-time="90">{{ _('Last 90 Days') }}</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    <i class="bi bi-download me-1"></i> {{ _('Export') }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-pdf me-2"></i>{{ _('PDF') }}</a>
+                    </li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-excel me-2"></i>{{ _('Excel')
+                            }}</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-text me-2"></i>{{ _('CSV') }}</a>
+                    </li>
+                </ul>
+                <a href="{{ url_for('client.profile') }}" class="btn btn-primary">
+                    <i class="bi bi-person-circle me-1"></i> {{ _('Profile') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Balance Card -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stats-card border-left-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-primary fw-bold mb-1">{{ _('Balance (BTC)') }}</h6>
+                            <h3 class="mb-0">{{ "%.6f"|format(balance|default(0)) }}</h3>
+                            <p class="text-success small mb-0 mt-2>
+                                <i class="bi bi-wallet2 me-1"></i> <span class="text-muted">{{ _('Available') }}</span>
+                            </p>
+                        </div>
+                        <div class="icon-bg text-primary">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Card -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stats-card border-left-success h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-success fw-bold mb-1">{{ _('Transactions') }}</h6>
+                            <h3 class="mb-0">{{ monthly_transactions|default(0) }}</h3>
+                            <p class="text-success small mb-0 mt-2>
+                                <i class="bi bi-arrow-up me-1"></i> <span class="text-muted">{{ _('This month')
+                                    }}</span>
+                            </p>
+                        </div>
+                        <div class="icon-bg text-success">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Volume Card -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stats-card border-left-info h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-info fw-bold mb-1">{{ _('30-Day Volume') }}</h6>
+                            <h3 class="mb-0">{{ "%.4f"|format(total_deposits|default(0)) }}</h3>
+                            <p class="text-success small mb-0 mt-2>
+                                <i class="bi bi-graph-up-arrow me-1"></i> <span class="text-muted">BTC</span>
+                            </p>
+                        </div>
+                        <div class="icon-bg text-info">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Commission Card -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card stats-card border-left-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-warning fw-bold mb-1">{{ _('Commission') }}</h6>
+                            <h3 class="mb-0">${{ "%.2f"|format(total_commission|default(0)) }}</h3>
+                            <p class="text-success small mb-0 mt-2>
+                                <i class="bi bi-percent me-1"></i> <span class="text-muted">{{ _('Earned') }}</span>
+                            </p>
+                        </div>
+                        <div class="icon-bg text-warning">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Main Charts Section -->
+    <div class="row mb-4">
+        <!-- Recent Transactions Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-graph-up me-2"></i>{{ _('Recent Transactions') }}
+                    </h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="transactionsDropdown"
+                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in"
+                            aria-labelledby="transactionsDropdown">
+                            <a class="dropdown-item" href="{{ url_for('client.payment_history') }}">{{ _('View All')
+                                }}</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#">{{ _('Export Data') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if payments and payments.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Date') }}</th>
+                                    <th>{{ _('Amount') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                    <th>{{ _('Action') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments.items[:5] %}
+                                <tr>
+                                    <td>{{ payment.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+                                    <td>{{ payment.amount }} <span class="text-muted">{{ payment.currency or 'BTC' }}</span></td>
+                                    <td>
+                                        {% set status_value = payment.status|string|lower %}
+                                        {% set status_class = {
+                                            'completed': 'success',
+                                            'pending': 'warning',
+                                            'failed': 'danger',
+                                            'approved': 'success',
+                                            'rejected': 'danger',
+                                            'cancelled': 'secondary'
+                                        } %}
+                                        <span class="badge bg-{{ status_class.get(status_value, 'secondary') }}">
+                                            {{ status_value|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-receipt display-4 mb-3"></i>
+                        <div>{{ _('No transactions yet') }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4 h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-lightning me-2"></i>{{ _('Quick Actions') }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('client.payment_history') }}" class="btn btn-outline-info">
+                            <i class="bi bi-clock-history me-2"></i>{{ _('Payment History') }}
+                        </a>
+                        <a href="{{ url_for('client.withdraw') }}" class="btn btn-outline-success">
+                            <i class="bi bi-arrow-up-circle me-2"></i>{{ _('Withdraw') }}
+                        </a>
+                        <a href="{{ url_for('client.invoices') }}" class="btn btn-outline-warning">
+                            <i class="bi bi-file-text me-2"></i>{{ _('Invoices') }}
+                        </a>
+
+                        <!-- API Management (if feature enabled) -->
+                        {% if current_user.has_feature('api_basic') or is_enterprise_flat_rate %}
+                        <hr class="my-2">
+                        <a href="{{ url_for('client.api_management') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-key me-2"></i>{{ _('API Keys & Docs') }}
+                        </a>
+                        {% endif %}
+
+                        <hr class="my-3">
+                        <div class="text-center">
+                            <h6 class="fw-bold mb-2">{{ _('System Status') }}</h6>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span>{{ _('API Status') }}</span>
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>{{
+                                    _('Operational') }}</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span>{{ _('Payment Processing') }}</span>
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>{{ _('Active')
+                                    }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature-Based Alerts -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <!-- Real-time Dashboard Feature Alert -->
+            {% if current_user.has_feature('dashboard_realtime') or is_enterprise_flat_rate %}
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-broadcast-tower"></i>
+
+                                {% if current_user.has_feature('api_basic') or is_enterprise_flat_rate %}
+                                <div class="mt-4">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <h5 class="mb-2"><i class="fas fa-plug me-2"></i>{{ _('API Quick Start') }}</h5>
+                                        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('client.api_management') }}">{{ _('Open API Management') }}</a>
+                                    </div>
+                                    <p class="text-muted mb-2">{{ _('Use HMAC headers to call our API and redirect your users to the hosted checkout. Keys and secret are on API Management.') }}</p>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-3 bg-light">
+                                                <div class="fw-semibold mb-2">{{ _('Headers') }}</div>
+                                                <ul class="mb-0 small">
+                                                    <li><code>X-Paycrypt-Key</code> – {{ _('your API key') }}</li>
+                                                    <li><code>X-Paycrypt-Timestamp</code> – {{ _('unix seconds') }}</li>
+                                                    <li><code>X-Paycrypt-Signature</code> – {{ _('hex sha256 hmac of "<ts>.<body>" using your secret') }}</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-3 bg-light">
+                                                <div class="fw-semibold mb-2">{{ _('Create session (POST /api/v1/payment_sessions)') }}</div>
+<pre class="small mb-0"><code>{
+    "order_id": "ORD-123",
+    "amount": "49.00",
+    "currency": "USD",
+    "customer": {"email": "a@b.com"},
+    "metadata": {"source": "merchant"},
+    "success_url": "https://merchant.tld/success?oid=ORD-123",
+    "cancel_url": "https://merchant.tld/cancel?oid=ORD-123",
+    "webhook_url": "https://merchant.tld/api/paycrypt/webhook"
+}</code></pre>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="border rounded p-3 bg-light">
+                                                <div class="fw-semibold mb-2">{{ _('Python example (server-to-server)') }}</div>
+<pre class="small mb-0"><code>import time, hmac, hashlib, json, requests
+                <strong>{{ _('Live Stats Enabled!') }}</strong> {{ _('Your dashboard updates in real-time.') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% else %}
+            {% set upgrade_pkg = get_upgrade_package_name(current_user.package.slug if current_user and current_user.package else '') %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="fas fa-clock"></i>
+                <strong>{{ _('Static Dashboard:') }}</strong> {{ _('Upgrade to %(package)s for real-time monitoring.', package=upgrade_pkg) }}
+                <a href="{{ url_for('client.pricing') if 'pricing' in get_route_names() else '#' }}" class="alert-link">{{ _('Learn more') }}</a>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endif %}
+
+            <!-- Analytics Feature Alert -->
+            {% if current_user.has_feature('dashboard_analytics') or is_enterprise_flat_rate %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-chart-line"></i>
+                <strong>{{ _('Advanced Analytics Available!') }}</strong>
+                <a href="{{ url_for('client.withdrawal_analytics') }}" class="alert-link">{{ _('View detailed
+                    analytics') }}</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endif %}
+
+            <!-- Payment & Withdrawal Status Alerts for B2C Users -->
+            {% if current_user.has_feature('wallet_management') or is_enterprise_flat_rate %}
+            <!-- Pending Withdrawal Requests Alert -->
+            {% set pending_withdrawals = current_user.get_pending_withdrawal_requests_count() %}
+            {% if pending_withdrawals > 0 %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="fas fa-clock"></i>
+                <strong>{{ _('Pending Withdrawals:') }}</strong> {{ _('You have') }} {{ pending_withdrawals }} {{
+                _('withdrawal request') }}{{ 's' if pending_withdrawals > 1 else '' }} {{ _('pending approval.') }}
+                <a href="{{ url_for('client.withdrawal_requests') }}" class="alert-link">{{ _('View details') }}</a>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endif %}
+
+            <!-- Wallet configuration Alert -->
+            {% if not current_user.client_wallets %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>{{ _('Wallet configuration Required!') }}</strong> {{ _('configure your payment wallets to
+                receive funds.') }}
+                <a href="{{ url_for('client.wallet_configure') }}" class="alert-link">{{ _('configure wallets') }}</a>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endif %}
+
+            <!-- Low Balance Alert -->
+            {% if current_user.balance < 50.0 %} <div class="alert alert-info alert-dismissible fade show"
+                role="alert">
+                <i class="fas fa-info-circle"></i>
+                <strong>{{ _('Low Balance:') }}</strong> {{ _('Your account balance is below $50. Consider topping up to
+                avoid service interruptions.') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <!-- Commission Payment Status for Commission-Based Clients -->
+        {% if current_user.package and current_user.package.pricing_model == 'commission' %}
+        {% if current_user.commission_balance > 100.0 %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-money-bill-wave"></i>
+            <strong>{{ _('Commission Available:') }}</strong> {{ _('You have') }} ${{
+            "%.2f"|format(current_user.commission_balance) }} {{ _('in commission earnings ready for
+            withdrawal.') }}
+            <a href="{{ url_for('client.withdraw') }}" class="alert-link">{{ _('Request withdrawal') }}</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Feature Showcase Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-rocket me-2"></i>{{ _('Your Features & Capabilities') }}
+                </h6>
+                <span class="badge bg-info">{{ current_user.package.name if current_user.package else
+                    _('No Package') }}</span>
+            </div>
+            <div class="card-body">
+                <!-- Feature showcase temporarily disabled to isolate recursion issue -->
+                <div class="alert alert-info">
+                    <h5>{{ _('Your Plan Features') }}</h5>
+                    <p>{{ _('Feature showcase is temporarily disabled during debugging.') }}</p>
+                </div>
+
+                <!-- Feature-specific action buttons -->
+                <div class="row mt-4">
+                    {% if current_user.has_feature('api_basic') or is_enterprise_flat_rate %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('client.api_management') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-code me-2"></i>{{ _('API Documentation') }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if current_user.has_feature('dashboard_analytics') or is_enterprise_flat_rate %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('client.withdrawal_analytics') }}" class="btn btn-outline-success">
+                                <i class="fas fa-chart-bar me-2"></i>{{ _('Advanced Analytics') }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if current_user.has_feature('wallet_multi') or is_enterprise_flat_rate %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('client.wallets') }}" class="btn btn-outline-info">
+                                <i class="fas fa-wallet me-2"></i>{{ _('Multi-Wallet Management') }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Upgrade prompt for missing features -->
+                {% set missing_features = [] %}
+                {% if not current_user.has_feature('api_advanced') and not is_enterprise_flat_rate %}
+                {% set __ = missing_features.append(_('Advanced API Features')) %}
+                {% endif %}
+                {% if not current_user.has_feature('dashboard_realtime') and not is_enterprise_flat_rate %}
+                {% set __ = missing_features.append(_('Real-time Dashboard Updates')) %}
+                {% endif %}
+                {% if not current_user.has_feature('dashboard_analytics') and not is_enterprise_flat_rate %}
+                {% set __ = missing_features.append(_('Advanced Analytics Dashboard')) %}
+                {% endif %}
+
+                {% if missing_features and not is_enterprise_flat_rate %}
+                <div class="border-top pt-3 mt-3">
+                    <h6 class="text-muted mb-2">
+                        <i class="fas fa-star me-2"></i>{{ _('Unlock More Features') }}
+                    </h6>
+                    <p class="text-muted small mb-3">
+                        {{ _('Upgrade your plan to access:') }} {{ missing_features|join(', ') }}
+                    </p>
+                    <a href="{{ url_for('client.payments') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-arrow-up me-1"></i>{{ _('View Payments') }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Detail Modals -->
+{% if payments and payments.items %}
+{% for payment in payments.items[:5] %}
+<div class="modal fade" id="txnModal-{{ payment.id }}" tabindex="-1" aria-labelledby="txnModalLabel-{{ payment.id }}"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="txnModalLabel-{{ payment.id }}">{{ _('Transaction Details') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-6"><strong>{{ _('Transaction ID:') }}</strong></div>
+                    <div class="col-6">{{ payment.id }}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6"><strong>{{ _('Amount:') }}</strong></div>
+                    <div class="col-6">{{ payment.amount }} {{ payment.currency or 'BTC' }}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6"><strong>{{ _('Status:') }}</strong></div>
+                    <div class="col-6">
+                        {% set status_value = payment.status|string|lower %}
+                        <span class="badge bg-{{ {
+                            'completed': 'success',
+                            'pending': 'warning',
+                            'failed': 'danger',
+                            'approved': 'success',
+                            'rejected': 'danger',
+                            'cancelled': 'secondary'
+                        }.get(status_value, 'secondary') }}">
+                            {{ status_value|title }}
+                        </span>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6"><strong>{{ _('Created:') }}</strong></div>
+                    <div class="col-6">{{ payment.created_at.strftime('%B %d, %Y at %H:%M UTC') }}</div>
+                </div>
+                {% if payment.transaction_hash %}
+                <div class="row mt-2">
+                    <div class="col-6"><strong>{{ _('Transaction Hash:') }}</strong></div>
+                    <div class="col-6"><small class="text-muted">{{ payment.transaction_hash[:16] }}...</small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                {% if payment.transaction_hash %}
+                <a href="#" class="btn btn-primary">{{ _('View on Blockchain') }}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- Referral Modal -->
+<div class="modal fade" id="referralModal" tabindex="-1" aria-labelledby="referralModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="referralModalLabel">{{ _('Refer a Client') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">{{ _('Invite new clients and earn rewards when they join!') }}</p>
+                <div class="mb-3">
+                    <label for="referralLink" class="form-label">{{ _('Your Referral Link:') }}</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="referralLink"
+                            value="{{ request.url_root }}register?ref={{ client.id }}" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyReferralLink()">
+                            <i class="bi bi-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>{{ _('Earn 5%% commission') }}</strong> {{ _('on referred client transactions for their first 3 months!') }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+                <button type="button" class="btn btn-primary" onclick="shareReferralLink()">{{ _('Share Link')
+                    }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize tooltips safely
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            console.debug('Bootstrap tooltips initialized:', tooltipList.length, 'tooltips');
+        } else {
+            console.warn('Bootstrap JS not loaded - tooltips disabled');
+        }
+    });
+
+    // Referral system functions
+    function copyReferralLink() {
+        const referralLink = document.getElementById('referralLink');
+        referralLink.select();
+        referralLink.setSelectionRange(0, 99999); // For mobile devices
+        navigator.clipboard.writeText(referralLink.value).then(function () {
+            // Show success feedback
+            const button = event.target.closest('button');
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-check"></i>';
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-success');
+
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-secondary');
+            }, 2000);
+        });
+    }
+
+    function shareReferralLink() {
+        const referralLink = document.getElementById('referralLink').value;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Join PayCrypt Gateway',
+                text: 'Join me on PayCrypt Gateway for secure crypto payments!',
+                url: referralLink
+            });
+        } else {
+            // Fallback - copy to clipboard
+            copyReferralLink();
+        }
+    }
+
+    // Dark mode toggle (DISABLED - FORCING LIGHT MODE FOR GLASSMORPHISM)
+    function toggleDarkMode() {
+        // FORCE LIGHT MODE ALWAYS
+        document.body.classList.remove('dark-theme');
+        localStorage.setItem('darkMode', false);
+
+        // Update icon
+        const darkModeToggleBtn = document.getElementById('darkModeToggle');
+        if (darkModeToggleBtn) {
+            darkModeToggleBtn.innerHTML = '<i class="bi bi-moon"></i>';
+        }
+
+        console.log('🌞 DARK MODE DISABLED - Forced light mode for glassmorphism debugging');
+
+        // Re-apply glassmorphism after removing dark theme
+        setTimeout(() => {
+            const allCards = document.querySelectorAll('.card, .glass-card');
+            allCards.forEach(card => {
+                card.style.setProperty('background', 'rgba(255,255,255,0.85)', 'important');
+                card.style.setProperty('backdrop-filter', 'blur(12px)', 'important');
+                card.style.setProperty('-webkit-backdrop-filter', 'blur(12px)', 'important');
+            });
+            console.log('🎨 GLASSMORPHISM RE-APPLIED AFTER DARK MODE REMOVAL');
+        }, 100);
+
+        const darkModeToggleBtn = document.getElementById('darkModeToggle');
+        if (darkModeToggleBtn) {
+            darkModeToggleBtn.innerHTML = '<i class="bi bi-moon"></i>';
+        }
+
+        console.log('🌞 FORCED LIGHT MODE ON PAGE LOAD - Dark theme completely disabled');
+    });
+
+    // Dynamic status checker
+    let statusCheckInterval;
+
+    function checkSystemStatus() {
+        fetch('{{ url_for("api.status_heartbeat") }}', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                const statusIndicator = document.getElementById('status-indicator');
+                const apiStatus = document.getElementById('api-status');
+                const paymentStatus = document.getElementById('payment-status');
+                const lastUpdated = document.getElementById('last-updated');
+
+                if (data.status === 'ok') {
+                    statusIndicator.className = 'badge bg-warning ms-2';
+                    statusIndicator.textContent = 'Live';
+                    apiStatus.innerHTML = '<i class="bi bi-check-circle me-1"></i>Operational';
+                    apiStatus.className = 'badge bg-warning';
+                    paymentStatus.innerHTML = '<i class="bi bi-check-circle me-1"></i>Active';
+                    paymentStatus.className = 'badge bg-warning';
+                } else {
+                    statusIndicator.className = 'badge bg-danger ms-2';
+                    statusIndicator.textContent = 'Offline';
+                    apiStatus.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error';
+                    apiStatus.className = 'badge bg-danger';
+                    paymentStatus.innerHTML = '<i class="bi bi-x-circle me-1"></i>Inactive';
+                    paymentStatus.className = 'badge bg-danger';
+                }
+
+                lastUpdated.textContent = new Date().toLocaleTimeString();
+            })
+            .catch(error => {
+                console.warn('Status check failed:', error);
+                const statusIndicator = document.getElementById('status-indicator');
+                statusIndicator.className = 'badge bg-warning ms-2';
+                statusIndicator.textContent = 'Unknown';
+            });
+    }
+
+    // Check status every 30 seconds
+    document.addEventListener('DOMContentLoaded', function () {
+        checkSystemStatus(); // Initial check
+        statusCheckInterval = setInterval(checkSystemStatus, 30000);
+    });
+
+    // Clean up interval when page unloads
+    window.addEventListener('beforeunload', function () {
+        if (statusCheckInterval) {
+            clearInterval(statusCheckInterval);
+        }
+    });
+
+    // Check if CSS is loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        var testEl = document.createElement('div');
+        testEl.className = 'glass-card';
+        document.body.appendChild(testEl);
+        var style = window.getComputedStyle(testEl);
+        console.debug('glass-card background:', style.background, 'box-shadow:', style.boxShadow);
+        document.body.removeChild(testEl);
+
+        // Check if Bootstrap JS is loaded
+        console.debug('Bootstrap JS:', typeof bootstrap !== 'undefined' ? 'Loaded' : 'Not loaded');
+
+        // Check if jQuery is loaded (optional)
+        console.debug('jQuery:', typeof $ !== 'undefined' ? 'Loaded' : 'Not loaded');
+
+        // NUCLEAR OPTION: FORCE STYLES AFTER PAGE LOAD
+        console.debug('🚀 APPLYING NUCLEAR GLASSMORPHISM OVERRIDE...');
+
+        // FORCE REMOVE DARK THEME FIRST
+        document.body.classList.remove('dark-theme');
+        localStorage.setItem('darkMode', false);
+        console.debug('🌞 DARK THEME FORCIBLY REMOVED');
+
+        // Force all cards to have glassmorphism
+        const allCards = document.querySelectorAll('.card, .glass-card');
+        allCards.forEach(card => {
+            // Remove any dark theme classes
+            card.classList.remove('dark-theme');
+
+            card.style.setProperty('background', 'rgba(255,255,255,0.85)', 'important');
+            card.style.setProperty('backdrop-filter', 'blur(12px)', 'important');
+            card.style.setProperty('-webkit-backdrop-filter', 'blur(12px)', 'important');
+            card.style.setProperty('border-radius', '1.25rem', 'important');
+            card.style.setProperty('box-shadow', '0 8px 32px rgba(0,0,0,0.08)', 'important');
+            card.style.setProperty('border', '1px solid rgba(255,255,255,0.18)', 'important');
+            card.style.setProperty('transition', 'all 0.3s ease', 'important');
+        });
+
+        // Force body background gradient
+        document.body.style.setProperty('background', 'linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%)', 'important');
+
+        // Force card headers
+        const cardHeaders = document.querySelectorAll('.card-header');
+        cardHeaders.forEach(header => {
+            header.style.setProperty('background', 'transparent', 'important');
+            header.style.setProperty('border-bottom', 'none', 'important');
+            header.style.setProperty('border-radius', '1.25rem 1.25rem 0 0', 'important');
+        });
+
+        console.debug('💥 NUCLEAR GLASSMORPHISM APPLIED TO', allCards.length, 'CARDS');
+        console.debug('🌞 DARK THEME PERMANENTLY DISABLED');
+
+        console.debug('Dashboard initialization complete');
+    });
+</script>
+{% endblock %}

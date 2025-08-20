@@ -1,0 +1,83 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Preview Flask app (mobile test)",
+			"command": "python run.py",
+			"group": "test",
+			"isBackground": true,
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "Flask db migrate upgrade (sqlite quick)",
+			"type": "shell",
+			"command": "$env:DATABASE_URL = 'sqlite:///paycrypt_dev.db'; flask db upgrade",
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Flask db migrate + upgrade (sqlite)",
+			"type": "shell",
+			"command": "$env:DATABASE_URL = 'sqlite:///paycrypt_dev.db'; $env:FLASK_APP='wsgi.py'; flask db migrate -m \"add payment_session\"; flask db upgrade",
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Flask db migrate + upgrade (sqlite)",
+			"type": "shell",
+			"command": "$env:DATABASE_URL = 'sqlite:///paycrypt_dev.db'; $env:FLASK_APP='wsgi.py'; flask db migrate -m \"add payment_session\"; flask db upgrade",
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Flask migrate (sqlite)",
+			"type": "shell",
+			"command": "$env:DATABASE_URL='sqlite:///paycrypt_dev.db'; $env:FLASK_APP='wsgi.py'; & .\\venv\\Scripts\\flask.exe db migrate -m 'add_payment_sessions'; & .\\venv\\Scripts\\flask.exe db upgrade",
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Flask migrate upgrade (sqlite, venv)",
+			"type": "shell",
+			"command": "$env:DATABASE_URL='sqlite:///paycrypt_dev.db'; $env:FLASK_APP='wsgi.py'; & .\\venv\\Scripts\\flask.exe db migrate -m 'add_payment_sessions'; if ($LASTEXITCODE -eq 0) { & .\\venv\\Scripts\\flask.exe db upgrade }",
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Flask migrate upgrade (sqlite, venv) 2",
+			"type": "shell",
+			"command": "$env:DATABASE_URL='sqlite:///paycrypt_dev.db'; $env:FLASK_APP='wsgi.py'; & .\\venv\\Scripts\\flask.exe db migrate -m 'add_payment_sessions'; if ($LASTEXITCODE -eq 0) { & .\\venv\\Scripts\\flask.exe db upgrade }",
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Flask upgrade only (sqlite, venv)",
+			"type": "shell",
+			"command": "$env:DATABASE_URL='sqlite:///paycrypt_dev.db'; $env:FLASK_APP='wsgi.py'; & .\\venv\\Scripts\\flask.exe db upgrade",
+			"isBackground": false,
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
+		}
+	]
+}

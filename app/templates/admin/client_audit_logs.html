@@ -1,0 +1,155 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}{{ _('Client Audit Logs') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+<h1 class="h3 mb-4 text-gray-800">{{ _('Client Audit Logs') }}</h1>
+    
+    <!-- Client Management Navigation -->
+    <div class="mb-3">
+        <ul class="nav nav-pills flex-wrap">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.view_client', client_id=client.id) }}">
+                    <i class="fas fa-user me-2"></i>{{ _('Overview') }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_commission', client_id=client.id) }}">
+                    <i class="fas fa-percent me-2"></i>{{ _('Commission') }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_branding', client_id=client.id) }}">
+                    <i class="fas fa-paint-brush me-2"></i>{{ _('Branding') }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_rate_limits', client_id=client.id) }}">
+                    <i class="fas fa-gauge-high me-2"></i>{{ _('Rate Limits') }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_api_keys', client_id=client.id) }}">
+                    <i class="fas fa-key me-2"></i>{{ _('API Keys') }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('admin.clients_audit_logs', client_id=client.id) }}">
+                    <i class="fas fa-history me-2"></i>{{ _('Audit Logs') }}
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!-- End Client Management Navigation -->
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>{{ _('Audit Logs for') }} {{ client.company_name or client.name or client.email }}</strong>
+            <small class="text-muted">{{ _('Showing recent API activity') }}</small>
+        </div>
+        <div class="card-body">
+            {% if logs.items %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Timestamp') }}</th>
+                            <th>{{ _('Endpoint') }}</th>
+                            <th>{{ _('Method') }}</th>
+                            <th>{{ _('Status') }}</th>
+                            <th>IP Address</th>
+                            <th>User Agent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs.items %}
+                        <tr>
+                            <td>
+                                <small>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <code>{{ log.endpoint or 'N/A' }}</code>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ log.method or 'N/A' }}</span>
+                            </td>
+                            <td>
+                                {% if log.status_code %}
+                                    {% if log.status_code < 300 %}
+                                        <span class="badge bg-success">{{ log.status_code }}</span>
+                                    {% elif log.status_code < 400 %}
+                                        <span class="badge bg-warning">{{ log.status_code }}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">{{ log.status_code }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ log.ip_address or 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <small class="text-truncate" style="max-width: 200px;" title="{{ log.user_agent or 'N/A' }}">
+                                    {{ log.user_agent or 'N/A' }}
+                                </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if logs.pages > 1 %}
+            <nav aria-label="Audit logs pagination">
+                <ul class="pagination justify-content-center">
+                    {% if logs.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.clients_audit_logs', client_id=client.id, page=logs.prev_num) }}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in logs.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != logs.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.clients_audit_logs', client_id=client.id, page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if logs.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.clients_audit_logs', client_id=client.id, page=logs.next_num) }}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>No audit logs found.</strong> This client hasn't made any API requests yet.
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-2 mt-3">
+                <a href="{{ url_for('admin.view_client', client_id=client.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Client
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

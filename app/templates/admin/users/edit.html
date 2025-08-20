@@ -1,0 +1,33 @@
+{% extends "admin/users/form.html" %}
+
+{% set title = 'Edit User: ' + user.username %}
+
+{% block title %}{{ title }} - Admin Dashboard{% endblock %}
+
+{% block content %}
+    {{ super() }}
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        // Only require password if it's being changed
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordField = document.getElementById('{{ form.password.id }}');
+            const confirmField = document.getElementById('{{ form.confirm_password.id }}');
+            
+            // Make password fields not required by default for editing
+            passwordField.required = false;
+            confirmField.required = false;
+            
+            // Toggle required attribute based on password field content
+            passwordField.addEventListener('input', function() {
+                if (this.value) {
+                    confirmField.required = true;
+                } else {
+                    confirmField.required = false;
+                }
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Backup & Restore - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Backup & Restore</h1>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Database Backup Card -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-database me-2"></i>Database Backup
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Create a complete backup of your database including all transactions, users, and settings.
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="font-weight-bold">Backup Options</h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="includeMedia" checked>
+                            <label class="form-check-label" for="includeMedia">
+                                Include media files (user uploads, etc.)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="encryptBackup">
+                            <label class="form-check-label" for="encryptBackup">
+                                Encrypt backup file with password
+                            </label>
+                        </div>
+                        <div class="mt-2" id="passwordField" style="display: none;">
+                            <label for="backupPassword" class="form-label">Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="backupPassword" placeholder="Enter password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary w-100" id="createBackupBtn">
+                        <i class="bi bi-download me-2"></i>Create Backup Now
+                    </button>
+                    
+                    <div class="progress mt-3 d-none" id="backupProgress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Restore Database Card -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-warning">
+                    <h6 class="m-0 font-weight-bold text-dark">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>Restore Database
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Warning:</strong> Restoring from a backup will overwrite all existing data. This action cannot be undone.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="backupFile" class="form-label">Select backup file</label>
+                        <input class="form-control" type="file" id="backupFile" accept=".sql,.sql.gz,.backup">
+                        <div class="form-text">Only .sql, .sql.gz, or .backup files are supported.</div>
+                    </div>
+                    
+                    <div class="mb-3" id="restorePasswordField" style="display: none;">
+                        <label for="restorePassword" class="form-label">Backup Password</label>
+                        <input type="password" class="form-control" id="restorePassword" placeholder="Enter backup password">
+                    </div>
+                    
+                    <button class="btn btn-warning w-100" id="restoreBtn" disabled>
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>Restore from Backup
+                    </button>
+                    
+                    <div class="progress mt-3 d-none" id="restoreProgress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Backup History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-clock-history me-2"></i>Backup History
+                    </h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="backupHistoryActions" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-gear me-1"></i>Actions
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="backupHistoryActions">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-download me-2"></i>Download All</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-trash me-2"></i>Delete Old Backups</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-arrow-repeat me-2"></i>Refresh</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="backupHistoryTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Backup Date</th>
+                                    <th>File Name</th>
+                                    <th>Size</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2023-06-20 00:00:00</td>
+                                    <td>backup_20230620_0000.sql.gz</td>
+                                    <td>45.2 MB</td>
+                                    <td>Full</td>
+                                    <td><span class="badge bg-success">Completed</span></td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" title="Download">
+                                                <i class="bi bi-download"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- More backup history rows would go here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        // Toggle password field for backup encryption
+        $('#encryptBackup').change(function() {
+            if(this.checked) {
+                $('#passwordField').slideDown();
+            } else {
+                $('#passwordField').slideUp();
+            }
+        });
+        
+        // Toggle password visibility
+        $('#togglePassword').on('click', function() {
+            const passwordField = $('#backupPassword');
+            const icon = $(this).find('i');
+            const type = passwordField.attr('type') === 'password' ? 'text' : 'password';
+            passwordField.attr('type', type);
+            icon.toggleClass('bi-eye bi-eye-slash');
+        });
+        
+        // Handle file selection for restore
+        $('#backupFile').on('change', function() {
+            const fileName = $(this).val().split('\\').pop();
+            if (fileName) {
+                $('#restoreBtn').prop('disabled', false);
+                // Check if file might be encrypted
+                if (fileName.endsWith('.enc')) {
+                    $('#restorePasswordField').show();
+                } else {
+                    $('#restorePasswordField').hide();
+                }
+            } else {
+                $('#restoreBtn').prop('disabled', true);
+            }
+        });
+        
+        // Simulate backup process
+        $('#createBackupBtn').on('click', function() {
+            const $btn = $(this);
+            const $progress = $('#backupProgress');
+            
+            $btn.prop('disabled', true);
+            $progress.removeClass('d-none');
+            
+            // Simulate progress
+            let width = 0;
+            const interval = setInterval(function() {
+                width += 5;
+                $progress.find('.progress-bar').css('width', width + '%');
+                
+                if (width >= 100) {
+                    clearInterval(interval);
+                    setTimeout(function() {
+                        $btn.prop('disabled', false);
+                        showToast('Backup created successfully!', 'success');
+                        $progress.addClass('d-none');
+                        $progress.find('.progress-bar').css('width', '0%');
+                    }, 500);
+                }
+            }, 100);
+        });
+        
+        // Initialize DataTable for backup history
+        $('#backupHistoryTable').DataTable({
+            "order": [[0, "desc"]],
+            "pageLength": 10,
+            "responsive": true
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

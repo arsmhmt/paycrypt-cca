@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}⛽ Gas Price Tracker - Real-time Gas Fees for Ethereum, BSC, Polygon | PayCrypt{% endblock %}
+
+{% block head %}
+<!-- SEO Meta Tags for Gas Tracker -->
+<meta name="description" content="⛽ Track real-time gas prices across Ethereum, BSC, Polygon, Arbitrum, and Avalanche. Get optimal timing recommendations, gas fee predictions, and save money on blockchain transactions.">
+<meta name="keywords" content="gas price tracker, ethereum gas fees, BSC gas prices, polygon gas tracker, real-time gas prices, gas fee calculator, blockchain gas costs, optimal transaction timing, gas fee predictor, DeFi gas tracker, crypto gas prices">
+<meta name="author" content="PayCrypt - DeFi Analytics Tools">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://paycrypt.online/tools/gas-tracker">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paycrypt.online/tools/gas-tracker">
+<meta property="og:title" content="⛽ Gas Price Tracker - Real-time Gas Fees | PayCrypt">
+<meta property="og:description" content="⛽ Track real-time gas prices across all major blockchains. Get optimal timing recommendations and save money on transactions.">
+<meta property="og:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta property="og:site_name" content="PayCrypt DeFi Tools">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://paycrypt.online/tools/gas-tracker">
+<meta name="twitter:title" content="⛽ Gas Price Tracker - Real-time Gas Fees">
+<meta name="twitter:description" content="⛽ Save money on blockchain transactions with real-time gas price tracking and optimal timing recommendations.">
+<meta name="twitter:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta name="twitter:creator" content="@paycryptonline">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Gas Price Tracker",
+  "alternateName": "Blockchain Gas Fee Monitor",
+  "url": "https://paycrypt.online/tools/gas-tracker",
+  "description": "Real-time gas price tracker for Ethereum, BSC, Polygon, and other blockchains with optimal timing recommendations.",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "provider": {
+    "@type": "Organization",
+    "name": "PayCrypt",
+    "url": "https://paycrypt.online"
+  },
+  "featureList": [
+    "Real-time gas prices",
+    "Multi-chain support",
+    "Gas fee predictions",
+    "Optimal timing alerts",
+    "Historical gas data",
+    "Cost optimization",
+    "Transaction planning"
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="tool-icon me-3">
+                            <i class="fas fa-fire fa-2x"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title mb-1">Gas Tracker</h2>
+                            <p class="mb-0">Real-time gas prices across all chains with optimal timing recommendations</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chain Selection Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Select Chains to Monitor</label>
+                            <div class="row">
+                                {% for chain_id, chain_name in chains.items() %}
+                                    {% if chain_id in ['1', '56', '137', '42161', '43114', '10', '250'] %}
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="chains" value="{{ chain_id }}" 
+                                                   id="chain_{{ chain_id }}" 
+                                                   {% if chain_id in selected_chains %}checked{% endif %}>
+                                            <label class="form-check-label" for="chain_{{ chain_id }}">
+                                                {{ chain_name }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-sync me-2"></i>Update Gas Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gas Data -->
+    {% if gas_data %}
+    <div class="row">
+        {% for chain_id, data in gas_data.items() %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-link me-2"></i>{{ data.chain_name }}
+                    </h5>
+                    <span class="badge bg-{{ 'success' if data.gas_trend == 'falling' else 'warning' if data.gas_trend == 'stable' else 'danger' }}">
+                        {% if data.gas_trend == 'rising' %}↗️ Rising
+                        {% elif data.gas_trend == 'falling' %}↘️ Falling
+                        {% else %}➡️ Stable{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <!-- Current Gas Prices -->
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">Current Gas Prices (Gwei)</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-success bg-opacity-10 rounded">
+                                    <small class="text-muted d-block">Slow</small>
+                                    <strong class="text-success">{{ data.current_gas.slow }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-warning bg-opacity-10 rounded">
+                                    <small class="text-muted d-block">Standard</small>
+                                    <strong class="text-warning">{{ data.current_gas.standard }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-info bg-opacity-10 rounded">
+                                    <small class="text-muted d-block">Fast</small>
+                                    <strong class="text-info">{{ data.current_gas.fast }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-danger bg-opacity-10 rounded">
+                                    <small class="text-muted d-block">Instant</small>
+                                    <strong class="text-danger">{{ data.current_gas.instant }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">💡 Recommendation</h6>
+                        <div class="alert alert-info py-2 mb-0">
+                            <small>{{ data.recommended_time }}</small>
+                        </div>
+                    </div>
+
+                    <!-- Statistics -->
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <small class="text-muted d-block">24h Avg</small>
+                            <strong>{{ data.avg_24h }}</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">1h Pred</small>
+                            <strong class="text-{{ 'success' if data.prediction_1h < data.current_gas.standard else 'danger' }}">
+                                {{ data.prediction_1h }}
+                            </strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">6h Pred</small>
+                            <strong class="text-{{ 'success' if data.prediction_6h < data.current_gas.standard else 'danger' }}">
+                                {{ data.prediction_6h }}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        Peak: {{ data.peak_hours }} | 
+                        Cheapest: {{ data.cheapest_hours }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Gas Saving Tips -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Gas Optimization Tips
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">⏰ Timing Tips</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Trade during off-peak hours (weekends, early morning UTC)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Avoid major market events and news releases</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Monitor gas trends before making transactions</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">💰 Cost Reduction</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Use Layer 2 solutions (Arbitrum, Polygon)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Batch multiple transactions together</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Set custom gas limits to avoid overpaying</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-gas-pump fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Select chains to view gas data</h5>
+                    <p class="text-muted">Choose the blockchains you want to monitor for real-time gas prices</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.tool-icon {
+    background: rgba(255,255,255,0.2);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+</style>
+{% endblock %}

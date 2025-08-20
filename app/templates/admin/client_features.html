@@ -1,0 +1,306 @@
+{% extends 'admin/base.html' %}
+{% from 'admin/_form_helpers.html' import render_field, form_actions %}
+
+{% block title %}Manage Features - {{ client.company_name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="bi bi-toggles me-2"></i>Manage Features
+            </h1>
+            <p class="text-muted mb-0">{{ client.company_name }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.view_client', client_id=client.id) }}" class="btn btn-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Client
+            </a>
+            <a href="{{ url_for('admin.clients') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-list me-1"></i> All Clients
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="POST" action="">
+                {{ form.hidden_tag() }}
+
+                <!-- Current Package Info -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-box-seam me-2"></i>Current Package
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% if client.package %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ client.package.name }}</h5>
+                                <p class="text-muted mb-1">{{ client.package.description or 'No description available'
+                                    }}</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-tag me-1"></i>{{ client.package.client_type.value.title() }} Package
+                                    <span class="mx-2">|</span>
+                                    <i class="bi bi-cash me-1"></i>{{ client.package.price_display }}
+                                </small>
+                            </div>
+                            <span class="badge bg-primary fs-6">
+                                {{ client.package.features|length }} Features
+                            </span>
+                        </div>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Features marked below will override the package defaults. Unchecked features will be
+                            disabled even if included in the package.
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>No Package Assigned</strong><br>
+                            This client doesn't have a package assigned. You can manually enable features below.
+                            <a href="{{ url_for('admin.edit_client', client_id=client.id) }}" class="alert-link">
+                                Assign a package
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Feature Management -->
+                {% for category, features in features_by_category.items() %}
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i
+                                class="bi bi-{{ 'gear' if category == 'api' else 'graph-up' if category == 'analytics' else 'shield-check' if category == 'support' else 'grid-3x3-gap' }} me-2"></i>
+                            {{ category.title() if category else 'General' }} Features
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for feature in features %}
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check feature-item">
+                                    {% set field_name = 'feature_' + feature.id|string %}
+                                    {% if form[field_name] %}
+                                    {{ form[field_name](class="form-check-input feature-checkbox", id=field_name) }}
+                                    <label class="form-check-label" for="{{ field_name }}">
+                                        <strong>{{ feature.name }}</strong>
+                                        {% if feature.is_premium %}
+                                        <span class="badge bg-warning text-dark ms-1">Premium</span>
+                                        {% endif %}
+                                        {% if client.package and client.package.has_feature(feature.feature_key) %}
+                                        <span class="badge bg-info ms-1">In Package</span>
+                                        {% endif %}
+                                        <br>
+                                        <small class="text-muted">{{ feature.description or 'No description available'
+                                            }}</small>
+                                        <br>
+                                        <small class="text-secondary">
+                                            <code>{{ feature.feature_key }}</code>
+                                        </small>
+                                    </label>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Form Actions -->
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Changes will take effect immediately and may affect the client's access to features.
+                                </small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary" onclick="selectAllFeatures()">
+                                    Select All
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="deselectAllFeatures()">
+                                    Deselect All
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check2 me-1"></i>Update Features
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar with Feature Summary -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="bi bi-list-check me-2"></i>Feature Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Currently Enabled Features</h6>
+                        <div id="enabled-features-list">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Feature Categories</h6>
+                        {% for category, features in features_by_category.items() %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">{{ category.title() if category else 'General' }}</span>
+                            <span class="badge bg-secondary" id="category-{{ category or 'general' }}-count">
+                                0 / {{ features|length }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="bi bi-lightbulb me-1"></i>
+                            <strong>Tip:</strong> Premium features require appropriate package assignment for billing
+                            purposes.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Package Recommendation -->
+            {% if client.package %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="bi bi-lightbulb me-2"></i>Package Optimization
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-2">
+                        Based on enabled features, consider if the current package is optimal for this client.
+                    </p>
+                    <div class="d-grid">
+                        <a href="{{ url_for('admin.edit_client', client_id=client.id) }}"
+                            class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-box-seam me-1"></i>Review Package
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .feature-item {
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+        padding: 1rem;
+        background: #f8f9fc;
+        transition: all 0.2s ease;
+    }
+
+    .feature-item:hover {
+        background: #f1f3f6;
+        border-color: #d1d3e2;
+    }
+
+    .feature-item .form-check-input:checked~.form-check-label {
+        color: #5a5c69;
+    }
+
+    .feature-item .form-check-input:checked {
+        background-color: #5a5c69;
+        border-color: #5a5c69;
+    }
+
+    .feature-checkbox {
+        margin-top: 0.2rem;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        updateFeatureSummary();
+
+        // Add event listeners to all checkboxes
+        document.querySelectorAll('.feature-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateFeatureSummary);
+        });
+    });
+
+    function updateFeatureSummary() {
+        const enabledFeatures = [];
+        const categoryCounts = {};
+
+        // Initialize category counts
+        {% for category, features in features_by_category.items() %}
+        categoryCounts['{{ category or "general" }}'] = { enabled: 0, total: {{ features | length }
+    }};
+    {% endfor %}
+
+    // Count enabled features
+    document.querySelectorAll('.feature-checkbox:checked').forEach(checkbox => {
+        const label = checkbox.nextElementSibling;
+        const featureName = label.querySelector('strong').textContent;
+        enabledFeatures.push(featureName);
+
+        // Find category for this feature
+        const card = checkbox.closest('.card');
+        const categoryHeader = card.querySelector('.card-header h6').textContent.trim();
+        const category = categoryHeader.split(' ')[0].toLowerCase();
+
+        if (categoryCounts[category]) {
+            categoryCounts[category].enabled++;
+        }
+    });
+
+    // Update enabled features list
+    const enabledList = document.getElementById('enabled-features-list');
+    if (enabledFeatures.length === 0) {
+        enabledList.innerHTML = '<p class="text-muted small">No features enabled</p>';
+    } else {
+        enabledList.innerHTML = enabledFeatures.map(feature =>
+            `<span class="badge bg-primary me-1 mb-1">${feature}</span>`
+        ).join('');
+    }
+
+    // Update category counts
+    Object.keys(categoryCounts).forEach(category => {
+        const counter = document.getElementById(`category-${category}-count`);
+        if (counter) {
+            const count = categoryCounts[category];
+            counter.textContent = `${count.enabled} / ${count.total}`;
+            counter.className = count.enabled === count.total ? 'badge bg-success' :
+                count.enabled === 0 ? 'badge bg-secondary' : 'badge bg-warning';
+        }
+    });
+}
+
+    function selectAllFeatures() {
+        document.querySelectorAll('.feature-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updateFeatureSummary();
+    }
+
+    function deselectAllFeatures() {
+        document.querySelectorAll('.feature-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updateFeatureSummary();
+    }
+</script>
+{% endblock %}

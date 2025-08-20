@@ -1,0 +1,1878 @@
+{% extends "admin/base.html" %}
+{% set active_page = 'clients' %}
+
+{% block title %}{{ client.company_name }} - Client Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.list_clients') }}">Clients</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ client.company_name }}</li>
+            </ol>
+        </nav>
+        <div class="btn-group">
+            <a href="{{ url_for('admin.edit_client', client_id=client.id) }}" class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i> Edit Client
+            </a>
+            <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" 
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#regenerateApiKeyModal">
+                        <i class="bi bi-key me-2"></i>Regenerate API Key
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#exportDataModal">
+                        <i class="bi bi-download me-2"></i>Export Data
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#changePackageModal">
+                        <i class="bi bi-box me-2"></i>Change Package
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-{{ 'danger' if client.is_active else 'success' }}" 
+                       href="#" 
+                       onclick="return toggleClientStatus({{ client.id }}, {{ 'false' if client.is_active else 'true' }});">
+                        <i class="bi bi-{{ 'x-circle' if client.is_active else 'check-circle' }} me-2"></i>
+                        {{ 'Deactivate' if client.is_active else 'Activate' }} Client
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item text-danger" 
+                       href="#" 
+                       onclick="return confirmDelete({{ client.id }}, '{{ client.company_name|escapejs }}');">
+                        <i class="bi bi-trash me-2"></i>Delete Client
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Client Info -->
+        <div class="col-xl-4">
+            <!-- Client Card -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Client Information</h5>
+                    <span class="badge rounded-pill bg-{{ 'success' if client.is_active else 'secondary' }} bg-opacity-10 text-{{ 'success' if client.is_active else 'secondary' }} px-3 py-2">
+                        <i class="bi bi-{{ 'check-circle-fill' if client.is_active else 'x-circle-fill' }} me-1"></i>
+                        {{ 'Active' if client.is_active else 'Inactive' }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="avatar-xl bg-light rounded-circle p-3">
+                                <i class="bi bi-building fs-1 text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h4 class="mb-1">{{ client.company_name }}</h4>
+                            <p class="text-muted mb-0">Client ID: {{ client.id }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <h6 class="text-uppercase text-muted mb-3">Contact Information</h6>
+                        <dl class="row g-2 mb-0">
+                            <dt class="col-4">Email</dt>
+                            <dd class="col-8">
+                                <a href="mailto:{{ client.email }}" class="text-decoration-none">
+                                    {{ client.email }}
+                                </a>
+                            </dd>
+                            
+                            <dt class="col-4">Phone</dt>
+                            <dd class="col-8">{{ client.phone or '—' }}</dd>
+                            
+                            <dt class="col-4">Contact</dt>
+                            <dd class="col-8">{{ client.contact_person or '—' }}</dd>
+                            
+                            {% if client.contact_email %}
+                            <dt class="col-4">Contact Email</dt>
+                            <dd class="col-8">
+                                <a href="mailto:{{ client.contact_email }}" class="text-decoration-none">
+                                    {{ client.contact_email }}
+                                </a>
+                            </dd>
+                            {% endif %}
+                            
+                            {% if client.contact_phone %}
+                            <dt class="col-4">Contact Phone</dt>
+                            <dd class="col-8">{{ client.contact_phone }}</dd>
+                            {% endif %}
+                            
+                            <dt class="col-4">Website</dt>
+                            <dd class="col-8">
+                                {% if client.website %}
+                                    <a href="{{ client.website }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+                                        {{ client.website|truncate(25, true) }}
+                                    </a>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </dd>
+                            
+                            <dt class="col-4">Created</dt>
+                            <dd class="col-8">
+                                <span data-bs-toggle="tooltip" title="{{ client.created_at.strftime('%b %d, %Y %I:%M %p') }}">
+                                    {{ client.created_at.strftime('%b %d, %Y') }}
+                                </span>
+                            </dd>
+                            
+                            {% if client.last_login_at %}
+                            <dt class="col-4">Last Active</dt>
+                            <dd class="col-8">
+                                <span data-bs-toggle="tooltip" title="{{ client.last_login_at.strftime('%b %d, %Y %I:%M %p') }}">
+                                    {{ client.last_login_at.strftime('%b %d, %Y') }}
+                                </span>
+                            </dd>
+                            {% endif %}
+                        </dl>
+                    </div>
+                    
+                    {% if client.notes %}
+                    <div class="border-top pt-3 mt-3">
+                        <h6 class="text-uppercase text-muted mb-3">Notes</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ client.notes|nl2br }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        
+            <!-- API Access Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">API Access</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">API Key</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" value="{{ client.api_key }}" id="apiKey" readonly>
+                            <button class="btn btn-outline-secondary" type="button" id="toggleApiKey">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('apiKey')">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-shield-lock me-1"></i> Keep this key secure and never share it
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Webhook URL</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ client.webhook_url or 'Not configured' }}" readonly>
+                            {% if client.webhook_url %}
+                            <button class="btn btn-outline-secondary" type="button" onclick="testWebhook('{{ client.id }}')">
+                                <i class="bi bi-arrow-repeat"></i> Test
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i> Callback URL for payment notifications
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <label class="form-label small text-muted mb-1">Rate Limit</label>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1 me-3">
+                                <div class="progress" style="height: 6px;">
+                                    {% set usage_percent = (client.rate_limit_used / client.rate_limit * 100) if client.rate_limit else 0 %}
+                                    <div class="progress-bar bg-{{ 'success' if usage_percent < 70 else 'warning' if usage_percent < 90 else 'danger' }}" 
+                                         role="progressbar" 
+                                         style="width: {{ usage_percent }}%"
+                                         aria-valuenow="{{ client.rate_limit_used }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="{{ client.rate_limit }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-nowrap text-muted">
+                                {{ client.rate_limit_used }} / {{ client.rate_limit }} requests
+                            </small>
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Resets in <span id="rateLimitReset">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Client Status & Package Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Client Status & Package</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Current Package</label>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                {% if client.package %}
+                                    <span class="badge bg-primary bg-opacity-10 text-primary p-2 fs-6">
+                                        {{ client.package.name }}
+                                    </span>
+                                    <div class="form-text mt-1">
+                                        <i class="bi bi-{{ 'percent' if client.package.client_type.name == 'COMMISSION' else 'currency-dollar' }} me-1"></i>
+                                        {{ client.package.price_display }}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">No package assigned</span>
+                                {% endif %}
+                            </div>
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#changePackageModal">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Client Type</label>
+                        <div class="d-flex align-items-center">
+                            {% if client.package %}
+                                {% set client_type = client.package.client_type.name %}
+                                <span class="badge bg-{{ 'success' if client_type == 'COMMISSION' else 'info' }} bg-opacity-10 text-{{ 'success' if client_type == 'COMMISSION' else 'info' }} p-2">
+                                    <i class="bi bi-{{ 'building' if client_type == 'COMMISSION' else 'wallet2' }} me-1"></i>
+                                    {{ 'Commission-based' if client_type == 'COMMISSION' else 'Flat-rate' }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Not set</span>
+                            {% endif %}
+                        </div>
+                        <div class="form-text">
+                            {% if client.package and client.package.client_type.name == 'COMMISSION' %}
+                                Uses platform wallet, pays commission per transaction
+                            {% elif client.package and client.package.client_type.name == 'FLAT_RATE' %}
+                                Manages own wallet, pays flat monthly/annual fee
+                            {% else %}
+                                No client type assigned
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Account Status</label>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="badge rounded-pill bg-{{ 'success' if client.is_active else 'secondary' }} bg-opacity-10 text-{{ 'success' if client.is_active else 'secondary' }} px-3 py-2">
+                                <i class="bi bi-{{ 'check-circle-fill' if client.is_active else 'x-circle-fill' }} me-1"></i>
+                                {{ 'Active' if client.is_active else 'Inactive' }}
+                            </span>
+                            <button class="btn btn-outline-{{ 'danger' if client.is_active else 'success' }} btn-sm" 
+                                    onclick="toggleClientStatus({{ client.id }}, {{ 'false' if client.is_active else 'true' }})">
+                                <i class="bi bi-{{ 'x-circle' if client.is_active else 'check-circle' }} me-1"></i>
+                                {{ 'Deactivate' if client.is_active else 'Activate' }}
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {% if client.package and client.package.client_type.name == 'COMMISSION' %}
+                    <div class="mb-0">
+                        <label class="form-label small text-muted mb-1">Commission Rates</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-light rounded">
+                                    <small class="text-muted d-block">Deposit</small>
+                                    <span class="fw-semibold">{{ "%.2f"|format((client.deposit_commission_rate or 0) * 100) }}%</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-2 bg-light rounded">
+                                    <small class="text-muted d-block">Withdrawal</small>
+                                    <span class="fw-semibold">{{ "%.2f"|format((client.withdrawal_commission_rate or 0) * 100) }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Login Credentials Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Login Credentials</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Username</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ client.username or 'Not set' }}" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('clientUsername')" id="copyUsernameBtn" {% if not client.username %}disabled{% endif %}>
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" id="clientUsername" value="{{ client.username or '' }}">
+                        <div class="form-text">
+                            <i class="bi bi-person me-1"></i> Username for client dashboard login
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Password</label>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1 me-2">
+                                <span class="text-muted">••••••••••••</span>
+                                <small class="text-muted ms-2">
+                                    {% if client.password_hash %}
+                                        <i class="bi bi-check-circle-fill text-success me-1"></i>Set
+                                    {% else %}
+                                        <i class="bi bi-x-circle-fill text-danger me-1"></i>Not set
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="form-text">
+                            <i class="bi bi-shield-lock me-1"></i> Secure password for client dashboard access
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="resetClientPassword({{ client.id }})" {% if not client.password_hash %}disabled{% endif %}>
+                            <i class="bi bi-arrow-clockwise me-2"></i>Reset Password
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="generateClientPassword({{ client.id }})">
+                            <i class="bi bi-key me-2"></i>Generate New Password
+                        </button>
+                        {% if not client.username %}
+                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#setUsernameModal">
+                            <i class="bi bi-person-plus me-2"></i>Set Username
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary text-start" data-bs-toggle="modal" data-bs-target="#sendMessageModal">
+                            <i class="bi bi-envelope me-2"></i> Send Message
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary text-start" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                            <i class="bi bi-pencil-square me-2"></i> Add Note
+                        </a>
+                        <a href="#" class="btn btn-outline-info text-start" data-bs-toggle="modal" data-bs-target="#generateReportModal">
+                            <i class="bi bi-file-earmark-bar-graph me-2"></i> Generate Report
+                        </a>
+                        <a href="#" class="btn btn-outline-warning text-start" data-bs-toggle="modal" data-bs-target="#adjustLimitsModal">
+                            <i class="bi bi-sliders me-2"></i> Adjust Limits
+                        </a>
+                    </div>
+                </div>
+            </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="col-xl-8">
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-uppercase text-muted mb-0">Total Volume</h6>
+                            <span class="badge bg-soft-primary text-primary">30d</span>
+                        </div>
+                        <h3 class="mb-0">${{ "%0.2f"|format((payment_stats.total or 0) + (withdrawal_stats.total or 0)) }}</h3>
+                        <p class="text-muted mb-0">
+                            <span class="text-{{ 'success' if payment_stats.count > 0 else 'muted' }}">
+                                {{ payment_stats.count or 0 }} payments
+                            </span>
+                            <span class="mx-1">•</span>
+                            <span class="text-{{ 'success' if withdrawal_stats.count > 0 else 'muted' }}">
+                                {{ withdrawal_stats.count or 0 }} withdrawals
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-uppercase text-muted mb-0">Fees Earned</h6>
+                            <span class="badge bg-soft-success text-success">30d</span>
+                        </div>
+                        <h3 class="mb-0">${{ "%0.2f"|format((payment_stats.fees or 0) + (withdrawal_stats.fees or 0)) }}</h3>
+                        <p class="text-muted mb-0">
+                            <span class="text-{{ 'success' if payment_stats.fees > 0 else 'muted' }}">
+                                ${{ "%0.2f"|format(payment_stats.fees or 0) }} payments
+                            </span>
+                            <span class="mx-1">•</span>
+                            <span class="text-{{ 'success' if withdrawal_stats.fees > 0 else 'muted' }}">
+                                ${{ "%0.2f"|format(withdrawal_stats.fees or 0) }} withdrawals
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-uppercase text-muted mb-0">Avg. Payment</h6>
+                            <i class="bi bi-currency-dollar text-primary"></i>
+                        </div>
+                        <h3 class="mb-0">
+                            ${{ "%0.2f"|format((payment_stats.total / payment_stats.count) if payment_stats.count > 0 else 0) }}
+                        </h3>
+                        <p class="text-muted mb-0">
+                            <span class="text-{{ 'success' if payment_stats.count > 0 else 'muted' }}">
+                                {{ payment_stats.count or 0 }} payments
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-xl-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-uppercase text-muted mb-0">Success Rate</h6>
+                            <div class="spinner-grow spinner-grow-sm text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <h3 class="mb-0">98.5%</h3>
+                        <p class="text-muted mb-0">
+                            <span class="text-success">↑ 2.4%</span> from last month
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Volume Chart -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Payment Volume (6 months)</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                            id="chartRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Last 6 Months
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chartRangeDropdown">
+                        <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+                        <li><a class="dropdown-item active" href="#">Last 6 Months</a></li>
+                        <li><a class="dropdown-item" href="#">This Year</a></li>
+                        <li><a class="dropdown-item" href="#">All Time</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="volumeChart" height="300"></canvas>
+            </div>
+        </div>
+        
+        <!-- Activity Tabs -->
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="transactions-tab" data-bs-toggle="tab" 
+                                data-bs-target="#transactions" type="button" role="tab" 
+                                aria-controls="transactions" aria-selected="true">
+                            <i class="bi bi-arrow-left-right me-1"></i> Transactions
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="finance-tab" data-bs-toggle="tab" 
+                                data-bs-target="#finance" type="button" role="tab" 
+                                aria-controls="finance" aria-selected="false">
+                            <i class="bi bi-cash-coin me-1"></i> Finance
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="withdrawals-tab" data-bs-toggle="tab" 
+                                data-bs-target="#withdrawals" type="button" role="tab" 
+                                aria-controls="withdrawals" aria-selected="false">
+                            <i class="bi bi-arrow-up-right-circle me-1"></i> Withdrawals
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="audit-tab" data-bs-toggle="tab" 
+                                data-bs-target="#audit" type="button" role="tab" 
+                                aria-controls="audit" aria-selected="false">
+                            <i class="bi bi-journal-text me-1"></i> Audit Log
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="api-tab" data-bs-toggle="tab" 
+                                data-bs-target="#api" type="button" role="tab" 
+                                aria-controls="api" aria-selected="false">
+                            <i class="bi bi-hdd-network me-1"></i> API Usage
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" 
+                                data-bs-target="#settings" type="button" role="tab" 
+                                aria-controls="settings" aria-selected="false">
+                            <i class="bi bi-gear me-1"></i> Settings
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body p-0">
+                <div class="tab-content">
+                    <!-- Transactions Tab -->
+                    <div class="tab-pane fade show active" id="transactions" role="tabpanel" 
+                         aria-labelledby="transactions-tab">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if recent_payments or recent_withdrawals %}
+                                        {% for payment in recent_payments %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-xs me-2">
+                                                        <span class="avatar-title bg-soft-primary text-primary rounded">
+                                                            <i class="bi bi-arrow-down-circle"></i>
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">
+                                                            {{ payment.created_at.strftime('%b %d, %Y') }}
+                                                        </h6>
+                                                        <small class="text-muted">
+                                                            {{ payment.created_at.strftime('%I:%M %p') }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-soft-primary text-uppercase">
+                                                    {{ payment.currency }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">
+                                                    ${{ "%0.2f"|format(payment.amount) }}
+                                                </div>
+                                                <small class="text-muted">
+                                                    Fee: ${{ "%0.2f"|format(payment.fee or 0) }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if payment.status == 'completed' else 'warning' if payment.status == 'pending' else 'danger' }} bg-opacity-10 text-{{ 'success' if payment.status == 'completed' else 'warning' if payment.status == 'pending' else 'danger' }} p-2">
+                                                    {{ payment.status|title }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <a href="#" class="btn btn-sm btn-light">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        
+                                        {% for withdrawal in recent_withdrawals %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-xs me-2">
+                                                        <span class="avatar-title bg-soft-danger text-danger rounded">
+                                                            <i class="bi bi-arrow-up-circle"></i>
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">
+                                                            {{ withdrawal.created_at.strftime('%b %d, %Y') }}
+                                                        </h6>
+                                                        <small class="text-muted">
+                                                            {{ withdrawal.created_at.strftime('%I:%M %p') }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-soft-danger text-uppercase">
+                                                    {{ withdrawal.currency }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">
+                                                    ${{ "%0.2f"|format(withdrawal.amount) }}
+                                                </div>
+                                                <small class="text-muted">
+                                                    Fee: ${{ "%0.2f"|format(withdrawal.fee or 0) }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if withdrawal.status == 'completed' else 'warning' if withdrawal.status == 'pending' else 'danger' }} bg-opacity-10 text-{{ 'success' if withdrawal.status == 'completed' else 'warning' if withdrawal.status == 'pending' else 'danger' }} p-2">
+                                                    {{ withdrawal.status|title }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <a href="#" class="btn btn-sm btn-light">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">
+                                                <div class="text-muted">No recent transactions found</div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between align-items-center">
+                            <div class="text-muted small">
+                                Showing <span class="fw-semibold">{{ (recent_payments|length) + (recent_withdrawals|length) }}</span> of 
+                                <span class="fw-semibold">{{ client.payments.count() + client.withdrawal_requests.count() }}</span> transactions
+                            </div>
+                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                View All Transactions
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Finance Tab -->
+                    <div class="tab-pane fade" id="finance" role="tabpanel" aria-labelledby="finance-tab">
+                        <div class="p-4">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">Current Balance</h5>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <h2 class="display-5 fw-bold mb-3">{{ "%.8f"|format(balance|default(0)) }} <small class="text-muted">BTC</small></h2>
+                                            <div class="d-flex justify-content-around">
+                                                <div class="text-center">
+                                                    <div class="text-muted small">Available</div>
+                                                    <div class="h5 mb-0">{{ "%.8f"|format(balance|default(0)) }} BTC</div>
+                                                </div>
+                                                <div class="text-center">
+                                                    <div class="text-muted small">In Escrow</div>
+                                                    <div class="h5 mb-0">0.00000000 BTC</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">Commission Rates</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <form method="POST" action="{{ url_for('client.update_commission_rates', client_id=client.id) }}">
+                                                <div class="mb-3">
+                                                    <label for="depositCommission" class="form-label">Deposit Commission</label>
+                                                    <div class="input-group">
+                                                        <input type="number" step="0.0001" min="0" max="1" 
+                                                               class="form-control" id="depositCommission" 
+                                                               name="deposit_commission" 
+                                                               value="{{ '%.4f'|format(client.deposit_commission * 100) }}">
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="withdrawalCommission" class="form-label">Withdrawal Commission</label>
+                                                    <div class="input-group">
+                                                        <input type="number" step="0.0001" min="0" max="1" 
+                                                               class="form-control" id="withdrawalCommission" 
+                                                               name="withdrawal_commission" 
+                                                               value="{{ '%.4f'|format(client.withdrawal_commission * 100) }}">
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="bi bi-save me-1"></i> Save Rates
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Transaction Summary</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Type</th>
+                                                    <th class="text-end">Volume (BTC)</th>
+                                                    <th class="text-end">Commission Rate</th>
+                                                    <th class="text-end">Commission (BTC)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Deposits</td>
+                                                    <td class="text-end">{{ "%.8f"|format(deposits|default(0)) }}</td>
+                                                    <td class="text-end">{{ "%.2f"|format(client.deposit_commission * 100) }}%</td>
+                                                    <td class="text-end">{{ "%.8f"|format(deposit_comm|default(0)) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Withdrawals</td>
+                                                    <td class="text-end">{{ "%.8f"|format(withdrawals|default(0)) }}</td>
+                                                    <td class="text-end">{{ "%.2f"|format(client.withdrawal_commission * 100) }}%</td>
+                                                    <td class="text-end">{{ "%.8f"|format(withdrawal_comm|default(0)) }}</td>
+                                                </tr>
+                                                <tr class="table-light fw-bold">
+                                                    <td>Total</td>
+                                                    <td class="text-end">{{ "%.8f"|format((deposits|default(0)) + (withdrawals|default(0))) }}</td>
+                                                    <td class="text-end"></td>
+                                                    <td class="text-end">{{ "%.8f"|format((deposit_comm|default(0)) + (withdrawal_comm|default(0))) }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Recent Commission Transactions</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    {% if recent_commissions %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Type</th>
+                                                        <th class="text-end">Amount</th>
+                                                        <th class="text-end">Commission</th>
+                                                        <th class="text-end">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for tx in recent_commissions %}
+                                                    <tr>
+                                                        <td>{{ tx.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                                        <td>
+                                                            {% if tx.type == 'deposit' %}
+                                                                <span class="badge bg-soft-info text-info">Deposit</span>
+                                                            {% else %}
+                                                                <span class="badge bg-soft-warning text-warning">Withdrawal</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="text-end">{{ "%.8f"|format(tx.amount) }} BTC</td>
+                                                        <td class="text-end">{{ "%.8f"|format(tx.commission) }} BTC</td>
+                                                        <td class="text-end">
+                                                            <span class="badge bg-soft-{{ 'success' if tx.status == 'completed' else 'warning' }}">
+                                                                {{ tx.status|title }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center p-4">
+                                            <div class="text-muted">No commission transactions found</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <div class="text-muted small">
+                                        Showing {{ recent_commissions|length }} of {{ total_commissions|default(0) }} transactions
+                                    </div>
+                                    <a href="#" class="btn btn-sm btn-outline-primary">View All Transactions</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Withdrawals Tab -->
+                    <div class="tab-pane fade" id="withdrawals" role="tabpanel" aria-labelledby="withdrawals-tab">
+                        <div class="p-4">
+                            {% if client.package and client.package.client_type.name == 'COMMISSION' %}
+                            <!-- Commission-based Client Withdrawals -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">Client Net Balance</h5>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <h2 class="display-6 fw-bold mb-3 text-success">
+                                                ${{ "%.2f"|format(client_net_balance|default(0)) }}
+                                            </h2>
+                                            <p class="text-muted mb-3">
+                                                Available for withdrawal
+                                            </p>
+                                            <div class="d-grid">
+                                                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createWithdrawalModal">
+                                                    <i class="bi bi-plus-circle me-2"></i>Create Withdrawal Request
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">Balance Calculation</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Total User Deposits:</span>
+                                                    <span class="fw-semibold text-success">+${{ "%.2f"|format(total_user_deposits|default(0)) }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Total User Withdrawals:</span>
+                                                    <span class="fw-semibold text-danger">-${{ "%.2f"|format(total_user_withdrawals|default(0)) }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Our Commission:</span>
+                                                    <span class="fw-semibold text-warning">-${{ "%.2f"|format(total_commission|default(0)) }}</span>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <div class="d-flex justify-content-between fw-bold">
+                                                <span>Net Balance:</span>
+                                                <span class="text-success">${{ "%.2f"|format(client_net_balance|default(0)) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Withdrawal Types -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Type A: Commission-based Withdrawals</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="small text-muted mb-3">
+                                                User withdrawal requests that will have commission deducted from client balance.
+                                            </p>
+                                            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#createUserWithdrawalModal">
+                                                <i class="bi bi-person-plus me-1"></i> Process User Withdrawal
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Type B: Net Balance Withdrawals</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="small text-muted mb-3">
+                                                Client requests to withdraw from their net balance (no commission).
+                                            </p>
+                                            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createNetWithdrawalModal">
+                                                <i class="bi bi-building me-1"></i> Client Net Withdrawal
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% else %}
+                            <!-- Flat-rate Client Info -->
+                            <div class="text-center py-5">
+                                <i class="bi bi-wallet2 display-4 text-muted mb-3"></i>
+                                <h4>Flat-rate Client</h4>
+                                <p class="text-muted mb-0">
+                                    This client manages their own wallet. Withdrawal management is done through their dashboard.
+                                </p>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Withdrawal Requests Table -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Recent Withdrawal Requests</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    {% if withdrawal_requests %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Type</th>
+                                                        <th>Amount</th>
+                                                        <th>Commission</th>
+                                                        <th>Status</th>
+                                                        <th class="text-end">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for withdrawal in withdrawal_requests %}
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex flex-column">
+                                                                <span class="fw-semibold">{{ withdrawal.created_at.strftime('%b %d, %Y') }}</span>
+                                                                <small class="text-muted">{{ withdrawal.created_at.strftime('%I:%M %p') }}</small>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-{{ 'info' if withdrawal.type == 'user' else 'primary' }} bg-opacity-10 text-{{ 'info' if withdrawal.type == 'user' else 'primary' }} p-2">
+                                                                {{ 'Type A (User)' if withdrawal.type == 'user' else 'Type B (Net)' }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <div class="fw-semibold">${{ "%.2f"|format(withdrawal.amount) }}</div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="fw-semibold text-warning">
+                                                                ${{ "%.2f"|format(withdrawal.commission|default(0)) }}
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-{{ 'warning' if withdrawal.status == 'pending' else 'success' if withdrawal.status == 'completed' else 'danger' }} bg-opacity-10 text-{{ 'warning' if withdrawal.status == 'pending' else 'success' if withdrawal.status == 'completed' else 'danger' }} p-2">
+                                                                {{ withdrawal.status|title }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <div class="btn-group">
+                                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewWithdrawalModal{{ withdrawal.id }}">
+                                                                    <i class="bi bi-eye"></i>
+                                                                </button>
+                                                                {% if withdrawal.status == 'pending' %}
+                                                                <button class="btn btn-sm btn-outline-success" onclick="approveWithdrawal({{ withdrawal.id }})">
+                                                                    <i class="bi bi-check"></i>
+                                                                </button>
+                                                                <button class="btn btn-sm btn-outline-danger" onclick="rejectWithdrawal({{ withdrawal.id }})">
+                                                                    <i class="bi bi-x"></i>
+                                                                </button>
+                                                                {% endif %}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center p-4">
+                                            <div class="text-muted">No withdrawal requests found</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <div class="text-muted small">
+                                        Showing {{ withdrawal_requests|length if withdrawal_requests else 0 }} withdrawal requests
+                                    </div>
+                                    <a href="#" class="btn btn-sm btn-outline-primary">View All Withdrawals</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Audit Log Tab -->
+                    <div class="tab-pane fade" id="audit" role="tabpanel" aria-labelledby="audit-tab">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Action</th>
+                                        <th>Details</th>
+                                        <th>User</th>
+                                        <th>IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if audit_logs %}
+                                        {% for log in audit_logs %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <span class="fw-semibold">{{ log.created_at.strftime('%b %d, %Y') }}</span>
+                                                    <small class="text-muted">{{ log.created_at.strftime('%I:%M %p') }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ 'primary' if log.action == 'create' else 'success' if log.action == 'update' else 'danger' if log.action == 'delete' else 'info' }} bg-opacity-10 text-{{ 'primary' if log.action == 'create' else 'success' if log.action == 'update' else 'danger' if log.action == 'delete' else 'info' }} p-2">
+                                                    {{ log.action|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="text-wrap" style="max-width: 300px;">
+                                                    {{ log.details|truncate(60) }}
+                                                    {% if log.details|length > 60 %}
+                                                    <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#auditDetailsModal{{ loop.index }}">
+                                                        More
+                                                    </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-xs me-2">
+                                                        <span class="avatar-title bg-soft-secondary rounded-circle">
+                                                            <i class="bi bi-person"></i>
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-semibold">{{ log.user.username if log.user else 'System' }}</div>
+                                                        <small class="text-muted">{{ log.user.role|default('System')|title }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="font-monospace">{{ log.ip_address or 'N/A' }}</span>
+                                            </td>
+                                        </tr>
+                                        
+                                        <!-- Audit Details Modal -->
+                                        <div class="modal fade" id="auditDetailsModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Audit Log Details</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <h6 class="text-muted mb-2">Action Details</h6>
+                                                            <pre class="bg-light p-3 rounded">{{ log.details|tojson(indent=2) }}</pre>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <h6 class="text-muted mb-2">Metadata</h6>
+                                                                <dl class="mb-0">
+                                                                    <dt>Action</dt>
+                                                                    <dd>{{ log.action|title }}</dd>
+                                                                    <dt>Model</dt>
+                                                                    <dd>{{ log.model|default('N/A') }}</dd>
+                                                                    <dt>Record ID</dt>
+                                                                    <dd>{{ log.record_id|default('N/A') }}</dd>
+                                                                </dl>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <h6 class="text-muted mb-2">User Info</h6>
+                                                                <dl class="mb-0">
+                                                                    <dt>User</dt>
+                                                                    <dd>{{ log.user.username if log.user else 'System' }}</dd>
+                                                                    <dt>Role</dt>
+                                                                    <dd>{{ log.user.role|default('System')|title if log.user else 'System' }}</dd>
+                                                                    <dt>IP Address</dt>
+                                                                    <dd>{{ log.ip_address or 'N/A' }}</dd>
+                                                                    <dt>User Agent</dt>
+                                                                    <dd class="text-truncate" style="max-width: 250px;" title="{{ log.user_agent or 'N/A' }}">
+                                                                        {{ log.user_agent or 'N/A' }}
+                                                                    </dd>
+                                                                </dl>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">
+                                                <div class="text-muted">No audit logs found</div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between align-items-center">
+                            <div class="text-muted small">
+                                Showing <span class="fw-semibold">{{ audit_logs|length }}</span> of 
+                                <span class="fw-semibold">{{ client.audit_logs.count() if client.audit_logs else 0 }}</span> audit logs
+                            </div>
+                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                View All Logs
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- API Usage Tab -->
+                    <div class="tab-pane fade" id="api" role="tabpanel" aria-labelledby="api-tab">
+                        <div class="p-4 text-center">
+                            <div class="mb-4">
+                                <i class="bi bi-graph-up-arrow display-4 text-muted mb-3"></i>
+                                <h4>API Analytics</h4>
+                                <p class="text-muted">Detailed API usage statistics and analytics</p>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 col-lg-3 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="text-uppercase text-muted mb-2">Total Requests</h6>
+                                            <h3 class="mb-0">12,485</h3>
+                                            <div class="mt-2">
+                                                <span class="badge bg-soft-success text-success">
+                                                    <i class="bi bi-arrow-up"></i> 12.5%
+                                                </span>
+                                                <span class="text-muted ms-2">vs last month</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-3 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="text-uppercase text-muted mb-2">Success Rate</h6>
+                                            <h3 class="mb-0">99.8%</h3>
+                                            <div class="progress mt-3" style="height: 4px;">
+                                                <div class="progress-bar bg-success" role="progressbar" style="width: 99.8%" aria-valuenow="99.8" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-3 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="text-uppercase text-muted mb-2">Avg. Response</h6>
+                                            <h3 class="mb-0">128ms</h3>
+                                            <div class="mt-2">
+                                                <span class="badge bg-soft-danger text-danger">
+                                                    <i class="bi bi-arrow-down"></i> 5.2%
+                                                </span>
+                                                <span class="text-muted ms-2">vs last month</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-3 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h6 class="text-uppercase text-muted mb-2">Errors</h6>
+                                            <h3 class="mb-0">24</h3>
+                                            <div class="mt-2">
+                                                <span class="badge bg-soft-success text-success">
+                                                    <i class="bi bi-arrow-down"></i> 8.3%
+                                                </span>
+                                                <span class="text-muted ms-2">vs last month</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Endpoint Usage</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Endpoint</th>
+                                                    <th>Method</th>
+                                                    <th>Requests</th>
+                                                    <th>Success</th>
+                                                    <th>Avg. Time</th>
+                                                    <th>Last Used</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>/api/v1/payments</td>
+                                                    <td><span class="badge bg-soft-primary">POST</span></td>
+                                                    <td>4,582</td>
+                                                    <td>99.9%</td>
+                                                    <td>142ms</td>
+                                                    <td>2 min ago</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>/api/v1/payments/{id}</td>
+                                                    <td><span class="badge bg-soft-info">GET</span></td>
+                                                    <td>3,927</td>
+                                                    <td>100%</td>
+                                                    <td>98ms</td>
+                                                    <td>5 min ago</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>/api/v1/withdrawals</td>
+                                                    <td><span class="badge bg-soft-primary">POST</span></td>
+                                                    <td>2,153</td>
+                                                    <td>99.7%</td>
+                                                    <td>187ms</td>
+                                                    <td>12 min ago</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>/api/v1/balances</td>
+                                                    <td><span class="badge bg-soft-info">GET</span></td>
+                                                    <td>1,823</td>
+                                                    <td>100%</td>
+                                                    <td>76ms</td>
+                                                    <td>8 min ago</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <a href="#" class="btn btn-primary">
+                                    <i class="bi bi-graph-up me-1"></i> View Detailed Analytics
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Tab -->
+                    <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                        <div class="p-4">
+                            <form id="clientSettingsForm">
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <h5 class="mb-3">API Settings</h5>
+                                        <div class="mb-3">
+                                            <label class="form-label">API Rate Limit</label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" value="{{ client.rate_limit }}" name="rate_limit">
+                                                <span class="input-group-text">requests/minute</span>
+                                            </div>
+                                            <div class="form-text">
+                                                Maximum number of API requests allowed per minute
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Webhook URL</label>
+                                            <input type="url" class="form-control" value="{{ client.webhook_url }}" name="webhook_url">
+                                            <div class="form-text">
+                                                URL to receive payment notifications
+                                            </div>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="webhookActive" name="webhook_active" {% if client.webhook_active %}checked{% endif %}>
+                                            <label class="form-check-label" for="webhookActive">Enable Webhook Notifications</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5 class="mb-3">Security</h5>
+                                        <div class="mb-3">
+                                            <label class="form-label">Allowed IPs</label>
+                                            <textarea class="form-control" name="allowed_ips" rows="3" placeholder="Enter one IP per line">{{ client.allowed_ips|join('\n') if client.allowed_ips }}{% if not client.allowed_ips %}0.0.0.0/0{% endif %}</textarea>
+                                            <div class="form-text">
+                                                One IP or CIDR range per line. Leave blank to allow all IPs.
+                                            </div>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="ipRestriction" name="ip_restriction" {% if client.ip_restriction_enabled %}checked{% endif %}>
+                                            <label class="form-check-label" for="ipRestriction">Enable IP Restrictions</label>
+                                        </div>
+                                        <div class="alert alert-warning mb-0">
+                                            <i class="bi bi-exclamation-triangle me-2"></i>
+                                            Changes to these settings may affect your integration. Test thoroughly in a development environment first.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-light me-2">Reset</button>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create User Withdrawal Modal (Type A) -->
+<div class="modal fade" id="createUserWithdrawalModal" tabindex="-1" aria-labelledby="createUserWithdrawalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createUserWithdrawalModalLabel">Process User Withdrawal (Type A)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createUserWithdrawalForm" action="{{ url_for('client.create_user_withdrawal', client_id=client.id) }}" method="post">
+                <div class="modal-body">
+                    <p>Process a withdrawal request from a user on <strong>{{ client.company_name }}</strong>'s platform:</p>
+                    <div class="mb-3">
+                        <label for="userWithdrawalAmount" class="form-label">Withdrawal Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" step="0.01" class="form-control" id="userWithdrawalAmount" 
+                                   name="amount" required placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userWithdrawalCommission" class="form-label">Commission Rate</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" id="userWithdrawalCommission" 
+                                   name="commission_rate" value="{{ (client.withdrawal_commission_rate or 0) * 100 }}" required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text">Commission will be deducted from client balance</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userWithdrawalAddress" class="form-label">Destination Address</label>
+                        <input type="text" class="form-control" id="userWithdrawalAddress" 
+                               name="destination_address" required placeholder="Withdrawal address">
+                    </div>
+                    <div class="mb-3">
+                        <label for="userWithdrawalNotes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="userWithdrawalNotes" name="notes" rows="2" 
+                                  placeholder="Internal notes for this withdrawal..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check me-1"></i> Process Withdrawal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Net Withdrawal Modal (Type B) -->
+<div class="modal fade" id="createNetWithdrawalModal" tabindex="-1" aria-labelledby="createNetWithdrawalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createNetWithdrawalModalLabel">Client Net Balance Withdrawal (Type B)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createNetWithdrawalForm" action="{{ url_for('client.create_net_withdrawal', client_id=client.id) }}" method="post">
+                <div class="modal-body">
+                    <p>Create a withdrawal request for <strong>{{ client.company_name }}</strong> from their net balance:</p>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Available Balance:</strong> ${{ "%.2f"|format(client_net_balance|default(0)) }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="netWithdrawalAmount" class="form-label">Withdrawal Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" step="0.01" class="form-control" id="netWithdrawalAmount" 
+                                   name="amount" required placeholder="0.00" max="{{ client_net_balance|default(0) }}">
+                        </div>
+                        <div class="form-text">No commission will be applied to this withdrawal</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="netWithdrawalAddress" class="form-label">Destination Address</label>
+                        <input type="text" class="form-control" id="netWithdrawalAddress" 
+                               name="destination_address" required placeholder="Client's withdrawal address">
+                    </div>
+                    <div class="mb-3">
+                        <label for="netWithdrawalNotes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="netWithdrawalNotes" name="notes" rows="2" 
+                                  placeholder="Internal notes for this withdrawal..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-arrow-up-right me-1"></i> Create Withdrawal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Change Package Modal -->
+<div class="modal fade" id="changePackageModal" tabindex="-1" aria-labelledby="changePackageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePackageModalLabel">Change Client Package</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="changePackageForm" action="{{ url_for('client.change_client_package', client_id=client.id) }}" method="post">
+                <div class="modal-body">
+                    <p>Change the package for <strong>{{ client.company_name }}</strong>:</p>
+                    <div class="mb-3">
+                        <label for="newPackage" class="form-label">Select Package</label>
+                        <select class="form-select" id="newPackage" name="package_id" required>
+                            <option value="">Select a package...</option>
+                            {% for package in available_packages %}
+                                <option value="{{ package.id }}" 
+                                        {% if client.package and client.package.id == package.id %}selected{% endif %}
+                                        data-type="{{ package.client_type.value }}"
+                                        data-price="{{ package.price_display }}">
+                                    {{ package.name }} - {{ package.price_display }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Changing the package will affect client's available features and billing.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="changeReason" class="form-label">Reason for Change</label>
+                        <textarea class="form-control" id="changeReason" name="reason" rows="3" 
+                                  placeholder="Explain why the package is being changed..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check me-1"></i> Change Package
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Set Username Modal -->
+<div class="modal fade" id="setUsernameModal" tabindex="-1" aria-labelledby="setUsernameModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="setUsernameModalLabel">Set Username</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="setUsernameForm" action="{{ url_for('client.set_client_username', client_id=client.id) }}" method="post">
+                <div class="modal-body">
+                    <p>Set a username for <strong>{{ client.company_name }}</strong> to enable dashboard login.</p>
+                    <div class="mb-3">
+                        <label for="newUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="newUsername" name="username" required 
+                               placeholder="Enter username" autocomplete="off">
+                        <div class="form-text">
+                            Username must be unique and at least 3 characters long.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check me-1"></i> Set Username
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Password Reset Confirmation Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to reset the password for <strong>{{ client.company_name }}</strong>?</p>
+                <p class="text-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    The client will need to use the new password for their next login.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmResetPassword()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reset Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Password Generation Result Modal -->
+<div class="modal fade" id="passwordResultModal" tabindex="-1" aria-labelledby="passwordResultModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordResultModalLabel">New Password Generated</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>A new password has been generated for <strong>{{ client.company_name }}</strong>:</p>
+                <div class="alert alert-success">
+                    <div class="input-group">
+                        <input type="text" class="form-control font-monospace" id="generatedPassword" readonly>
+                        <button class="btn btn-outline-success" type="button" onclick="copyGeneratedPassword()">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-info">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    Please share this password with the client securely. This is the only time it will be displayed.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Regenerate API Key Modal -->
+<div class="modal fade" id="regenerateApiKeyModal" tabindex="-1" aria-labelledby="regenerateApiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="regenerateApiKeyModalLabel">Regenerate API Key</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to regenerate the API key for <strong>{{ client.company_name }}</strong>?</p>
+                <p class="text-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    This will invalidate the current API key and may disrupt any integrations using it.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('client.regenerate_api_key', client_id=client.id) }}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-arrow-repeat me-1"></i> Regenerate Key
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Password management functions
+    function resetClientPassword(clientId) {
+        const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+        modal.show();
+        
+        // Store client ID for confirmation
+        window.currentClientId = clientId;
+    }
+    
+    function confirmResetPassword() {
+        if (!window.currentClientId) return;
+        
+        // Create a form data object for the POST request
+        const formData = new FormData();
+        
+        fetch(`{{ url_for('client.reset_client_password', client_id=0) }}`.replace('0', window.currentClientId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide reset modal
+            bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
+            
+            if (data.success) {
+                // Show the new password if it was generated
+                if (data.password) {
+                    document.getElementById('generatedPassword').value = data.password;
+                    const modal = new bootstrap.Modal(document.getElementById('passwordResultModal'));
+                    modal.show();
+                }
+                showToast('Password reset successfully', 'success');
+                // Refresh the page to update the status
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(data.message || 'Failed to reset password', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error resetting password', 'error');
+        });
+    }
+    
+    function generateClientPassword(clientId) {
+        // Create a form data object for the POST request
+        const formData = new FormData();
+        
+        fetch(`{{ url_for('client.generate_client_password', client_id=0) }}`.replace('0', clientId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('generatedPassword').value = data.password;
+                const modal = new bootstrap.Modal(document.getElementById('passwordResultModal'));
+                modal.show();
+                
+                showToast('New password generated successfully', 'success');
+                
+                // Update the page to reflect password is now set
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                showToast(data.message || 'Failed to generate password', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error generating password', 'error');
+        });
+    }
+    
+    function copyGeneratedPassword() {
+        const passwordInput = document.getElementById('generatedPassword');
+        passwordInput.select();
+        document.execCommand('copy');
+        
+        showToast('Password copied to clipboard', 'success');
+        
+        // Change button text temporarily
+        const button = event.target.closest('button');
+        const originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i>';
+        
+        setTimeout(() => {
+            button.innerHTML = originalHtml;
+        }, 2000);
+    }
+    
+    // Enhanced copy to clipboard with better feedback
+    function copyToClipboard(elementId) {
+        const el = document.getElementById(elementId);
+        if (!el || !el.value) {
+            showToast('Nothing to copy', 'warning');
+            return;
+        }
+        
+        el.select();
+        document.execCommand('copy');
+        
+        showToast('Copied to clipboard', 'success');
+        
+        // Update copy button feedback
+        const copyBtn = document.getElementById('copyUsernameBtn');
+        if (copyBtn && elementId === 'clientUsername') {
+            const originalHtml = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="bi bi-check"></i>';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHtml;
+            }, 2000);
+        }    }
+    
+    // Withdrawal management functions
+    function approveWithdrawal(withdrawalId) {
+        if (!confirm('Are you sure you want to approve this withdrawal?')) return;
+        
+        fetch(`{{ url_for('client.approve_withdrawal', client_id=client.id, withdrawal_id=0) }}`.replace('0', withdrawalId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Withdrawal approved successfully', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(data.message || 'Failed to approve withdrawal', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error approving withdrawal', 'error');
+        });
+    }
+    
+    function rejectWithdrawal(withdrawalId) {
+        const reason = prompt('Please provide a reason for rejecting this withdrawal:');
+        if (!reason) return;
+        
+        fetch(`{{ url_for('client.reject_withdrawal', client_id=client.id, withdrawal_id=0) }}`.replace('0', withdrawalId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Withdrawal rejected', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(data.message || 'Failed to reject withdrawal', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error rejecting withdrawal', 'error');
+        });
+    }
+    
+    function toggleClientStatus(clientId, newStatus) {
+        const action = newStatus === 'true' ? 'activate' : 'deactivate';
+        if (!confirm(`Are you sure you want to ${action} this client?`)) return false;
+        
+        fetch(`{{ url_for('client.toggle_client_status', client_id=0) }}`.replace('0', clientId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ is_active: newStatus === 'true' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Client ${action}d successfully`, 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(data.message || `Failed to ${action} client`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast(`Error ${action}ing client`, 'error');
+        });
+        
+        return false;
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toastContainer';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Create toast element
+        const toastId = 'toast-' + Date.now();
+        const toastHtml = `
+            <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <i class="bi bi-${type === 'success' ? 'check-circle-fill text-success' : type === 'error' ? 'x-circle-fill text-danger' : 'info-circle-fill text-info'} me-2"></i>
+                    <strong class="me-auto">${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info'}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        const toast = new bootstrap.Toast(document.getElementById(toastId), {
+            autohide: true,
+            delay: type === 'error' ? 5000 : 3000
+        });
+        
+        toast.show();
+        
+        // Remove toast from DOM after it's hidden
+        document.getElementById(toastId).addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    }
+
+    // Toggle API key visibility
+    document.getElementById('toggleApiKey').addEventListener('click', function() {
+        const apiKeyInput = document.getElementById('apiKey');
+        const icon = this.querySelector('i');
+        
+        if (apiKeyInput.type === 'password') {
+            apiKeyInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            apiKeyInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+    
+    // Copy to clipboard
+    function copyToClipboard(elementId) {
+        const el = document.getElementById(elementId);
+        el.select();
+        document.execCommand('copy');
+        
+        // Show tooltip
+        const tooltip = new bootstrap.Tooltip(document.getElementById('copyButton'), {
+            title: 'Copied!',
+            trigger: 'manual'
+        });
+        tooltip.show();
+        
+        // Hide tooltip after 2 seconds
+        setTimeout(() => {
+            tooltip.hide();
+        }, 2000);
+    }
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Handle tab persistence
+    const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabEls.forEach(tabEl => {
+        tabEl.addEventListener('shown.bs.tab', function (event) {
+            localStorage.setItem('clientViewActiveTab', event.target.id);
+        });
+    });
+
+    // Restore active tab
+    const activeTab = localStorage.getItem('clientViewActiveTab');
+    if (activeTab) {
+        const tab = document.querySelector(`#${activeTab}`);
+        if (tab) {
+            new bootstrap.Tab(tab).show();
+        }
+    }
+</script>
+{% endblock %}

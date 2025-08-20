@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}🪂 Airdrop Hunter - Free Crypto Airdrop Checker & Eligibility Tool | PayCrypt{% endblock %}
+
+{% block head %}
+<!-- SEO Meta Tags for Airdrop Hunter -->
+<meta name="description" content="🪂 Discover eligible crypto airdrops and maximize rewards with our free airdrop hunter tool. Check airdrop eligibility, farming strategies, and never miss free crypto tokens again.">
+<meta name="keywords" content="airdrop hunter, crypto airdrops, free crypto tokens, airdrop eligibility checker, airdrop farming, DeFi airdrops, crypto rewards, token airdrops, airdrop strategies, free cryptocurrency">
+<meta name="author" content="PayCrypt - Crypto Rewards Platform">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://paycrypt.online/tools/airdrop-hunter">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paycrypt.online/tools/airdrop-hunter">
+<meta property="og:title" content="🪂 Airdrop Hunter - Free Crypto Airdrop Checker | PayCrypt">
+<meta property="og:description" content="🪂 Discover eligible crypto airdrops and maximize rewards. Free professional tool to never miss crypto tokens again.">
+<meta property="og:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta property="og:site_name" content="PayCrypt DeFi Tools">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://paycrypt.online/tools/airdrop-hunter">
+<meta name="twitter:title" content="🪂 Airdrop Hunter - Free Crypto Airdrop Checker">
+<meta name="twitter:description" content="🪂 Discover eligible airdrops and maximize crypto rewards with our free professional airdrop hunting tool.">
+<meta name="twitter:image" content="{{ url_for('static', filename='img/paycrypt_logo.png', _external=True) }}">
+<meta name="twitter:creator" content="@paycryptonline">
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Airdrop Hunter",
+  "alternateName": "Crypto Airdrop Checker",
+  "url": "https://paycrypt.online/tools/airdrop-hunter",
+  "description": "Professional airdrop hunting tool to discover eligible crypto airdrops and maximize token rewards through strategic farming.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "provider": {
+    "@type": "Organization",
+    "name": "PayCrypt",
+    "url": "https://paycrypt.online"
+  },
+  "featureList": [
+    "Airdrop discovery",
+    "Eligibility checking",
+    "Farming strategies",
+    "Reward optimization",
+    "Multi-chain support",
+    "Real-time tracking",
+    "Portfolio analysis"
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="tool-icon me-3">
+                            <i class="fas fa-parachute-box fa-2x"></i>
+                        </div>
+                        <div>
+                            <h2 class="card-title mb-1">Airdrop Hunter</h2>
+                            <p class="mb-0">Track upcoming airdrops and maximize your free token opportunities</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Eligibility Checker -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>Check Wallet Eligibility
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-8">
+                            <label for="wallet_address" class="form-label">Wallet Address</label>
+                            <input type="text" name="wallet_address" id="wallet_address" class="form-control" 
+                                   placeholder="0x..." value="{{ wallet_address or '' }}" required>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-search me-2"></i>Check Eligibility
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Eligibility Results -->
+    {% if result and result.success %}
+    <div class="row mb-4">
+        <!-- Wallet Score -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star me-2"></i>Airdrop Score
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="position-relative d-inline-block">
+                        <div class="progress-circle" data-percentage="{{ result.wallet_score }}">
+                            <span class="progress-value">{{ result.wallet_score }}</span>
+                        </div>
+                    </div>
+                    <h6 class="mt-3 mb-0 text-{{ 'success' if result.wallet_score >= 70 else 'warning' if result.wallet_score >= 40 else 'danger' }}">
+                        {% if result.wallet_score >= 70 %}EXCELLENT
+                        {% elif result.wallet_score >= 40 %}GOOD
+                        {% else %}NEEDS IMPROVEMENT{% endif %}
+                    </h6>
+                    <small class="text-muted">Airdrop Farming Score</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Eligible Airdrops -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-gift me-2"></i>Eligible Airdrops
+                    </h5>
+                    <span class="badge bg-success">{{ result.eligible_airdrops|length }} Found</span>
+                </div>
+                <div class="card-body">
+                    {% for airdrop in result.eligible_airdrops %}
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0">{{ airdrop.project }}</h6>
+                            <span class="badge bg-{{ 'success' if airdrop.status == 'Eligible' else 'warning' }}">
+                                {{ airdrop.status }}
+                            </span>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Estimated Tokens</small>
+                                <strong class="text-primary">{{ airdrop.estimated_tokens }}</strong>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Estimated Value</small>
+                                <strong class="text-success">{{ airdrop.estimated_value }}</strong>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Criteria Met:</small>
+                            {% for criteria in airdrop.criteria_met %}
+                            <span class="badge bg-success me-1">{{ criteria }}</span>
+                            {% endfor %}
+                        </div>
+                        {% if airdrop.missing_criteria %}
+                        <div>
+                            <small class="text-muted d-block">Missing:</small>
+                            {% for criteria in airdrop.missing_criteria %}
+                            <span class="badge bg-warning me-1">{{ criteria }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Missed Airdrops & Tips -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 text-danger">
+                        <i class="fas fa-times me-2"></i>Missed Opportunities
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for missed in result.missed_airdrops %}
+                    <div class="d-flex justify-content-between align-items-center p-3 mb-2 bg-danger bg-opacity-10 rounded">
+                        <div>
+                            <h6 class="mb-1">{{ missed.project }}</h6>
+                            <small class="text-muted">{{ missed.reason }}</small>
+                        </div>
+                        <strong class="text-danger">{{ missed.value_missed }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Farming Tips
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for tip in result.airdrop_farming_tips %}
+                    <div class="d-flex align-items-start mb-3">
+                        <i class="fas fa-check-circle text-success me-3 mt-1"></i>
+                        <span>{{ tip }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif result and not result.success %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Error:</strong> {{ result.error }}
+    </div>
+    {% endif %}
+
+    <!-- Upcoming Airdrops -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Upcoming Airdrops
+                    </h5>
+                    <span class="badge bg-primary">{{ upcoming_airdrops|length if upcoming_airdrops else 0 }} Active</span>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_airdrops %}
+                    <div class="row">
+                        {% for airdrop in upcoming_airdrops %}
+                        <div class="col-lg-4 mb-4">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ airdrop.project }}</h6>
+                                        <span class="badge bg-light text-dark">{{ airdrop.time_left }}</span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Expected Date</small>
+                                        <strong>{{ airdrop.expected_date }}</strong>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Estimated Value</small>
+                                        <strong class="text-success">{{ airdrop.estimated_value }}</strong>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Difficulty</small>
+                                        <span class="badge bg-{{ 'success' if airdrop.difficulty == 'EASY' else 'warning' if airdrop.difficulty == 'MEDIUM' else 'danger' }}">
+                                            {{ airdrop.difficulty }}
+                                        </span>
+                                    </div>
+                                    <div class="mb-0">
+                                        <small class="text-muted d-block">Requirements</small>
+                                        {% for criteria in airdrop.criteria %}
+                                        <small class="d-block">• {{ criteria }}</small>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No upcoming airdrops available</h6>
+                        <p class="text-muted">Check back later for new opportunities</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not result %}
+    <!-- Getting Started Guide -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-rocket me-2"></i>Getting Started with Airdrop Hunting
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <i class="fas fa-search fa-3x text-primary mb-3"></i>
+                            <h6>1. Check Eligibility</h6>
+                            <p class="text-muted small">Enter your wallet address to see which airdrops you qualify for</p>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <i class="fas fa-tasks fa-3x text-warning mb-3"></i>
+                            <h6>2. Complete Tasks</h6>
+                            <p class="text-muted small">Follow requirements for upcoming airdrops to maximize eligibility</p>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <i class="fas fa-coins fa-3x text-success mb-3"></i>
+                            <h6>3. Claim Rewards</h6>
+                            <p class="text-muted small">Get notified when airdrops go live and claim your free tokens</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.tool-icon {
+    background: rgba(255,255,255,0.2);
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+}
+
+.progress-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#28a745 0deg, #28a745 calc(var(--percentage) * 3.6deg), #e9ecef calc(var(--percentage) * 3.6deg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-circle::before {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: white;
+}
+
+.progress-value {
+    position: relative;
+    z-index: 1;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if result and result.success %}
+    const circle = document.querySelector('.progress-circle');
+    if (circle) {
+        circle.style.setProperty('--percentage', '{{ result.wallet_score }}');
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

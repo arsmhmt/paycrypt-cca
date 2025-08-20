@@ -1,0 +1,540 @@
+{% extends "client/base.html" %}
+
+{% block client_content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-arrow-up-circle me-2"></i>
+                    Withdraw Funds
+                </h4>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                <i class="bi bi-{{ 'exclamation-triangle' if category == 'error' or category == 'danger' else 'info-circle' if category == 'info' else 'check-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <!-- Balance Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-1">Available Balance</h6>
+                                <div class="h4 text-success mb-0">
+                                    {{ "%.2f"|format(balance) }} <small class="text-muted">USDT</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-1">Net Balance</h6>
+                                <div class="h4 text-info mb-0">
+                                    {{ "%.2f"|format(client.get_balance()) }} <small class="text-muted">USDT</small>
+                                </div>
+                                <small class="text-muted">Available for withdrawal</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" id="withdrawalForm">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="coin" class="form-label">
+                                <i class="bi bi-currency-bitcoin me-1"></i>
+                                {{ form.coin.label.text }}
+                            </label>
+                            {{ form.coin(class="form-select", id="coin") }}
+                            {% if form.coin.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.coin.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="blockchain" class="form-label">
+                                <i class="bi bi-link-45deg me-1"></i>
+                                {{ form.blockchain.label.text }}
+                            </label>
+                            {{ form.blockchain(class="form-select", id="blockchain") }}
+                            {% if form.blockchain.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.blockchain.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Choose the blockchain network for your withdrawal
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="withdrawalAmount" class="form-label">
+                            <i class="bi bi-cash me-1"></i>
+                            {{ form.amount.label.text }}
+                        </label>
+                        <div class="input-group">
+                            {{ form.amount(class="form-control", id="withdrawalAmount") }}
+                            <button class="btn btn-outline-secondary" type="button" id="maxButton">
+                                <i class="bi bi-arrow-up me-1"></i>Max
+                            </button>
+                        </div>
+                        {% if form.amount.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.amount.errors[0] }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <small class="text-muted">Network fee: <span id="networkFee">~0.5 USDT</span></small>
+                                </div>
+                                <div class="col-sm-6 text-sm-end">
+                                    <small class="text-muted">You will receive: <span id="receiveAmount">0.00</span></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="walletAddress" class="form-label">
+                            <i class="bi bi-wallet2 me-1"></i>
+                            {{ form.address.label.text }}
+                        </label>
+                        <div class="input-group">
+                            {{ form.address(class="form-control", id="walletAddress") }}
+                            <button class="btn btn-outline-secondary" type="button" id="pasteButton">
+                                <i class="bi bi-clipboard me-1"></i>Paste
+                            </button>
+                        </div>
+                        {% if form.address.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.address.errors[0] }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text text-warning">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Please double-check the address. Incorrect addresses may result in permanent loss of funds.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="memo" class="form-label">
+                            <i class="bi bi-tag me-1"></i>
+                            {{ form.memo.label.text }}
+                        </label>
+                        {{ form.memo(class="form-control", id="memo") }}
+                        {% if form.memo.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.memo.errors[0] }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Some exchanges require a memo/tag for deposits
+                        </div>
+                    </div>
+
+                    <!-- Summary Card -->
+                    <div class="card bg-light mb-4" id="withdrawalSummary" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="card-title">Withdrawal Summary</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">Amount:</small><br>
+                                    <span id="summaryAmount">0.00</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Network Fee:</small><br>
+                                    <span id="summaryFee">0.00</span>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-12">
+                                    <small class="text-muted">Total Deduction:</small><br>
+                                    <strong id="summaryTotal">0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary btn-lg", id="submitButton") }}
+                        <a href="{{ url_for('client.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-muted">
+                <div class="row">
+                    <div class="col-md-6">
+                        <small>
+                            <i class="bi bi-clock me-1"></i>
+                            Processing time: 1-24 hours
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <small>
+                            <i class="bi bi-shield-check me-1"></i>
+                            Secure & encrypted
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('withdrawalForm');
+    const coinSelect = document.getElementById('coin');
+    const blockchainSelect = document.getElementById('blockchain');
+    const amountInput = document.getElementById('withdrawalAmount');
+    const addressInput = document.getElementById('walletAddress');
+    const maxButton = document.getElementById('maxButton');
+    const pasteButton = document.getElementById('pasteButton');
+    const submitBtn = document.getElementById('submitButton');
+    const summaryCard = document.getElementById('withdrawalSummary');
+    
+    const balance = parseFloat('{{ balance }}');
+    const netBalance = parseFloat('{{ client.get_balance() }}');
+    
+    // Network fees for different coins/blockchains
+    const networkFees = {
+        'USDT': {
+            'ERC20': 2.0,
+            'TRC20': 0.5,
+            'BEP20': 0.8
+        },
+        'BTC': { 'BTC': 0.0005 },
+        'ETH': { 'ETH': 0.002, 'ERC20': 0.002 },
+        'BNB': { 'BNB': 0.001, 'BEP20': 0.001 },
+        'ADA': { 'ADA': 0.17 },
+        'XRP': { 'XRP': 0.02 }
+    };
+    
+    // Blockchain compatibility
+    const compatibility = {
+        'USDT': ['ERC20', 'TRC20', 'BEP20'],
+        'BTC': ['BTC'],
+        'ETH': ['ETH', 'ERC20'],
+        'BNB': ['BNB', 'BEP20'],
+        'ADA': ['ADA'],
+        'XRP': ['XRP']
+    };
+    
+    // Update blockchain options based on coin selection
+    function updateBlockchainOptions() {
+        const selectedCoin = coinSelect.value;
+        const availableBlockchains = compatibility[selectedCoin] || [];
+        
+        // Clear current options
+        blockchainSelect.innerHTML = '';
+        
+        // Add compatible options
+        availableBlockchains.forEach(blockchain => {
+            const option = document.createElement('option');
+            option.value = blockchain;
+            option.textContent = getBlockchainDisplayName(blockchain);
+            blockchainSelect.appendChild(option);
+        });
+        
+        // Set default
+        if (selectedCoin === 'USDT') {
+            blockchainSelect.value = 'TRC20'; // Default to TRC20 for USDT
+        }
+        
+        updateNetworkFee();
+    }
+    
+    function getBlockchainDisplayName(blockchain) {
+        const names = {
+            'ERC20': 'Ethereum (ERC-20)',
+            'TRC20': 'Tron (TRC-20)',
+            'BEP20': 'BNB Smart Chain (BEP-20)',
+            'BTC': 'Bitcoin Network',
+            'ETH': 'Ethereum Native',
+            'BNB': 'BNB Chain',
+            'ADA': 'Cardano Network',
+            'XRP': 'XRP Ledger'
+        };
+        return names[blockchain] || blockchain;
+    }
+    
+    function updateNetworkFee() {
+        const coin = coinSelect.value;
+        const blockchain = blockchainSelect.value;
+        const fee = networkFees[coin] && networkFees[coin][blockchain] ? networkFees[coin][blockchain] : 0;
+        
+        document.getElementById('networkFee').textContent = `~${fee} ${coin}`;
+        updateReceiveAmount();
+    }
+    
+    function updateReceiveAmount() {
+        const amount = parseFloat(amountInput.value) || 0;
+        const coin = coinSelect.value;
+        const blockchain = blockchainSelect.value;
+        const fee = networkFees[coin] && networkFees[coin][blockchain] ? networkFees[coin][blockchain] : 0;
+        
+        const receiveAmount = Math.max(0, amount - fee);
+        document.getElementById('receiveAmount').textContent = `${receiveAmount.toFixed(8)} ${coin}`;
+        
+        // Update summary
+        document.getElementById('summaryAmount').textContent = `${amount.toFixed(8)} ${coin}`;
+        document.getElementById('summaryFee').textContent = `${fee.toFixed(8)} ${coin}`;
+        document.getElementById('summaryTotal').textContent = `${amount.toFixed(8)} ${coin}`;
+        
+        // Show/hide summary
+        if (amount > 0) {
+            summaryCard.style.display = 'block';
+        } else {
+            summaryCard.style.display = 'none';
+        }
+    }
+    
+    // Handle paste button
+    pasteButton.addEventListener('click', async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            addressInput.value = text.trim();
+            
+            // Visual feedback
+            pasteButton.innerHTML = '<i class="bi bi-check me-1"></i>Pasted';
+            pasteButton.classList.add('btn-success');
+            pasteButton.classList.remove('btn-outline-secondary');
+            
+            setTimeout(() => {
+                pasteButton.innerHTML = '<i class="bi bi-clipboard me-1"></i>Paste';
+                pasteButton.classList.remove('btn-success');
+                pasteButton.classList.add('btn-outline-secondary');
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to read clipboard:', err);
+            alert('Failed to read from clipboard. Please paste manually.');
+        }
+    });
+    
+    // Handle max button
+    maxButton.addEventListener('click', () => {
+        const coin = coinSelect.value;
+        const blockchain = blockchainSelect.value;
+        const fee = networkFees[coin] && networkFees[coin][blockchain] ? networkFees[coin][blockchain] : 0;
+        
+        // Use net balance for max calculation
+        let maxAmount = netBalance;
+        
+        // Subtract network fee for max calculation
+        if (coin === 'USDT' || coin === balance.toString().includes('USDT')) {
+            maxAmount = Math.max(0, netBalance - fee);
+        }
+        
+        amountInput.value = maxAmount.toFixed(8);
+        updateReceiveAmount();
+        
+        // Visual feedback
+        maxButton.innerHTML = '<i class="bi bi-check me-1"></i>Max';
+        maxButton.classList.add('btn-success');
+        maxButton.classList.remove('btn-outline-secondary');
+        
+        setTimeout(() => {
+            maxButton.innerHTML = '<i class="bi bi-arrow-up me-1"></i>Max';
+            maxButton.classList.remove('btn-success');
+            maxButton.classList.add('btn-outline-secondary');
+        }, 1000);
+    });
+    
+    // Event listeners
+    coinSelect.addEventListener('change', updateBlockchainOptions);
+    blockchainSelect.addEventListener('change', updateNetworkFee);
+    amountInput.addEventListener('input', updateReceiveAmount);
+    
+    // Form validation and submission
+    form.addEventListener('submit', function(e) {
+        const amount = parseFloat(amountInput.value) || 0;
+        const coin = coinSelect.value;
+        const blockchain = blockchainSelect.value;
+        const fee = networkFees[coin] && networkFees[coin][blockchain] ? networkFees[coin][blockchain] : 0;
+        const totalRequired = amount + fee;
+        
+        // Balance validation
+        if (amount <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid withdrawal amount.');
+            return false;
+        }
+        
+        if (totalRequired > netBalance) {
+            e.preventDefault();
+            alert(`Insufficient balance. You need ${totalRequired.toFixed(8)} ${coin} but only have ${netBalance.toFixed(8)} ${coin} available.`);
+            return false;
+        }
+        
+        // Address validation
+        if (!addressInput.value.trim()) {
+            e.preventDefault();
+            alert('Please enter a valid wallet address.');
+            addressInput.focus();
+            return false;
+        }
+        
+        // Confirmation
+        const confirmMessage = `Confirm withdrawal of ${amount.toFixed(8)} ${coin} to ${addressInput.value.substring(0, 20)}...?\n\nNetwork: ${getBlockchainDisplayName(blockchain)}\nFee: ${fee.toFixed(8)} ${coin}\nYou will receive: ${(amount - fee).toFixed(8)} ${coin}`;
+        
+        if (!confirm(confirmMessage)) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+    });
+    
+    // Initialize
+    updateBlockchainOptions();
+});
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #e0e6ed;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #5a67d8 100%);
+        border: none;
+        box-shadow: 0 4px 15px rgba(78, 115, 223, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(78, 115, 223, 0.4);
+    }
+    
+    .input-group .btn {
+        border-left: none;
+    }
+    
+    .form-text {
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    
+    .invalid-feedback {
+        font-size: 0.875rem;
+    }
+    
+    #withdrawalSummary {
+        border: 1px solid #e0e6ed;
+        background: linear-gradient(135deg, #f8f9fc 0%, #eef2ff 100%);
+    }
+    
+    .card-footer {
+        background-color: #f8f9fc;
+        border-top: 1px solid #e0e6ed;
+        border-radius: 0 0 15px 15px;
+    }
+    
+    .bg-light {
+        background: linear-gradient(135deg, #f8f9fc 0%, #ffffff 100%) !important;
+        border: 1px solid #e0e6ed;
+        border-radius: 10px;
+    }
+    
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .col-lg-8 {
+            padding: 0 15px;
+        }
+        
+        .card {
+            margin: 10px 0;
+            border-radius: 10px;
+        }
+        
+        .form-text .row {
+            flex-direction: column;
+        }
+        
+        .form-text .col-sm-6.text-sm-end {
+            text-align: left !important;
+        }
+    }
+</style>
+{% endblock %}
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        font-weight: 600;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .input-group-text {
+        background-color: #f8f9fa;
+    }
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+    .progress-bar {
+        background-color: #198754;
+    }
+</style>
+{% endblock %}

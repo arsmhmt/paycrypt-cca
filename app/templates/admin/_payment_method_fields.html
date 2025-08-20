@@ -1,0 +1,167 @@
+{% macro payment_method_fields(payment_method, form) %}
+<div id="paymentMethodFields" class="mb-3">
+    {% if payment_method == 'credit_card' %}
+        <div class="card bg-light mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-credit-card me-2"></i>Credit Card Details
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="{{ form.card_number.id }}" class="form-label">Card Number</label>
+                            <div class="input-group">
+                                {{ form.card_number(class="form-control", placeholder="XXXX XXXX XXXX XXXX") }}
+                                <button class="btn btn-outline-secondary" type="button" onclick="validateCardNumber()">
+                                    <i class="bi bi-check"></i> Validate
+                                </button>
+                            </div>
+                            <div class="form-text">Card number will be securely stored using tokenization.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.expiry_date.id }}" class="form-label">Expiry Date</label>
+                            {{ form.expiry_date(class="form-control", placeholder="MM/YY") }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.cvv.id }}" class="form-label">CVV</label>
+                            {{ form.cvv(class="form-control", type="password", maxlength="4") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.card_holder_name.id }}" class="form-label">Card Holder Name</label>
+                            {{ form.card_holder_name(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.card_type.id }}" class="form-label">Card Type</label>
+                            {{ form.card_type(class="form-select") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% elif payment_method == 'bank_transfer' %}
+        <div class="card bg-light mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-bank me-2"></i>Bank Transfer Details
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="{{ form.bank_account_number.id }}" class="form-label">Bank Account Number</label>
+                            {{ form.bank_account_number(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.bank_name.id }}" class="form-label">Bank Name</label>
+                            {{ form.bank_name(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.bank_branch.id }}" class="form-label">Bank Branch</label>
+                            {{ form.bank_branch(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.swift_code.id }}" class="form-label">SWIFT/BIC Code</label>
+                            {{ form.swift_code(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.iban.id }}" class="form-label">IBAN</label>
+                            {{ form.iban(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% elif payment_method == 'cash' %}
+        <div class="card bg-light mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-cash me-2"></i>Cash Payment Details
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="{{ form.payment_location.id }}" class="form-label">Payment Location</label>
+                            {{ form.payment_location(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.cash_collected_by.id }}" class="form-label">Collected By</label>
+                            {{ form.cash_collected_by(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.cash_receipt_number.id }}" class="form-label">Receipt Number</label>
+                            {{ form.cash_receipt_number(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% elif payment_method == 'other' %}
+        <div class="card bg-light mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Other Payment Details
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="{{ form.other_payment_method.id }}" class="form-label">Payment Method</label>
+                            {{ form.other_payment_method(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="{{ form.other_payment_details.id }}" class="form-label">Payment Details</label>
+                            {{ form.other_payment_details(class="form-control", rows="3") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endmacro %}

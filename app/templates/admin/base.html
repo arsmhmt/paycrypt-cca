@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Admin Panel - Paycrypt{% endblock %}</title>
+
+        <!-- Favicon -->
+        <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+        <!-- Bootstrap Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+        
+        <!-- Add base URL for JavaScript -->
+        <script>
+            window.APP_config = {
+                baseUrl: '{{ url_for("admin.admin_dashboard").rstrip("/admin120724/") }}',
+                adminPrefix: '{{ url_for("admin.admin_dashboard")|replace(url_for("admin.admin_dashboard").split("/")[-1], "") }}'
+            };
+        </script>
+
+        <!-- Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet">
+
+        <!-- Custom styles -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-layout.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-dashboard-pro.css') }}">
+        <style>
+            /* Import unified brand variables */
+            :root {
+                /* Brand Colors - Exact logo colors as primary */
+                --brand-primary: #4e73df;
+                /* Logo blue */
+                --brand-secondary: #FF6B35;
+                /* Logo orange */
+                --brand-primary-dark: #3d5bc7;
+                /* Darker blue */
+                --brand-secondary-dark: #e05d2e;
+                /* Darker orange */
+
+                /* Logo-based gradients for admin */
+                --brand-gradient: linear-gradient(135deg, #4e73df 0%, #FF6B35 100%);
+                --brand-gradient-dark: linear-gradient(135deg, #3d5bc7 0%, #e05d2e 100%);
+                --brand-gradient-reverse: linear-gradient(135deg, #FF6B35 0%, #4e73df 100%);
+
+                /* Admin specific variants */
+                --admin-primary: var(--brand-primary);
+                --admin-secondary: var(--brand-secondary);
+                --admin-surface: #f8fafc;
+                --admin-surface-dark: #0f172a;
+            }
+
+            /* Global font */
+            body {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+
+            /* Sidebar logo styling */
+            .sidebar-logo {
+                max-height: 80px !important;
+                transition: all 0.3s ease;
+                /* Ensure logo displays properly without any color modifications */
+                mix-blend-mode: normal !important;
+                filter: none !important;
+                opacity: 1 !important;
+                background: transparent !important;
+            }
+
+            .sidebar-logo:hover {
+                transform: scale(1.05);
+                /* Remove any hover filters that might cause white appearance */
+                filter: none !important;
+            }
+
+            /* Responsive logo sizing */
+            @media (max-width: 768px) {
+                .sidebar-logo {
+                    max-height: 50px !important;
+                }
+            }
+
+            /* Sidebar collapsed state - keep logo visible but smaller */
+            body.sb-sidenav-toggled .sidebar-logo {
+                max-height: 60px !important;
+            }
+
+            /* Sidebar Enhancements - Updated with brand colors */
+            .sb-sidenav {
+                background: var(--brand-gradient);
+                color: #fff;
+            }
+
+            .sb-sidenav .nav-link {
+                color: rgba(255, 255, 255, 0.9);
+                transition: all 0.3s ease;
+                font-weight: 500;
+            }
+
+            .sb-sidenav .nav-link:hover {
+                color: #fff;
+                background-color: rgba(255, 255, 255, 0.1);
+                border-radius: 6px;
+                transform: translateX(4px);
+            }
+
+            .sb-sidenav .nav-link.active {
+                background: var(--brand-gradient-dark);
+                color: #fff;
+                border-radius: 6px;
+                font-weight: 600;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .sb-sidenav-menu-heading {
+                font-size: 0.75rem;
+                color: rgba(255, 255, 255, 0.6);
+                text-transform: uppercase;
+                margin-top: 1rem;
+                font-weight: 600;
+                letter-spacing: 0.05em;
+            }
+
+            .sb-sidenav-menu-nested .nav-link {
+                font-size: 0.85rem;
+                padding-left: 2rem;
+            }
+
+            .sb-sidenav-collapse-arrow {
+                color: rgba(255, 255, 255, 0.8);
+            }
+
+            /* Admin content area styling */
+            #layoutSidenav_content {
+                background: var(--admin-surface);
+            }
+
+            /* Update cards for admin */
+            .card {
+                border: none;
+                border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+                transition: all 0.2s ease;
+            }
+
+            .card:hover {
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+                transform: translateY(-1px);
+            }
+
+            /* Update buttons for admin */
+            .btn-primary {
+                background: var(--brand-gradient);
+                border: none;
+                font-weight: 500;
+            }
+
+            .btn-primary:hover {
+                background: var(--brand-gradient-dark);
+                transform: translateY(-1px);
+            }
+
+            /* Sidebar badge overflow/visibility fix */
+            .badge {
+                max-width: 32px;
+                min-width: 20px;
+                text-align: center;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: middle;
+            }
+
+            /* Ensure badges are visible in collapsed sidebar */
+            body.sb-sidenav-toggled .badge {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 2;
+                display: inline-block !important;
+            }
+
+            /* Tooltip for badges in collapsed mode */
+            body.sb-sidenav-toggled .nav-link .badge[title] {
+                cursor: pointer;
+            }
+
+            /* Ensure logo container doesn't inherit problematic styles */
+            .sidebar-brand {
+                background: transparent !important;
+            }
+
+            .sidebar-brand a {
+                background: transparent !important;
+                color: inherit !important;
+            }
+
+            /* Force logo to display without any color modifications */
+            .sidebar-brand img {
+                filter: none !important;
+                mix-blend-mode: normal !important;
+                opacity: 1 !important;
+                background: transparent !important;
+            }
+
+            /* Override any Bootstrap dark theme effects on images */
+            .sb-sidenav img,
+            .sb-sidenav-dark img,
+            .navbar-dark img,
+            img.sidebar-logo {
+                filter: none !important;
+                -webkit-filter: none !important;
+                mix-blend-mode: normal !important;
+                opacity: 1 !important;
+                background: transparent !important;
+            }
+
+            /* Ensure no dark theme filtering on topbar logo */
+            .sb-topnav img,
+            .navbar img {
+                filter: none !important;
+                -webkit-filter: none !important;
+            }
+        </style>
+        {% block styles %}{% endblock %}
+    </head>
+
+    <body class="sb-nav-fixed">
+        <!-- Toast Container -->
+        <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+            <!-- Toasts will be inserted here by JavaScript -->
+        </div>
+
+        <div id="layoutSidenav">
+            <!-- Sidebar -->
+            <div id="layoutSidenav_nav">
+                <nav class="sb-sidenav" id="sidenavAccordion">
+                    <div class="sb-sidenav-menu">
+                        <div class="nav">
+                            <!-- Dashboard -->
+                            <div class="sb-sidenav-menu-heading menu-orange">Overview</div>
+                            <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}"
+                                href="{{ url_for('admin.admin_dashboard') }}">
+                                <div class="sb-nav-link-icon"><i class="bi bi-speedometer2"></i></div>
+                                Dashboard
+                            </a>
+                            <a class="nav-link {% if request.endpoint == 'admin.analytics' %}active{% endif %}"
+                                href="{{ url_for('admin.list_clients') }}">
+                                <div class="sb-nav-link-icon"><i class="bi bi-graph-up"></i></div>
+                                Analytics
+                            </a>
+
+                            <!-- Transactions -->
+                            <div class="sb-sidenav-menu-heading menu-orange">Transactions</div>
+                            <a class="nav-link collapsed {% if 'payments' in request.path %}active{% endif %}"
+                                href="javascript:void(0)" data-bs-toggle="collapse"
+                                data-bs-target="#transactionsCollapse" aria-expanded="false">
+                                <div class="sb-nav-link-icon"><i class="bi bi-credit-card"></i></div>
+                                Payments
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse {% if 'payments' in request.path %}show{% endif %}"
+                                id="transactionsCollapse">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="{{ url_for('admin.list_clients') }}">
+                                        <i class="bi bi-list me-2"></i>All Payments
+                                    </a>
+                                    <!-- <a class="nav-link" href="#">New Payment (endpoint missing)</a> -->
+                                        <i class="bi bi-plus-circle me-2"></i>Create Payment
+                                    </a>
+                                    <!-- <a class="nav-link" href="#">Recurring Payments (endpoint missing)</a> -->
+                                        <i class="bi bi-arrow-repeat me-2"></i>Recurring Payments
+                                    </a>
+                                </nav>
+                            </div>
+
+                            <!-- Withdrawals -->
+                            <a class="nav-link collapsed {% if 'withdrawals' in request.path %}active{% endif %}"
+                                href="javascript:void(0)" data-bs-toggle="collapse"
+                                data-bs-target="#withdrawalsCollapse" aria-expanded="false">
+                                <div class="sb-nav-link-icon"><i class="bi bi-wallet2"></i></div>
+                                Withdrawals
+                                {% if sidebar_stats is defined and sidebar_stats.get('pending_withdrawals', 0) > 0 %}
+                                <span class="badge bg-danger rounded-pill ms-2">{{
+                                    sidebar_stats.get('pending_withdrawals', 0) }}</span>
+                                {% endif %}
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse {% if 'withdrawals' in request.path %}show{% endif %}"
+                                id="withdrawalsCollapse">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <div class="nav-section-title">User Requests (B2C)</div>
+                                    <a class="nav-link"
+                                        <!-- href="#" (withdrawal requests endpoint missing) -->
+                                        <i class="bi bi-person-circle me-2"></i>User Withdrawals
+                                        {% if sidebar_stats is defined and sidebar_stats.get('pending_user_withdrawals',
+                                        0) > 0 %}
+                                        <span class="badge bg-warning rounded-pill ms-1">{{
+                                            sidebar_stats.get('pending_user_withdrawals', 0) }}</span>
+                                        {% endif %}
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('withdrawal_admin.user_withdrawal_bulk') }}">
+                                        <i class="bi bi-check2-all me-2"></i>Bulk User Approvals
+                                    </a>
+
+                                    <div class="nav-section-title">Client Requests (B2B)</div>
+                                    <a class="nav-link"
+                                        href="{{ url_for('withdrawal_admin.client_withdrawal_requests') }}">
+                                        <i class="bi bi-building me-2"></i>Client Withdrawals
+                                        {% if sidebar_stats is defined and
+                                        sidebar_stats.get('pending_client_withdrawals', 0) > 0 %}
+                                        <span class="badge bg-info rounded-pill ms-1">{{
+                                            sidebar_stats.get('pending_client_withdrawals', 0) }}</span>
+                                        {% endif %}
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('withdrawal_admin.client_withdrawal_bulk') }}">
+                                        <i class="bi bi-briefcase me-2"></i>Bulk Client Approvals
+                                    </a>
+
+                                    <div class="nav-section-title">History & Reports</div>
+                                    <a class="nav-link" href="{{ url_for('withdrawal_admin.withdrawal_history') }}">
+                                        <i class="bi bi-clock-history me-2"></i>Withdrawal History
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('withdrawal_admin.withdrawal_reports') }}">
+                                        <i class="bi bi-graph-up me-2"></i>Withdrawal Reports
+                                    </a>
+                                </nav>
+                            </div>
+
+                            <!-- Client Management -->
+                            <div class="sb-sidenav-menu-heading menu-orange">Client Management</div>
+                            <!-- Client Management (Merged Clients + Financial) -->
+                            <a class="nav-link collapsed {% if 'clients' in request.path or 'commission' in request.path or 'balance' in request.path %}active{% endif %}"
+                                href="javascript:void(0)" data-bs-toggle="collapse"
+                                data-bs-target="#clientManagementCollapse" aria-expanded="false">
+                                <div class="sb-nav-link-icon"><i class="bi bi-people-fill"></i></div>
+                                Client Management
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse {% if 'clients' in request.path or 'commission' in request.path or 'balance' in request.path %}show{% endif %}"
+                                id="clientManagementCollapse">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <div class="nav-section-title">Client Operations</div>
+                                    <a class="nav-link" href="{{ url_for('admin.list_clients') }}">
+                                        <i class="bi bi-list me-2"></i>All Clients
+                                        <span class="badge bg-primary bg-opacity-10 text-primary ms-auto">{{
+                                            sidebar_stats.get('total_clients', 0) if sidebar_stats is defined else 0
+                                            }}</span>
+                                    </a>
+                                    <a class="nav-link {% if request.endpoint == 'admin.add_client' %}active{% endif %}" href="{{ url_for('admin.add_client') }}">
+                                        <i class="bi bi-person-plus me-2"></i>Add Client
+                                    </a>
+
+                                    {# <a class="nav-link" href="{{ url_for('admin.pricing_plans') }}"> #}
+                                        <i class="bi bi-tags me-2"></i>Pricing Plans
+                                    </a>
+
+                                    <div class="nav-section-title">Financial Operations</div>
+                                    <a class="nav-link" href="{{ url_for('admin.list_clients') }}">
+                                        <i class="bi bi-pie-chart me-2"></i>Analytics & Reports
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('admin.payments_list') }}">
+                                        <i class="bi bi-credit-card-2-front me-2"></i>Payment History
+                                    </a>
+                                    <a class="nav-link" href="#">
+                                        <i class="bi bi-bank me-2"></i>Withdrawals
+                                    </a>
+                                    <a class="nav-link" href="#" onclick="showToast('Feature coming soon!', 'info')">
+                                        <i class="bi bi-percent me-2"></i>Commission Settings
+                                    </a>
+                                </nav>
+                            </div>
+
+                            <!-- Wallet Management -->
+                            <div class="sb-sidenav-menu-heading menu-orange">
+                                <i class="bi bi-wallet2 me-1"></i>Wallet Management
+                            </div>
+                            <a class="nav-link collapsed {% if 'wallet' in request.path %}active{% endif %}"
+                                href="javascript:void(0)" data-bs-toggle="collapse" data-bs-target="#walletCollapse"
+                                aria-expanded="false">
+                                <div class="sb-nav-link-icon"><i class="bi bi-wallet2"></i></div>
+                                Wallet Providers
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse {% if 'wallet' in request.path %}show{% endif %}" id="walletCollapse">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="{{ url_for('admin.wallet_providers') }}">
+                                        <i class="bi bi-list me-2"></i>All Providers
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('admin.wallet_history') }}">
+                                        <i class="bi bi-clock-history me-2"></i>Transaction History
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('admin.wallet_balances') }}">
+                                        <i class="bi bi-bar-chart me-2"></i>Balance Overview
+                                    </a>
+                                    {% if current_user.has_permission('manage_wallets') %}
+                                    <div class="nav-section-title mt-2">Management</div>
+                                    <a class="nav-link" href="{{ url_for('admin.create_wallet_provider') }}">
+                                        <i class="bi bi-plus-circle me-2"></i>Add Provider
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('admin.settings') }}">
+                                        <i class="bi bi-gear me-2"></i>Wallet Settings
+                                    </a>
+                                    {% endif %}
+                                </nav>
+                            </div>
+
+                            <!-- Security & Compliance -->
+                            <div class="sb-sidenav-menu-heading menu-orange">
+                                <i class="bi bi-shield-check me-1"></i>Security
+                            </div>
+                            <a class="nav-link collapsed" href="javascript:void(0)" data-bs-toggle="collapse"
+                                data-bs-target="#securityCollapse" aria-expanded="false">
+                                <div class="sb-nav-link-icon"><i class="bi bi-shield-check"></i></div>
+                                Security & Logs
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse" id="securityCollapse">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="{{ url_for('admin.audit_trail') }}">
+                                        <i class="bi bi-journal-text me-2"></i>Audit Trail
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('admin.access_control') }}">
+                                        <i class="bi bi-person-lock me-2"></i>Access Control
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('admin.list_clients') }}">
+                                        <i class="bi bi-people me-2"></i>User Management
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('admin.settings') }}">
+                                        <i class="bi bi-person-gear me-2"></i>Admin Users
+                                    </a>
+                                </nav>
+                            </div>
+
+                            <!-- Support & Communication -->
+                            <div class="sb-sidenav-menu-heading menu-orange">
+                                <i class="bi bi-headset me-1"></i>Support
+                            </div>
+                            <a class="nav-link" href="{{ url_for('admin.support_tickets') }}">
+                                <div class="sb-nav-link-icon"><i class="bi bi-headset"></i></div>
+                                Support Tickets
+                                {% if sidebar_stats is defined and sidebar_stats.get('pending_tickets', 0) > 0 %}
+                                <span class="badge bg-warning rounded-pill ms-2">{{ sidebar_stats.get('pending_tickets',
+                                    0) }}</span>
+                                {% endif %}
+                            </a>
+                            <a class="nav-link" href="{{ url_for('client.notification_preferences') }}">
+                                <div class="sb-nav-link-icon"><i class="bi bi-bell"></i></div>
+                                Notifications
+                                {% if notification_count %}
+                                <span class="badge bg-info rounded-pill ms-2">{{ notification_count }}</span>
+                                {% endif %}
+                            </a>
+
+                            <!-- Advanced Settings & Tools -->
+                            <div class="sb-sidenav-menu-heading menu-orange">
+                                <i class="bi bi-tools me-1"></i>Advanced
+                            </div>
+                            <a class="nav-link collapsed" href="javascript:void(0)" data-bs-toggle="collapse"
+                                data-bs-target="#advancedCollapse" aria-expanded="false">
+                                <div class="sb-nav-link-icon"><i class="bi bi-tools"></i></div>
+                                Developer & System
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                            </a>
+                            <div class="collapse" id="advancedCollapse">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <div class="nav-section-title">Developer Tools</div>
+                                    <a class="nav-link" href="{{ url_for('admin.api_docs') }}">
+                                        <i class="bi bi-code-square me-2"></i>API Documentation
+                                    </a>
+                                    <a class="nav-link" href="#" onclick="showToast('Feature coming soon!', 'info')">
+                                        <i class="bi bi-graph-down me-2"></i>API Usage Logs
+                                    </a>
+
+                                    <div class="nav-section-title">System Settings</div>
+                                    <a class="nav-link" href="{{ url_for('admin.settings') }}">
+                                        <i class="bi bi-gear me-2"></i>Platform Settings
+                                    </a>
+                                    <a class="nav-link" href="#" onclick="showToast('Feature coming soon!', 'info')">
+                                        <i class="bi bi-database me-2"></i>Database Management
+                                    </a>
+                                    <a class="nav-link" href="#" onclick="showToast('Feature coming soon!', 'info')">
+                                        <i class="bi bi-cloud-upload me-2"></i>Backup & Restore
+                                    </a>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                <div class="sb-sidenav-footer">
+                    <div class="small">Logged in as:</div>
+                    {{ current_user.username or current_user.email.split('@')[0] }}
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div id="layoutSidenav_content">
+                <!-- Topbar -->
+                <nav class="sb-topnav navbar navbar-expand navbar-dark">
+                    <!-- Sidebar toggle button-->
+                    <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" type="button"
+                        title="Toggle Sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <!-- Brand -->
+                    <div class="sidebar-brand d-flex align-items-center justify-content-center py-3">
+                        <a class="sb-sidenav-menu-heading text-center m-0 p-0"
+                            href="{{ url_for('admin.admin_dashboard') }}" style="background: transparent;">
+                            <img src="{{ url_for('static', filename='img/paycrypt_logo_d.png') }}" alt="PayCrypt Logo"
+                                class="img-fluid sidebar-logo" 
+                                style="max-height: 50px; width: auto; filter: none !important; mix-blend-mode: normal !important; opacity: 1 !important;">
+                        </a>
+                    </div>
+                    <!-- Navbar -->
+                    <ul class="navbar-nav ms-auto me-0 me-lg-4 align-items-center flex-row">
+                        <li class="nav-item ms-3">
+                            <!-- Navbar Search -->
+                            <form class="d-none d-md-inline-block form-inline my-2 my-md-0" style="min-width: 220px;">
+                                <div class="input-group">
+                                    <input class="form-control" type="text" placeholder="Search for..."
+                                        aria-label="Search for...">
+                                    <button class="btn btn-primary" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </li>
+                        <!-- Nav Item - Alerts -->
+                        <li class="nav-item dropdown no-arrow mx-1">
+                            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="bi bi-bell"></i>
+                                <!-- Counter - Alerts -->
+                                <span class="badge bg-danger badge-counter">3+</span>
+                            </a>
+                            <!-- Dropdown - Alerts -->
+                            <div class="dropdown-list dropdown-menu dropdown-menu-end shadow animated--grow-in"
+                                aria-labelledby="alertsDropdown">
+                                <h6 class="dropdown-header">
+                                    Alerts Center
+                                </h6>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="mr-3">
+                                        <div class="icon-circle bg-primary">
+                                            <i class="bi bi-file-earmark-text text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-gray-500">Today</div>
+                                        <span class="font-weight-bold">New notifications available!</span>
+                                    </div>
+                                </a>
+                                <a class="dropdown-item text-center small text-gray-500" href="#">Show All
+                                    Alerts</a>
+                            </div>
+                        </li>
+                        <div class="topbar-divider d-none d-sm-block"></div>
+                        <!-- Language Switcher Dropdown (GET links) -->
+                        <li class="nav-item dropdown no-arrow">
+                            <div class="d-flex align-items-center" style="min-width:120px;">
+                                <select class="form-select form-select-sm me-2" onchange="window.location.href=this.value;">
+                                    <option value="{{ url_for('main.set_language', language='en') }}" {% if get_locale() == 'en' %}selected{% endif %}>English</option>
+                                    <option value="{{ url_for('main.set_language', language='tr') }}" {% if get_locale() == 'tr' %}selected{% endif %}>Türkçe</option>
+                                </select>
+                            </div>
+                        </li>
+                        <div class="topbar-divider d-none d-sm-block"></div>
+                        <!-- Dark/Light Mode Toggle -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link" href="#" id="themeToggle" title="Toggle Dark/Light Mode">
+                                <i class="bi bi-moon-fill" id="themeIcon"></i>
+                            </a>
+                        </li>
+                        <div class="topbar-divider d-none d-sm-block"></div>
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="me-2 d-none d-lg-inline text-gray-300" style="font-size: 0.75rem;">{{
+                                    current_user.username or current_user.email.split('@')[0] }}</span>
+                                <i class="bi bi-person-circle"></i>
+                            </a>
+                            <!-- Dropdown - User Information -->
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                                aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="#">
+                                    <i class="bi bi-person me-2 text-gray-400"></i>
+                                    Profile
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <i class="bi bi-gear me-2 text-gray-400"></i>
+                                    Settings
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ url_for('auth.logout') }}" data-bs-toggle="modal"
+                                    data-bs-target="#logoutModal">
+                                    <i class="bi bi-box-arrow-right me-2 text-gray-400"></i>
+                                    Logout
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <main>
+                    <div class="container-fluid px-4">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                        {% set shown_messages = [] %}
+                        {% for category, message in messages %}
+                        {% if message not in shown_messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% set _ = shown_messages.append(message) %}
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+
+                        {% block content %}
+                        {% block page_content %}{% endblock %}
+                        {% endblock %}
+                    </div>
+                </main>
+                <!-- /.container-fluid -->
+
+                <footer class="sticky-footer bg-white">
+                    <div class="container my-auto">
+                        <div class="copyright text-center my-auto">
+                            <span>Copyright &copy; PayCrypt 2025</span>
+                        </div>
+                    </div>
+                </footer>
+                <!-- End of Footer -->
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        {% block scripts %}
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+        <script src="{{ url_for('static', filename='js/admin-layout.js') }}"></script>
+        <script>
+            // Toast notification function
+            function showToast(message, type = 'info') {
+                const toastContainer = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast align-items-center text-white bg-${type} border-0`;
+                toast.role = 'alert';
+                toast.setAttribute('aria-live', 'assertive');
+                toast.setAttribute('aria-atomic', 'true');
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                `;
+                toastContainer.appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 5000 });
+                bsToast.show();
+                toast.addEventListener('hidden.bs.toast', function () {
+                    toast.remove();
+                });
+            }
+
+            // Dark/Light Mode Toggle
+            function initThemeToggle() {
+                const themeToggle = document.getElementById('themeToggle');
+                const themeIcon = document.getElementById('themeIcon');
+                const body = document.body;
+
+                // Get saved theme or default to light
+                const savedTheme = localStorage.getItem('theme') || 'light';
+
+                // Apply saved theme
+                if (savedTheme === 'dark') {
+                    body.setAttribute('data-theme', 'dark');
+                    themeIcon.className = 'bi bi-sun-fill';
+                } else {
+                    body.removeAttribute('data-theme');
+                    themeIcon.className = 'bi bi-moon-fill';
+                }
+
+                // Theme toggle event listener
+                themeToggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const currentTheme = body.getAttribute('data-theme');
+
+                    if (currentTheme === 'dark') {
+                        // Switch to light mode
+                        body.removeAttribute('data-theme');
+                        themeIcon.className = 'bi bi-moon-fill';
+                        localStorage.setItem('theme', 'light');
+                        showToast("Switched to Light Mode", 'info');
+                    } else {
+                        // Switch to dark mode
+                        body.setAttribute('data-theme', 'dark');
+                        themeIcon.className = 'bi bi-sun-fill';
+                        localStorage.setItem('theme', 'dark');
+                        showToast("Switched to Dark Mode", 'info');
+                    }
+
+                    // Update logo colors
+                    setTimeout(() => {
+                        if (window.updateLogoColors) {
+                            updateLogoColors();
+                        }
+                    }, 100);
+                });
+            }
+
+            // Initialize theme toggle when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function () {
+                initThemeToggle();
+            });
+
+            window.showToast = showToast;
+        </script>
+        {% endblock %}
+        {% block dashboard_scripts %}{% endblock %}
+
+        <!-- Logout Modal -->
+        <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to logout?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-primary">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug: Check username display -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const userSpan = document.querySelector('#userDropdown span');
+                if (userSpan) {
+                    console.log('Current user display:', userSpan.textContent);
+                    console.log('Expected: paycrypt (username)');
+                }
+            });
+        </script>
+    </body>
+
+</html>

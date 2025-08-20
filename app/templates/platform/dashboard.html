@@ -1,0 +1,179 @@
+{% extends "client/base.html" %}
+
+{% block client_content %}
+<div class="row">
+    <!-- Platform Overview -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ _('Platform Overview') }}</h5>
+                <p class="card-text">{{ platform.name }}</p>
+                <p class="card-text"><small class="text-muted">{{ _('Type') }}: {{ platform.platform_type.value }}</small></p>
+                <a href="{{ url_for('platform.settings') }}" class="btn btn-primary btn-sm">{{ _('Settings') }}</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Payments -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ _('Total Payments') }}</h5>
+                <p class="card-text display-6">{{ total_payments|default(0) }}</p>
+                <p class="card-text"><small class="text-muted">{{ _('Total amount') }}: {{ total_amount|default(0) }}</small></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Clients -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ _('Active Clients') }}</h5>
+                <p class="card-text display-6">{{ active_clients|default(0) }}</p>
+                <a href="{{ url_for('platform.clients') }}" class="btn btn-primary btn-sm">{{ _('View All') }}</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ _('Recent Activity') }}</h5>
+                <ul class="list-group">
+                    {% for activity in recent_activity[:5] %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>{{ activity.type }}</span>
+                            <span class="text-muted">{{ activity.timestamp.strftime('%H:%M') }}</span>
+                        </div>
+                        <small class="text-muted">{{ _(activity.description) }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Statistics -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Payment Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Count</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for status, count, amount in payment_stats %}
+                                    <tr>
+                                        <td>{{ status }}</td>
+                                        <td>{{ count }}</td>
+                                        <td>{{ amount }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Payments -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Payments</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Amount</th>
+                                <th>Currency</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in recent_payments %}
+                            <tr>
+                                <td>{{ payment.client.company_name }}</td>
+                                <td>{{ payment.amount }}</td>
+                                <td>{{ payment.currency }}</td>
+                                <td>
+                                    <span class="badge bg-{{ payment.status|lower }}">
+                                        {{ payment.status }}
+                                    </span>
+                                </td>
+                                <td>{{ payment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Payment statistics chart
+    const ctx = document.getElementById('paymentChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ payment_stats|map(attribute='0')|list|tojson }},
+            datasets: [{
+                label: 'Payment Count',
+                data: {{ payment_stats|map(attribute='1')|list|tojson }},
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)',
+                    'rgba(255, 99, 132, 0.5)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 99, 132, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

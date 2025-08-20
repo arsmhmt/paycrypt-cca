@@ -1,0 +1,94 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Client Rate Limits{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Client Rate Limits</h1>
+    
+    <!-- Client Management Navigation -->
+    <div class="mb-3">
+        <ul class="nav nav-pills flex-wrap">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.view_client', client_id=client.id) }}">
+                    <i class="fas fa-user me-2"></i>Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_commission', client_id=client.id) }}">
+                    <i class="fas fa-percent me-2"></i>Commission
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_branding', client_id=client.id) }}">
+                    <i class="fas fa-paint-brush me-2"></i>Branding
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('admin.clients_rate_limits', client_id=client.id) }}">
+                    <i class="fas fa-gauge-high me-2"></i>Rate Limits
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_api_keys', client_id=client.id) }}">
+                    <i class="fas fa-key me-2"></i>API Keys
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin.clients_audit_logs', client_id=client.id) }}">
+                    <i class="fas fa-history me-2"></i>Audit Logs
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!-- End Client Management Navigation -->
+
+    <div class="card">
+        <div class="card-header">
+            <strong>Rate Limits for {{ client.company_name or client.name or client.email }}</strong>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="mb-3">
+                    <label for="rate_limit" class="form-label">API Rate Limit (requests per minute)</label>
+                    <input type="number" class="form-control" id="rate_limit" name="rate_limit" 
+                           value="{{ client.rate_limit or 100 }}" min="1" max="10000" required>
+                    <div class="form-text">Maximum number of API requests allowed per minute</div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Current Usage:</strong> Rate limits help prevent abuse and ensure fair usage of the API. 
+                    The default limit is 100 requests per minute.
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">Recommended Limits</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li><small><strong>Light usage:</strong> 60 req/min</small></li>
+                                    <li><small><strong>Standard usage:</strong> 100 req/min</small></li>
+                                    <li><small><strong>Heavy usage:</strong> 300 req/min</small></li>
+                                    <li><small><strong>Enterprise:</strong> 1000+ req/min</small></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                    <a href="{{ url_for('admin.view_client', client_id=client.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Client
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

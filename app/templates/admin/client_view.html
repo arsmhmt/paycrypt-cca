@@ -1,0 +1,87 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Client Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Client Details</h1>
+    <!-- Client Management Navigation -->
+    <div class="mb-3">
+        <ul class="nav nav-pills flex-wrap">
+            <li class="nav-item">
+                <a class="nav-link{% if request.endpoint == 'admin.view_client' %} active{% endif %}" href="{{ url_for('admin.view_client', client_id=client.id) }}">
+                    <i class="fas fa-user me-2"></i>Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if request.endpoint == 'admin.clients_commission' %} active{% endif %}" href="{{ url_for('admin.clients_commission', client_id=client.id) }}">
+                    <i class="fas fa-percent me-2"></i>Commission
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if request.endpoint == 'admin.clients_branding' %} active{% endif %}" href="{{ url_for('admin.clients_branding', client_id=client.id) }}">
+                    <i class="fas fa-paint-brush me-2"></i>Branding
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if request.endpoint == 'admin.clients_rate_limits' %} active{% endif %}" href="{{ url_for('admin.clients_rate_limits', client_id=client.id) }}">
+                    <i class="fas fa-gauge-high me-2"></i>Rate Limits
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if request.endpoint == 'admin.clients_api_keys' %} active{% endif %}" href="{{ url_for('admin.clients_api_keys', client_id=client.id) }}">
+                    <i class="fas fa-key me-2"></i>API Keys
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if request.endpoint == 'admin.clients_audit_logs' %} active{% endif %}" href="{{ url_for('admin.clients_audit_logs', client_id=client.id) }}">
+                    <i class="fas fa-history me-2"></i>Audit Logs
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!-- End Client Management Navigation -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>{{ client.company_name or client.name or 'Client' }}</strong> (ID: {{ client.id }})
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Name</dt>
+                <dd class="col-sm-9">{{ client.name }}</dd>
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">{{ client.email }}</dd>
+                <dt class="col-sm-3">Company</dt>
+                <dd class="col-sm-9">{{ client.company_name or 'N/A' }}</dd>
+                <dt class="col-sm-3">API Key</dt>
+                <dd class="col-sm-9">{{ client.api_key or 'Not set' }}</dd>
+                <dt class="col-sm-3">Deposit Commission Rate</dt>
+                <dd class="col-sm-9">{{ '%.2f'|format(client.deposit_commission_rate * 100 if client.deposit_commission_rate else 0) }}%</dd>
+                <dt class="col-sm-3">Withdrawal Commission Rate</dt>
+                <dd class="col-sm-9">{{ '%.2f'|format(client.withdrawal_commission_rate * 100 if client.withdrawal_commission_rate else 0) }}%</dd>
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">
+                    <span class="badge {{ 'bg-success' if client.is_active else 'bg-secondary' }}">
+                        {{ 'Active' if client.is_active else 'Inactive' }}
+                    </span>
+                </dd>
+                <dt class="col-sm-3">Created At</dt>
+                <dd class="col-sm-9">{{ client.created_at.strftime('%Y-%m-%d %H:%M') if client.created_at else 'N/A' }}</dd>
+            </dl>
+            <hr>
+            <h5>Financials</h5>
+            <dl class="row">
+                <dt class="col-sm-3">Gross Deposits</dt>
+                <dd class="col-sm-9">{{ '%.8f'|format(calculator.get_gross_deposits(client.id)) }} BTC</dd>
+                <dt class="col-sm-3">Gross Withdrawals</dt>
+                <dd class="col-sm-9">{{ '%.8f'|format(calculator.get_gross_withdrawals(client.id)) }} BTC</dd>
+                <dt class="col-sm-3">Total Commission</dt>
+                <dd class="col-sm-9">{{ '%.8f'|format(calculator.calculate_commission(client.id)[2]) }} BTC</dd>
+                <dt class="col-sm-3">Net Balance</dt>
+                <dd class="col-sm-9">{{ '%.8f'|format(calculator.calculate_client_balance(client.id)) }} BTC</dd>
+            </dl>
+        </div>
+    </div>
+    <a href="{{ url_for('withdrawal_admin.withdrawal_reports') }}" class="btn btn-secondary">Back to Clients</a>
+</div>
+{% endblock %}

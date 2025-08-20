@@ -1,0 +1,32 @@
+{% extends 'admin/base.html' %}
+{% block title %}Create Payment{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Create Payment</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.client_id.label(class="form-label") }}
+            {{ form.client_id(class="form-select") }}
+        </div>
+        <div class="mb-3">
+            {{ form.amount.label(class="form-label") }}
+            {{ form.amount(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.currency.label(class="form-label") }}
+            {{ form.currency(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.status.label(class="form-label") }}
+            {{ form.status(class="form-select") }}
+        </div>
+        <div class="mb-3">
+            {{ form.description.label(class="form-label") }}
+            {{ form.description(class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-success">Create Payment</button>
+        <a href="{{ url_for('admin.payments_list') }}" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>
+{% endblock %}

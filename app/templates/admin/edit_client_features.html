@@ -1,0 +1,174 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Features - {{ client.company_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-cogs"></i>
+                        Feature Management for {{ client.company_name }}
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{{ url_for('admin.view_client', client_id=client.id) }}"
+                            class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back to Client
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                        <!-- Package Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-info">
+                                        <i class="fas fa-box"></i>
+                                    </span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Current Package</span>
+                                        <span class="info-box-number">
+                                            {% if client.package %}
+                                            {{ client.get_status_display() }}
+                                            {% else %}
+                                            No Package Assigned
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <span class="info-box-icon bg-success">
+                                        <i class="fas fa-check-circle"></i>
+                                    </span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Total Features</span>
+                                        <span class="info-box-number">{{ all_client_features|length }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Package Features (Read-only) -->
+                        {% if package_features %}
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-box text-primary"></i>
+                                    Package Features (Automatic)
+                                </h5>
+                                <small class="text-muted">These features are automatically provided by the client's
+                                    package.</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {% for feature in package_features %}
+                                    <div class="col-md-6 col-lg-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" checked disabled>
+                                            <label class="form-check-label text-muted">
+                                                <strong>{{ feature.replace('_', ' ').title() }}</strong>
+                                                {% if feature in feature_descriptions %}
+                                                <br><small>{{ feature_descriptions[feature] }}</small>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Feature Overrides (Editable) -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-edit text-warning"></i>
+                                    Manual Feature Overrides
+                                </h5>
+                                <small class="text-muted">Add additional features not included in the client's
+                                    package.</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {% for feature in all_possible_features %}
+                                    {% if feature not in package_features %}
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="features"
+                                                value="{{ feature }}" id="feature_{{ feature }}" {% if feature in
+                                                override_features %}checked{% endif %}>
+                                            <label class="form-check-label" for="feature_{{ feature }}">
+                                                <strong>{{ feature.replace('_', ' ').title() }}</strong>
+                                                {% if feature in feature_descriptions %}
+                                                <br><small class="text-muted">{{ feature_descriptions[feature]
+                                                    }}</small>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+
+                                {% if all_possible_features|length == package_features|length %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    This client's package already includes all available features. No additional
+                                    overrides are possible.
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Feature Overrides
+                                </button>
+                                <a href="{{ url_for('admin.view_client', client_id=client.id) }}"
+                                    class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Template data
+    window.templateData = {
+        packageCount: {{ package_features | length }}
+    };
+
+    // Add some interactive behavior
+    document.addEventListener('DOMContentLoaded', function () {
+        // Count selected overrides
+        function updateOverrideCount() {
+            const checked = document.querySelectorAll('input[name="features"]:checked').length;
+            const info = document.querySelector('.info-box-number');
+            if (info) {
+                info.textContent = window.templateData.packageCount + checked;
+            }
+        }
+
+        // Listen for changes
+        document.querySelectorAll('input[name="features"]').forEach(function (checkbox) {
+            checkbox.addEventListener('change', updateOverrideCount);
+        });
+    });
+</script>
+{% endblock %}

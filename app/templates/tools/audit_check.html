@@ -1,0 +1,484 @@
+{% extends 'base.html' %}
+
+{% block title %}Contract Audit Checker - Official Security Audits - PayCrypt{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card bg-gradient-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-certificate me-2"></i>
+                                Contract Audit Checker
+                            </h2>
+                            <p class="mb-0 opacity-90">
+                                Verify official security audits from CertiK, Hacken, and top audit firms
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="badge bg-light text-primary fs-6 px-3 py-2">
+                                <i class="fas fa-award me-1"></i>
+                                Trust Verification
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Form -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2 text-primary"></i>
+                        Audit Verification
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="chain" class="form-label">
+                                <i class="fas fa-link me-1"></i>
+                                Blockchain
+                            </label>
+                            <select name="chain" id="chain" class="form-select" required>
+                                <option value="">Select blockchain...</option>
+                                {% for chain_id, chain_name in chains.items() %}
+                                <option value="{{ chain_id }}" {% if request.form.get('chain') == chain_id %}selected{% endif %}>
+                                    {{ chain_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">
+                                <i class="fas fa-file-contract me-1"></i>
+                                Token Contract Address
+                            </label>
+                            <input type="text" 
+                                   name="address" 
+                                   id="address" 
+                                   class="form-control" 
+                                   placeholder="0x..." 
+                                   required
+                                   value="{{ request.form.get('address', '') }}">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-certificate me-1"></i>
+                                Check Audits
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if result and result.success %}
+            <!-- Audit Status Overview -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-{% if result.audit_status.total_audits >= 2 %}success{% elif result.audit_status.total_audits == 1 %}warning{% else %}danger{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-check me-2"></i>
+                            Audit Status
+                        </h5>
+                        <div class="badge bg-light text-{% if result.audit_status.total_audits >= 2 %}success{% elif result.audit_status.total_audits == 1 %}warning{% else %}danger{% endif %} fs-4">
+                            {{ result.audit_status.total_audits }} Audits
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="border-end">
+                                        <div class="h3 text-success mb-1">{{ result.audit_status.total_audits }}</div>
+                                        <small class="text-muted">Total Audits</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border-end">
+                                        <div class="h3 text-info mb-1">{{ result.audit_status.verified_audits|length }}</div>
+                                        <small class="text-muted">Verified</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="h3 text-warning mb-1">{{ result.audit_status.pending_audits|length }}</div>
+                                    <small class="text-muted">Pending</small>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="progress" style="height: 15px;">
+                                    <div class="progress-bar bg-{% if result.audit_status.trust_score >= 80 %}success{% elif result.audit_status.trust_score >= 60 %}warning{% else %}danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ result.audit_status.trust_score }}%"
+                                         aria-valuenow="{{ result.audit_status.trust_score }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        Trust Score: {{ result.audit_status.trust_score }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="display-4 mb-2">
+                                {% if result.audit_status.total_audits >= 2 %}
+                                    <i class="fas fa-award text-success"></i>
+                                {% elif result.audit_status.total_audits == 1 %}
+                                    <i class="fas fa-certificate text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                                {% endif %}
+                            </div>
+                            <div class="h5 text-{% if result.audit_status.total_audits >= 2 %}success{% elif result.audit_status.total_audits == 1 %}warning{% else %}danger{% endif %}">
+                                {% if result.audit_status.total_audits >= 2 %}
+                                    WELL AUDITED
+                                {% elif result.audit_status.total_audits == 1 %}
+                                    PARTIALLY AUDITED
+                                {% else %}
+                                    NOT AUDITED
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Information -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Token Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="border-start border-primary border-3 ps-3">
+                                <small class="text-muted">Contract Address</small>
+                                <div class="fw-bold font-monospace">{{ result.token_info.address[:10] }}...{{ result.token_info.address[-8:] }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-start border-success border-3 ps-3">
+                                <small class="text-muted">Blockchain</small>
+                                <div class="fw-bold">{{ result.token_info.chain }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-start border-info border-3 ps-3">
+                                <small class="text-muted">Last Checked</small>
+                                <div class="fw-bold">{{ result.timestamp }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Firms Results -->
+            <div class="row g-4 mb-4">
+                {% for audit in result.audit_firms %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow h-100">
+                        <div class="card-header bg-{% if audit.status == 'Verified' %}success{% elif audit.status == 'Pending' %}warning{% else %}light{% endif %} 
+                                    text-{% if audit.status == 'Verified' %}white{% elif audit.status == 'Pending' %}dark{% else %}muted{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    {% if audit.firm == 'CertiK' %}
+                                        <i class="fas fa-shield-alt me-2"></i>
+                                    {% elif audit.firm == 'Hacken' %}
+                                        <i class="fas fa-lock me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-search me-2"></i>
+                                    {% endif %}
+                                    {{ audit.firm }}
+                                </h6>
+                                <span class="badge bg-{% if audit.status == 'Verified' %}light text-success{% elif audit.status == 'Pending' %}dark text-warning{% else %}secondary{% endif %}">
+                                    {{ audit.status }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                {% if audit.status == 'Verified' %}
+                                    <div class="display-6 text-success mb-2">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <h5 class="text-success">Audit Found</h5>
+                                    {% if audit.score %}
+                                    <div class="h4 mb-2">{{ audit.score }}/100</div>
+                                    {% endif %}
+                                {% elif audit.status == 'Pending' %}
+                                    <div class="display-6 text-warning mb-2">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <h5 class="text-warning">Audit Pending</h5>
+                                {% else %}
+                                    <div class="display-6 text-muted mb-2">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <h5 class="text-muted">No Audit Found</h5>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span>Last Checked</span>
+                                    <small class="text-muted">{{ audit.last_checked }}</small>
+                                </div>
+                                {% if audit.report_url %}
+                                <div class="list-group-item px-0">
+                                    <a href="{{ audit.report_url }}" target="_blank" class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="fas fa-external-link-alt me-1"></i>
+                                        View Report
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Recommendations -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Audit-Based Recommendations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% for rec in result.recommendations %}
+                        <li class="mb-2">
+                            {% if rec.startswith('✅') %}
+                                <div class="text-success">{{ rec }}</div>
+                            {% elif rec.startswith('⚠️') %}
+                                <div class="text-warning">{{ rec }}</div>
+                            {% elif rec.startswith('🚨') %}
+                                <div class="text-danger">{{ rec }}</div>
+                            {% else %}
+                                <div class="text-muted">{{ rec }}</div>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Audit Firms Information -->
+            <div class="card border-0 shadow">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-university me-2"></i>
+                        About Audit Firms
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card border h-100">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="fas fa-shield-alt text-primary" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h6 class="card-title">CertiK</h6>
+                                    <p class="card-text text-muted">
+                                        Leading blockchain security firm with formal verification technology. Audited 3,000+ projects.
+                                    </p>
+                                    <div class="badge bg-primary">Tier 1</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border h-100">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="fas fa-lock text-success" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h6 class="card-title">Hacken</h6>
+                                    <p class="card-text text-muted">
+                                        Cybersecurity consulting firm specializing in blockchain security audits and penetration testing.
+                                    </p>
+                                    <div class="badge bg-success">Tier 1</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border h-100">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="fas fa-search text-info" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <h6 class="card-title">ConsenSys Diligence</h6>
+                                    <p class="card-text text-muted">
+                                        Ethereum-focused security auditing service by ConsenSys, providing comprehensive code reviews.
+                                    </p>
+                                    <div class="badge bg-info">Tier 1</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-primary">Why Audits Matter:</h6>
+                                        <ul class="mb-0 text-muted">
+                                            <li>Independent security verification</li>
+                                            <li>Professional code review</li>
+                                            <li>Vulnerability identification</li>
+                                            <li>Best practice compliance</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="text-primary">Audit Limitations:</h6>
+                                        <ul class="mb-0 text-muted">
+                                            <li>Not a guarantee of safety</li>
+                                            <li>Point-in-time assessment</li>
+                                            <li>May not cover all scenarios</li>
+                                            <li>Code can change post-audit</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Form styling */
+#address {
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* Progress bar styling */
+.progress-bar {
+    transition: width 2s ease-in-out;
+}
+
+/* List group styling */
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.8rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .display-6 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Custom audit firm styling */
+.card.border {
+    border-color: #dee2e6 !important;
+}
+
+.card.border:hover {
+    border-color: #007bff !important;
+}
+</style>
+
+<script>
+// Address validation
+document.getElementById('address').addEventListener('input', function(e) {
+    const value = e.target.value;
+    if (value && !value.startsWith('0x')) {
+        e.target.setCustomValidity('Address must start with 0x');
+    } else if (value && value.length !== 42) {
+        e.target.setCustomValidity('Address must be 42 characters long');
+    } else {
+        e.target.setCustomValidity('');
+    }
+});
+
+// Animate progress bar on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        setTimeout(() => {
+            progressBar.style.width = progressBar.getAttribute('aria-valuenow') + '%';
+        }, 500);
+    }
+});
+
+// Chain-specific address validation
+document.getElementById('chain').addEventListener('change', function(e) {
+    const addressField = document.getElementById('address');
+    const selectedChain = e.target.selectedOptions[0].text;
+    
+    if (selectedChain) {
+        addressField.placeholder = `Enter ${selectedChain} token address (0x...)`;
+    }
+});
+
+// Auto-focus address field when chain is selected
+document.getElementById('chain').addEventListener('change', function() {
+    if (this.value) {
+        document.getElementById('address').focus();
+    }
+});
+
+// Copy address functionality
+function copyAddress(address) {
+    navigator.clipboard.writeText(address).then(function() {
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed top-0 start-50 translate-middle-x p-3';
+        toast.style.zIndex = '9999';
+        toast.innerHTML = '<div class="alert alert-success mb-0">Address copied to clipboard!</div>';
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

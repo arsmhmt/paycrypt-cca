@@ -1,0 +1,70 @@
+{# Form field rendering macro #}
+{% macro render_field(field, label_visible=true) -%}
+    <div class="form-group mb-3">
+        {% if field.type != 'HiddenField' and label_visible %}
+            {{ field.label(class="form-label") }}
+        {% endif %}
+        
+        {% if field.errors %}
+            {{ field(class="form-control is-invalid" + (' is-invalid' if field.errors else ''), **kwargs) }}
+            <div class="invalid-feedback">
+                {% for error in field.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% else %}
+            {{ field(class="form-control", **kwargs) }}
+        {% endif %}
+        
+        {% if field.description %}
+            <small class="form-text text-muted">{{ field.description }}</small>
+        {% endif %}
+    </div>
+{%- endmacro %}
+
+{# Form actions rendering macro #}
+{% macro form_actions(cancel_url=None, delete_url=None) -%}
+    <div class="form-actions mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-1"></i> Save
+        </button>
+        
+        {% if cancel_url %}
+            <a href="{{ cancel_url }}" class="btn btn-outline-secondary ms-2">
+                <i class="bi bi-x-lg me-1"></i> Cancel
+            </a>
+        {% endif %}
+        
+        {% if delete_url %}
+            <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                <i class="bi bi-trash me-1"></i> Delete
+            </button>
+        {% endif %}
+    </div>
+{%- endmacro %}
+
+{# Delete confirmation modal #}
+{% macro delete_modal(title, body, confirm_url) -%}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">{{ title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {{ body }}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ confirm_url }}" method="POST" class="d-inline">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{%- endmacro %}

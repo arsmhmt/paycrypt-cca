@@ -1,0 +1,370 @@
+{% extends "client/base.html" %}
+
+{% block title %}Edit API Key - {{ client.company_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Edit API Key: {{ api_key.name }}</h1>
+            <p class="text-muted">Update your API key configuration</p>
+        </div>
+        <div class="btn-group">
+            <a href="{{ url_for('client.api_key_details', key_id=api_key.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Details
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Edit Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">API Key configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="{{ form.name.id }}" class="form-label">API Key Name *</label>
+                                {{ form.name(class="form-control") }}
+                                {% if form.name.errors %}
+                                {% for error in form.name.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                                {% endif %}
+                                <div class="form-text">Give your API key a descriptive name</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.rate_limit.id }}" class="form-label">Rate Limit *</label>
+                                <div class="input-group">
+                                    {{ form.rate_limit(class="form-control") }}
+                                    <span class="input-group-text">requests/min</span>
+                                </div>
+                                {% if form.rate_limit.errors %}
+                                {% for error in form.rate_limit.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                                {% endif %}
+                                <div class="form-text">Maximum API requests per minute (1-1000)</div>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_active(class="form-check-input") }}
+                                    <label class="form-check-label" for="{{ form.is_active.id }}">
+                                        Active
+                                    </label>
+                                    <div class="form-text">Uncheck to temporarily disable this API key</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permissions -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Permissions</h6>
+                            <p class="text-muted mb-3">Select which API endpoints this key can access</p>
+
+                            <div class="row">
+                                <!-- Payment Permissions -->
+                                <div class="col-md-6">
+                                    <div class="card border">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-credit-card text-primary"></i> Payment Operations
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="form-check mb-2">
+                                                {{ form.perm_payments_read(class="form-check-input") }}
+                                                <label class="form-check-label" for="{{ form.perm_payments_read.id }}">
+                                                    Read Payments
+                                                </label>
+                                                <div class="form-text">View payment history and status</div>
+                                            </div>
+                                            <div class="form-check">
+                                                {{ form.perm_payments_create(class="form-check-input") }}
+                                                <label class="form-check-label"
+                                                    for="{{ form.perm_payments_create.id }}">
+                                                    Create Payments
+                                                </label>
+                                                <div class="form-text">Create new payment requests</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Withdrawal Permissions -->
+                                <div class="col-md-6">
+                                    <div class="card border">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-arrow-up text-warning"></i> Withdrawal Operations
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="form-check mb-2">
+                                                {{ form.perm_withdrawals_read(class="form-check-input") }}
+                                                <label class="form-check-label"
+                                                    for="{{ form.perm_withdrawals_read.id }}">
+                                                    Read Withdrawals
+                                                </label>
+                                                <div class="form-text">View withdrawal history and status</div>
+                                            </div>
+                                            <div class="form-check">
+                                                {{ form.perm_withdrawals_create(class="form-check-input") }}
+                                                <label class="form-check-label"
+                                                    for="{{ form.perm_withdrawals_create.id }}">
+                                                    Create Withdrawals
+                                                </label>
+                                                <div class="form-text">Request new withdrawals</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Invoice Permissions -->
+                                <div class="col-md-6 mt-3">
+                                    <div class="card border">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-file-invoice text-success"></i> Invoice Operations
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="form-check mb-2">
+                                                {{ form.perm_invoices_read(class="form-check-input") }}
+                                                <label class="form-check-label" for="{{ form.perm_invoices_read.id }}">
+                                                    Read Invoices
+                                                </label>
+                                                <div class="form-text">View invoice history and details</div>
+                                            </div>
+                                            <div class="form-check">
+                                                {{ form.perm_invoices_create(class="form-check-input") }}
+                                                <label class="form-check-label"
+                                                    for="{{ form.perm_invoices_create.id }}">
+                                                    Create Invoices
+                                                </label>
+                                                <div class="form-text">Generate new invoices</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Account Permissions -->
+                                <div class="col-md-6 mt-3">
+                                    <div class="card border">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-user text-info"></i> Account Operations
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="form-check mb-2">
+                                                {{ form.perm_balance_read(class="form-check-input") }}
+                                                <label class="form-check-label" for="{{ form.perm_balance_read.id }}">
+                                                    Read Balance
+                                                </label>
+                                                <div class="form-text">View account balance</div>
+                                            </div>
+                                            <div class="form-check">
+                                                {{ form.perm_profile_read(class="form-check-input") }}
+                                                <label class="form-check-label" for="{{ form.perm_profile_read.id }}">
+                                                    Read Profile
+                                                </label>
+                                                <div class="form-text">View account profile information</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('client.api_key_details', key_id=api_key.id) }}"
+                                class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update API Key
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Current Key Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Current Key Info</h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-6">Created:</dt>
+                        <dd class="col-6">{{ api_key.created_at.strftime('%Y-%m-%d') }}</dd>
+
+                        <dt class="col-6">Last Used:</dt>
+                        <dd class="col-6">
+                            {% if api_key.last_used_at %}
+                            {{ api_key.last_used_at.strftime('%Y-%m-%d') }}
+                            {% else %}
+                            <span class="text-muted">Never</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-6">Usage Count:</dt>
+                        <dd class="col-6">{{ api_key.usage_count or 0 }}</dd>
+
+                        <dt class="col-6">Expires:</dt>
+                        <dd class="col-6">
+                            {% if api_key.expires_at %}
+                            {{ api_key.expires_at.strftime('%Y-%m-%d') }}
+                            {% else %}
+                            <span class="text-muted">Never</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllPermissions()">
+                            <i class="fas fa-check-square"></i> Select All Permissions
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllPermissions()">
+                            <i class="fas fa-square"></i> Clear All Permissions
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="selectReadOnlyPermissions()">
+                            <i class="fas fa-eye"></i> Read-Only Access
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            {% if api_key.is_active %}
+            <div class="card mt-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Irreversible actions for this API key.</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="regenerateKey()">
+                            <i class="fas fa-refresh"></i> Regenerate Key
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="revokeKey()">
+                            <i class="fas fa-ban"></i> Revoke Key
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Revoke Modal -->
+<div class="modal fade" id="revokeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Revoke API Key</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to revoke the API key "<strong>{{ api_key.name }}</strong>"?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All applications using this key will lose
+                    access immediately.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('client.revoke_api_key', key_id=api_key.id) }}"
+                    style="display: inline;">
+                    {{ csrf_token() }}
+                    <input type="hidden" name="api_key_id" value="{{ api_key.id }}">
+                    <input type="hidden" name="confirm_revoke" value="y">
+                    <button type="submit" class="btn btn-danger">Revoke Key</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Regenerate Modal -->
+<div class="modal fade" id="regenerateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Regenerate API Key</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to regenerate the API key "<strong>{{ api_key.name }}</strong>"?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> The old key will be invalidated immediately. Update all applications with
+                    the new key.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('client.regenerate_api_key', key_id=api_key.id) }}"
+                    style="display: inline;">
+                    {{ csrf_token() }}
+                    <button type="submit" class="btn btn-warning">Regenerate Key</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function selectAllPermissions() {
+        document.querySelectorAll('input[type="checkbox"][id^="perm_"]').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    function clearAllPermissions() {
+        document.querySelectorAll('input[type="checkbox"][id^="perm_"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+    function selectReadOnlyPermissions() {
+        clearAllPermissions();
+        document.querySelectorAll('input[type="checkbox"][id*="_read"]').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    function revokeKey() {
+        new bootstrap.Modal(document.getElementById('revokeModal')).show();
+    }
+
+    function regenerateKey() {
+        new bootstrap.Modal(document.getElementById('regenerateModal')).show();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,942 @@
+{% extends "auth/base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block subtitle %}{% if selected_package %}Register for {{ selected_package.name }}{% else %}Register New Account{%
+endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Steel, black, and orange palette */
+    :root {
+        --steel: #43484d;
+        --steel-light: #5a5f63;
+        --black: #181a1b;
+        --orange: #ff9800;
+        --orange-dark: #e65100;
+        --white: #fff;
+        --input-bg: #23272a;
+        --input-border: #43484d;
+        --input-focus: #ff9800;
+    }
+
+    .auth-container {
+        max-width: 1000px !important;
+        width: 100% !important;
+        margin: 1.2rem auto !important;
+        padding: 0 6px;
+    }
+
+    .register-content {
+        padding: 0;
+    }
+
+    .form-card {
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(67, 72, 77, 0.07);
+        padding: 1.25rem 1rem;
+        color: #23272a;
+        margin-bottom: 1.25rem;
+    }
+
+    .card-header,
+    .card-header.bg-white {
+        background: var(--steel);
+        color: var(--orange);
+        border-radius: 12px 12px 0 0;
+        border-bottom: 3px solid var(--orange);
+    }
+
+    .card {
+        border: none;
+        background: var(--steel-light);
+        color: var(--white);
+    }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--orange);
+    }
+
+    .form-control,
+    .form-select {
+        background: var(--input-bg);
+    }
+
+    .form-control::placeholder,
+    .form-select::placeholder,
+    textarea::placeholder {
+        color: #ffe7a5;
+        font-size: 0.65em;
+        opacity: 1;
+    }
+
+    .form-control::-webkit-input-placeholder,
+    .form-select::-webkit-input-placeholder,
+    textarea::-webkit-input-placeholder {
+        color: #d3d6db;
+        font-size: 0.85em;
+        opacity: 1;
+    }
+
+    .form-control:-ms-input-placeholder,
+    .form-select:-ms-input-placeholder,
+    textarea:-ms-input-placeholder {
+        color: #d3d6db;
+        font-size: 0.85em;
+        opacity: 1;
+    }
+
+    .form-control,
+    .form-select {
+        color: var(--white);
+        border-radius: 8px;
+        border: 1px solid var(--input-border);
+        transition: all 0.2s;
+        font-size: 1rem;
+        box-shadow: none;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--input-focus);
+        box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.18);
+        background: var(--input-bg);
+        color: var(--white);
+    }
+
+    .input-group-text {
+        background: var(--steel-light);
+        color: var(--orange);
+        border: 1px solid var(--input-border);
+    }
+
+    .btn-primary {
+        background: linear-gradient(90deg, var(--orange-dark), var(--orange));
+        border: none;
+        color: var(--white);
+        padding: 0.75rem 1.5rem;
+        font-weight: 700;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: background 0.2s;
+        box-shadow: 0 2px 8px rgba(255, 152, 0, 0.13);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(90deg, var(--orange), var(--orange-dark));
+        color: var(--black);
+    }
+
+    .btn-outline-secondary {
+        color: var(--orange);
+        border: 1px solid var(--orange);
+        background: transparent;
+    }
+
+    .btn-outline-secondary:hover {
+        background: var(--orange);
+        color: var(--black);
+    }
+
+    .alert-info {
+        background: rgba(255, 152, 0, 0.09);
+        color: var(--orange);
+        border: 1px solid var(--orange-dark);
+    }
+
+    .invalid-feedback,
+    .is-invalid {
+        color: #ff9800 !important;
+        background: transparent;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 991.98px) {
+        .form-card {
+            padding: 2rem;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .auth-container {
+            padding: 0 10px;
+        }
+
+        .form-card {
+            padding: 1.5rem;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .form-card {
+            padding: 1.25rem;
+            border-radius: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Form elements */
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+
+    .form-control,
+    .form-select {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        font-size: 1rem;
+    }
+
+    .btn-outline-primary {
+        color: #6366f1;
+        border-color: #6366f1;
+    }
+
+    .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-color: #6366f1;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-content">
+    {% if selected_package or commission_package %}
+    <div class="card shadow-sm mb-4 border-3 border-primary">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="m-0">
+                <i class="bi {% if selected_package and selected_package.client_type == 'flat_rate' %}bi-box-seam{% else %}bi-currency-exchange{% endif %} me-2"></i>
+                {% if selected_package %}
+                    {{ selected_package.name }}
+                {% else %}
+                    {{ commission_package.name }}
+                {% endif %}
+                <a href="{{ url_for('main.pricing') }}" class="btn btn-sm btn-outline-light float-end">
+                    <i class="bi bi-arrow-left me-1"></i> Change Package
+                </a>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary">Package Details</h6>
+                    <ul class="list-unstyled">
+                        {% if selected_package %}
+                            <li class="mb-2">
+                                <i class="bi bi-tag me-2"></i>
+                                <strong>Type:</strong> Flat Rate
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-currency-dollar me-2"></i>
+                                <strong>Monthly Price:</strong> ${{ "%.2f"|format(selected_package.monthly_price) }}
+                            </li>
+                            {% if selected_package.setup_fee and selected_package.setup_fee > 0 %}
+                            <li class="mb-2">
+                                <i class="bi bi-credit-card me-2"></i>
+                                <strong>One-Time Setup Fee:</strong> ${{ "%.2f"|format(selected_package.setup_fee) }}
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="mb-2">
+                                <i class="bi bi-tag me-2"></i>
+                                <strong>Type:</strong> Commission Based
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-percent me-2"></i>
+                                <strong>Commission Rate:</strong> {{ commission_package.commission_rate }}%
+                            </li>
+                            {% if commission_package.setup_fee and commission_package.setup_fee > 0 %}
+                            <li class="mb-2">
+                                <i class="bi bi-credit-card me-2"></i>
+                                <strong>One-Time Setup Fee:</strong> ${{ "%.2f"|format(commission_package.setup_fee) }}
+                            </li>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if selected_package and selected_package.features %}
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <strong>Includes:</strong>
+                            <ul class="mt-2">
+                                {% for feature in selected_package.features %}
+                                <li>{{ feature }}</li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {% if selected_package %}
+                            <p>Your subscription will start immediately after registration.</p>
+                            <p>The first payment of ${{ "%.2f"|format(selected_package.monthly_price) }} will be processed upon approval of your application.</p>
+                            <p>No setup fee is required for flat-rate packages.</p>
+                        {% else %}
+                            <p>Commission fees will be deducted from each transaction.</p>
+                            {% if commission_package.setup_fee and commission_package.setup_fee > 0 %}
+                            <p class="mb-0">A one-time setup fee of ${{ "%.2f"|format(commission_package.setup_fee) }} will be charged upon approval.</p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        No package selected. Please select a package from the <a href="{{ url_for('main.pricing') }}">pricing page</a>.
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Registration Form -->
+        <div class="col-12">
+            <div class="form-card">
+
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold mb-2">Create Your Account</h2>
+                    <p class="text-muted">Fill in your details to complete registration</p>
+                </div>
+
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading">Please fix the following errors:</h5>
+                    <ul class="mb-0">
+                        {% for field, errors in form.errors.items() %}
+                            {% for error in errors %}
+                                <li>{{ form[field].label.text }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <form method="POST" action="{{ url_for('auth.register') }}" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    {% if selected_package %}
+                    <input type="hidden" name="package_id" value="{{ selected_package.id }}">
+                    <input type="hidden" name="package_key" value="{{ selected_package.key if selected_package.key else '' }}">
+                    {% elif commission_package %}
+                    <input type="hidden" name="package_id" value="{{ commission_package.id }}">
+                    <input type="hidden" name="package_key" value="{{ commission_package.key }}">
+                    {% endif %}
+
+                    <!-- Login Credentials (Prioritized) -->
+                    <div class="card shadow-sm mb-4 border-3 border-primary bg-light bg-gradient"
+                        style="box-shadow: 0 4px 24px rgba(78,115,223,0.11);">
+                        <div class="card-header bg-primary bg-gradient text-white py-3 rounded-top shadow-sm">
+                            <h5 class="m-0">
+                                <i class="bi bi-shield-lock me-2"></i>Login Credentials
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.username.label(class="form-label fw-semibold text-primary") }}
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-person"></i></span>
+                                        {{ form.username(class_="form-control form-control-lg" + (" is-invalid" if form.username.errors else ""), 
+                                                      placeholder="Choose a username",
+                                                      id="register_username") }}
+                                        {% if form.username.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ form.username.errors[0] }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form.email.label(class="form-label fw-semibold text-primary") }}
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-envelope"></i></span>
+                                        {{ form.email(class_="form-control form-control-lg" + (" is-invalid" if form.email.errors else ""), 
+                                                   placeholder="Email address", 
+                                                   id="register_email") }}
+                                        {% if form.email.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ form.email.errors[0] }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.password.label(class="form-label fw-semibold text-primary") }}
+                                    <div class="input-group input-group-lg" id="show_hide_password">
+                                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-lock"></i></span>
+                                        {{ form.password(class_="form-control form-control-lg" + (" is-invalid" if form.password.errors else ""), 
+                                                      placeholder="Password", 
+                                                      id="register_password") }}
+                                        <button class="btn btn-outline-secondary password-toggle-btn" type="button" id="togglePassword">
+                                            <i class="bi bi-eye-slash" id="toggleIcon"></i>
+                                        </button>
+                                        {% if form.password.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ form.password.errors[0] }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="progress mt-2" style="height: 6px;">
+                                        <div id="password-strength" class="progress-bar bg-success" role="progressbar"
+                                            style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form.confirm_password.label(class="form-label fw-semibold text-primary") }}
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-lock-fill"></i></span>
+                                        {{ form.confirm_password(class_="form-control form-control-lg" + (" is-invalid" if form.confirm_password.errors else ""), 
+                                                                   placeholder="Confirm Password", 
+                                                                   id="register_confirm_password") }}
+                                        {% if form.confirm_password.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ form.confirm_password.errors[0] }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                These credentials will be used to access your client dashboard.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Business Information -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white py-3 border-bottom border-3 border-primary bg-gradient">
+                            <h5 class="m-0 text-primary">
+                                <i class="bi bi-building me-2"></i>Business Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    {{ form.first_name.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                        {{ form.first_name(class="form-control form-control-lg" + (" is-invalid" if form.first_name.errors else ""), placeholder="First Name") }}
+                                        {% if form.first_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.first_name.errors[0] }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ form.last_name.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                        {{ form.last_name(class="form-control form-control-lg" + (" is-invalid" if form.last_name.errors else ""), placeholder="Last Name") }}
+                                        {% if form.last_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.last_name.errors[0] }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ form.phone.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                        {{ form.phone(class="form-control form-control-lg" + (" is-invalid" if form.phone.errors else ""), placeholder="Phone Number") }}
+                                        {% if form.phone.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.phone.errors[0] }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.company_name.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                        {{ form.company_name(class="form-control form-control-lg" + (" is-invalid" if form.company_name.errors else ""), placeholder="Your company name") }}
+                                        {% if form.company_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.company_name.errors[0] }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% if form.company_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.company_name.errors[0] }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form.company_website.label(class="form-label fw-semibold") }}
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-globe"></i></span>
+                                    {{ form.company_website(class="form-control form-control-lg" + (" is-invalid" if form.company_website.errors else ""), placeholder="https://example.com") }}
+                                </div>
+                                {% if form.company_website.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.company_website.errors[0] }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="m-0 text-primary">
+                                <i class="bi bi-person-lines-fill me-2"></i>Contact Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    {{ form.contact_person.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                        {{ form.contact_person(class="form-control form-control-lg" + (" is-invalid" if form.contact_person.errors else ""), placeholder="Contact person") }}
+                                    </div>
+                                    {% if form.contact_person.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.contact_person.errors[0] }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ form.contact_email.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                        {{ form.contact_email(class="form-control form-control-lg" + (" is-invalid" if form.contact_email.errors else ""), placeholder="Contact email") }}
+                                    </div>
+                                    {% if form.contact_email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.contact_email.errors[0] }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ form.contact_phone.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                        {{ form.contact_phone(class="form-control form-control-lg" + (" is-invalid" if form.contact_phone.errors else ""), placeholder="Contact phone") }}
+                                    </div>
+                                    {% if form.contact_phone.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.contact_phone.errors[0] }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Address Information -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="m-0 text-primary">
+                                <i class="bi bi-geo-alt me-2"></i>Address Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                {{ form.street_address.label(class="form-label fw-semibold") }}
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-house-door"></i></span>
+                                    {{ form.street_address(class="form-control form-control-lg" + (" is-invalid" if form.street_address.errors else ""), placeholder="Street Address") }}
+                                </div>
+                                {% if form.street_address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.street_address.errors[0] }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    {{ form.city.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                        {{ form.city(class="form-control form-control-lg" + (" is-invalid" if form.city.errors else ""), placeholder="City") }}
+                                    </div>
+                                    {% if form.city.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.city.errors[0] }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ form.state_province.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                        {{ form.state_province(class="form-control form-control-lg" + (" is-invalid" if form.state_province.errors else ""), placeholder="State/Province") }}
+                                    </div>
+                                    {% if form.state_province.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.state_province.errors[0] }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form.country.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-globe-americas"></i></span>
+                                        {{ form.country(class="form-select form-select-lg" + (" is-invalid" if form.country.errors else "")) }}
+                                    </div>
+                                    {% if form.country.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.country.errors[0] }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.postal_code.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-mailbox"></i></span>
+                                        {{ form.postal_code(class="form-control form-control-lg" + (" is-invalid" if form.postal_code.errors else ""), placeholder="Postal/ZIP code") }}
+                                    </div>
+                                    {% if form.postal_code.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.postal_code.errors[0] }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Terms and Conditions -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="m-0 text-primary">
+                                <i class="bi bi-file-earmark-text me-2"></i>Terms and Conditions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-4">
+                                {{ form.terms_accepted(class="form-check-input" + (" is-invalid" if form.terms_accepted.errors else ""), id="terms_accepted") }}
+                                <label class="form-check-label" for="terms_accepted">
+                                    I have read and agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                                </label>
+                                {% if form.terms_accepted.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.terms_accepted.errors[0] }}
+                                </div>
+                                {% endif %}
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.privacy_accepted(class="form-check-input" + (" is-invalid" if form.privacy_accepted.errors else ""), id="privacy_accepted") }}
+                                        <label class="form-check-label" for="privacy_accepted">
+                                            I have read and agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+                                        </label>
+                                        {% if form.privacy_accepted.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.privacy_accepted.errors[0] }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                            <div class="d-grid gap-3">
+                                <button type="submit" class="btn btn-primary btn-lg py-3 fw-semibold shadow-sm" id="submitButton">
+                                    <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                                    Create Account
+                                </button>
+
+                                <div class="text-center">
+                                    <p class="text-muted mb-0">
+                                        Already have an account?
+                                        <a href="{{ url_for('auth.login') }}" class="fw-semibold text-primary">Sign in</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms and Privacy Modals -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+    <div class="mb-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show d-flex align-items-center" role="alert">
+                        <i class="bi {% if category == 'success' %}bi-check-circle-fill{% elif category == 'danger' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
+                        <div>{{ message }}</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Terms of Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                {% include 'legal/terms.html' %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="acceptTermsBtn">I Accept</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Privacy Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                {% include 'legal/privacy.html' %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Enable Bootstrap form validation
+    (function () {
+        'use strict';
+
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        var forms = document.querySelectorAll('.needs-validation');
+
+        // Loop over them and prevent submission
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    // Scroll to first invalid field
+                    const firstInvalid = form.querySelector(':invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus({ preventScroll: true });
+                    }
+                } else {
+                    // Show loading state on submit
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    const spinner = submitButton.querySelector('.spinner-border');
+
+                    submitButton.disabled = true;
+                    spinner.classList.remove('d-none');
+                    submitButton.innerHTML = 'Creating Account...';
+                }
+
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+
+    // Toggle password visibility
+    document.querySelectorAll('.toggle-password').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const input = this.previousElementSibling;
+            const icon = this.querySelector('i');
+
+            // Toggle the type attribute
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+
+            // Toggle the icon
+            icon.classList.toggle('bi-eye');
+            icon.classList.toggle('bi-eye-slash');
+
+            // Focus back on the input
+            input.focus();
+        });
+    });
+
+    // Format phone number
+    const phoneInput = document.getElementById('{{ form.phone.id }}');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function (e) {
+            // Only format if the input is not empty and the user is not deleting characters
+            if (e.inputType && e.inputType === 'deleteContentBackward') {
+                return;
+            }
+
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+
+        // Add validation for phone number format
+        phoneInput.addEventListener('blur', function (e) {
+            const phoneRegex = /^\(\d{3}\) \d{3}-\d{4}$/;
+            if (e.target.value && !phoneRegex.test(e.target.value)) {
+                e.target.setCustomValidity('Please enter a valid phone number (e.g., (123) 456-7890)');
+            } else {
+                e.target.setCustomValidity('');
+            }
+        });
+    }
+
+    // Format website URL
+    const websiteInput = document.getElementById('{{ form.website.id }}');
+    if (websiteInput) {
+        websiteInput.addEventListener('blur', function (e) {
+            let value = e.target.value.trim();
+            if (value && !value.match(/^https?:\/\//)) {
+                e.target.value = 'https://' + value;
+            }
+        });
+    }
+
+    // Password strength indicator
+    const passwordInput = document.getElementById('{{ form.password.id }}');
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function (e) {
+            const password = e.target.value;
+            const strengthMeter = document.getElementById('password-strength');
+
+            if (!strengthMeter) return;
+
+            // Reset strength meter
+            strengthMeter.innerHTML = '';
+
+            if (!password) {
+                strengthMeter.innerHTML = '<small class="text-muted">Enter a password to check strength</small>';
+                return;
+            }
+
+            // Check password strength
+            let strength = 0;
+            let feedback = [];
+
+            // Length check
+            if (password.length >= 8) strength++;
+            else feedback.push('at least 8 characters');
+
+            // Uppercase check
+            if (/[A-Z]/.test(password)) strength++;
+            else feedback.push('one uppercase letter');
+
+            // Lowercase check
+            if (/[a-z]/.test(password)) strength++;
+            else feedback.push('one lowercase letter');
+
+            // Number check
+            if (/\d/.test(password)) strength++;
+            else feedback.push('one number');
+
+            // Special character check
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            else feedback.push('one special character');
+
+            // Update UI
+            const strengthText = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'][strength];
+            const strengthClass = ['danger', 'warning', 'info', 'success', 'success', 'success'][strength];
+
+            if (feedback.length > 0) {
+                strengthMeter.innerHTML = `
+                    <div class="progress mb-2" style="height: 5px;">
+                        <div class="progress-bar bg-${strengthClass}" role="progressbar" style="width: ${(strength / 5) * 100}%" 
+                             aria-valuenow="${strength}" aria-valuemin="0" aria-valuemax="5"></div>
+                    </div>
+                    <small class="text-${strengthClass} d-block">
+                        <i class="bi ${feedback.length === 0 ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'}"></i>
+                        ${feedback.length === 0 ? 'Strong password!' : 'Include: ' + feedback.join(', ')}
+                    </small>
+                `;
+            }
+        });
+    }
+
+    // Confirm password match
+    const confirmPasswordInput = document.getElementById('{{ form.confirm_password.id }}');
+    if (passwordInput && confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', function (e) {
+            if (e.target.value !== passwordInput.value) {
+                e.target.setCustomValidity('Passwords do not match');
+            } else {
+                e.target.setCustomValidity('');
+            }
+        });
+    }
+
+    // Auto-advance fields
+    const inputs = document.querySelectorAll('input[maxlength]');
+    inputs.forEach(input => {
+        input.addEventListener('input', function () {
+            if (this.value.length === parseInt(this.maxLength)) {
+                const next = this.nextElementSibling;
+                if (next && next.tagName === 'INPUT') {
+                    next.focus();
+                }
+            }
+        });
+    });
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function () {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Focus on first input
+        const firstInput = document.querySelector('form input:not([type="hidden"])');
+        if (firstInput) firstInput.focus();
+    });
+</script>
+{% endblock %}

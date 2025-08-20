@@ -1,0 +1,20 @@
+{% extends "admin/users/form.html" %}
+
+{% set title = 'Create New User' %}
+
+{% block title %}{{ title }} - Admin Dashboard{% endblock %}
+
+{% block content %}
+    {{ super() }}
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        // Make password fields required for new users
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('{{ form.password.id }}').required = true;
+            document.getElementById('{{ form.confirm_password.id }}').required = true;
+        });
+    </script>
+{% endblock %}

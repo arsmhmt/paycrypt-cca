@@ -1,0 +1,33 @@
+{% extends 'admin/base.html' %}
+{% block title %}Commission Reports - Admin Panel{% endblock %}
+{% block content %}
+<div class="container-fluid px-0">
+    <h1 class="h3 text-gray-800 mb-4">Commission Reports</h1>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Email</th>
+                    <th>Deposit Commission</th>
+                    <th>Withdrawal Commission</th>
+                    <th>Total Commission</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in commission_data %}
+                <tr>
+                    <td>{{ row.client.company_name or row.client.name or 'N/A' }}</td>
+                    <td>{{ row.client.email }}</td>
+                    <td>{{ row.deposit_commission }}</td>
+                    <td>{{ row.withdrawal_commission }}</td>
+                    <td>{{ row.total_commission }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center">No commission data available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
